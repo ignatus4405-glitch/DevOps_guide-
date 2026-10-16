@@ -2,16 +2,73 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from devops_academy.markdown_renderer import render_lesson, render_plain
+from devops_academy.theme import palette
 
 CONTENT = Path(__file__).resolve().parents[1] / "content"
 
+SAMPLE_TABLE = "| Задача | Инструмент |\n| --- | --- |\n| код | Git |\n| контейнеры | Docker |\n"
+
 
 def test_headings_and_tables():
-    html = render_lesson("# Заголовок\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n", CONTENT, {})
-    assert "<h1" in html and "<table>" in html
+    html = render_lesson("# Заголовок\n\n" + SAMPLE_TABLE, CONTENT, {})
+    assert "<h1" in html and "<table " in html
+
+
+def test_tables_have_borders_and_header_background():
+    """Границы и фон заголовка заданы инлайново: иначе Qt рисует таблицу без сетки."""
+    for theme in ("dark", "light"):
+        html = render_lesson(SAMPLE_TABLE, CONTENT, {}, theme)
+        colors = palette(theme)
+        table_tag = re.search(r"<table[^>]*>", html).group(0)
+        header_tag = re.search(r"<th(?=[\s>])[^>]*>", html).group(0)
+        cell_tag = re.search(r"<td(?=[\s>])[^>]*>", html).group(0)
+
+        assert f"border: 1px solid {colors['border']}" in table_tag
+        assert "border-collapse: collapse" in table_tag
+        assert f"border: 1px solid {colors['border']}" in header_tag
+        assert f"background-color: {colors['panel_alt']}" in header_tag
+        assert f"border: 1px solid {colors['border']}" in cell_tag
+        # Общая ширина и отступы — чтобы колонки не «слипались»
+        assert "padding: 7px 10px" in header_tag and "padding: 7px 10px" in cell_tag
+
+
+def test_table_alignment_from_markdown_is_preserved():
+    html = render_lesson("| a | b |\n|:---|---:|\n| 1 | 2 |\n", CONTENT, {})
+    headers = re.findall(r"<th(?=[\s>])[^>]*>", html)
+    assert "text-align: left" in headers[0]
+    assert "text-align: right" in headers[1]
+    # Выравнивание не дублируется стилем по умолчанию
+    assert headers[0].count("text-align: left") == 1
+
+
+def test_zebra_rows_do_not_touch_header():
+    """Подложка чередуется только в теле таблицы — строка заголовка сохраняет свой фон."""
+    html = render_lesson(
+        "| h1 | h2 |\n| --- | --- |\n| a | b |\n| c | d |\n| e | f |\n", CONTENT, {}, "dark"
+    )
+    colors = palette("dark")
+    thead = html[html.index("<thead>") : html.index("</thead>")]
+    tbody = html[html.index("<tbody>") : html.index("</tbody>")]
+
+    assert f"background-color: {colors['bg_alt']}" not in thead
+    assert tbody.count(f"background-color: {colors['bg_alt']}") > 0
+    # В теле подложка только у каждой второй строки
+    assert tbody.count(f"background-color: {colors['bg_alt']}") < tbody.count("<td")
+
+
+def test_void_of_tables_is_untouched():
+    """HTML без таблиц не меняется — стилизация работает только при их наличии."""
+    html = render_lesson("# Только текст\n\nАбзац.\n", CONTENT, {})
+    assert "<table" not in html
+
+
+def test_render_plain_styles_tables_too():
+    html = render_plain("| a | b |\n| --- | --- |\n| 1 | 2 |\n", "light")
+    assert "<table " in html and "border: 1px solid" in html
 
 
 def test_code_block_highlighted():

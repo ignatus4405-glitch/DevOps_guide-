@@ -41,7 +41,7 @@ class UpdateDialog(QDialog):
 
         self.notes = QTextBrowser(self)
         self.notes.setObjectName("Lesson")
-        self.notes.setHtml(render_plain(release_notes_markdown(info)))
+        self.notes.setHtml(render_plain(release_notes_markdown(info), theme))
         self.notes.setStyleSheet(lesson_css(theme))
 
         self.progress = QProgressBar(self)

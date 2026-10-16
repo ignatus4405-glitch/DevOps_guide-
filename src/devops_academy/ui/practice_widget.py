@@ -167,11 +167,11 @@ class PracticeWidget(QWidget):
             return
         self.task = tasks[row]
         self.hints_shown = 0
-        self.goal.setText(f"<b>Цель:</b> {render_plain(self.task.goal)}")
+        self.goal.setText(f"<b>Цель:</b> {render_plain(self.task.goal, self.current_theme())}")
         self.goal.setTextFormat(Qt.RichText)
         bullets = "\n".join(f"- {item}" for item in self.task.instructions)
         checks = f"\n\n**Как проверить результат:** {self.task.validation_hint}" if self.task.validation_hint else ""
-        self.instructions.setHtml(render_plain(f"{bullets}{checks}"))
+        self.instructions.setHtml(render_plain(f"{bullets}{checks}", self.current_theme()))
         self.instructions.setStyleSheet(lesson_css(self.current_theme()))
         self.answer.clear()
         self.feedback.clear()
@@ -230,7 +230,8 @@ class PracticeWidget(QWidget):
         self.instructions.setHtml(
             render_plain(
                 f"**Эталонное решение:**\n\n```bash\n{self.task.solution}\n```\n\n"
-                f"**Пояснение:** {self.task.feedback}"
+                f"**Пояснение:** {self.task.feedback}",
+                self.current_theme(),
             )
         )
         self.instructions.setStyleSheet(lesson_css(self.current_theme()))

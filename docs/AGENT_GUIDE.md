@@ -47,7 +47,7 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest -q                                            # 99 тестов
+pytest -q                                            # 106 тестов
 ```
 
 В headless-средах (сервер, контейнер) Qt требует библиотек; используйте
@@ -96,6 +96,9 @@ Run workflow (выбор bump). Отдельно тег ставить не ну
 | `content_index.json` помечен как изменённый в CI | контент правили без регенерации | `python tools/generate_version.py --version "$(cat VERSION)"` |
 | GUI-тесты падают с ошибкой платформы | нет `QT_QPA_PLATFORM=offscreen` | выставьте переменную окружения |
 | Сборка exe не находит контент | контент не попал в `datas` | проверьте `packaging/devops_academy.spec` |
+| Таблицы в уроке без границ | Qt не применяет `border` из QSS к содержимому `QTextBrowser` | стили таблиц задаются инлайново в `markdown_renderer.style_tables`, проверьте `tests/test_markdown.py` |
+| Выравнивание колонки пропало | в `th_style` добавлен `text-align`, который перекрывает разметку markdown | не добавляйте `text-align` в `th_style`; выравнивание приходит из markdown |
+| После смены темы таблицы старого цвета | HTML отрендерен для прежней темы | `LessonView.apply_theme` перерисовывает контент — не убирайте перерисовку |
 | Обновление не приходит | репозиторий приватный или нет релиза | проверьте `releases/latest` в браузере |
 | Версия не поднялась | в коммитах нет `feat:`/`BREAKING` | используйте Conventional Commits |
 
