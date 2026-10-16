@@ -72,9 +72,8 @@ class LessonView(QWidget):
             f"{module.title} · урок {position + 1} из {module.lesson_count} · "
             f"~{lesson.minutes} мин · уровень: {module.level}"
         )
-        html = render_lesson(lesson.body, self.content_root, self.glossary)
-        self.browser.setHtml(html)
         self.browser.setStyleSheet(lesson_css(self.current_theme()))
+        self.browser.setHtml(self._render())
         self.browser.verticalScrollBar().setValue(0)
         self.done_box.blockSignals(True)
         self.done_box.setChecked(done)
@@ -90,6 +89,17 @@ class LessonView(QWidget):
         if self.lesson:
             self.completed_toggled.emit(self.lesson.key, checked)
 
+    def _render(self) -> str:
+        """HTML урока в текущей теме (цвета таблиц задаются инлайново — см. render_lesson)."""
+        if not self.lesson:
+            return ""
+        return render_lesson(self.lesson.body, self.content_root, self.glossary, self.current_theme())
+
     def apply_theme(self, theme: str) -> None:
         if self.lesson and self.module:
             self.browser.setStyleSheet(lesson_css(theme))
+            # Таблицы и врезки окрашены прямо в HTML, поэтому контент перерисовываем,
+            # сохраняя позицию прокрутки.
+            position = self.browser.verticalScrollBar().value()
+            self.browser.setHtml(self._render())
+            self.browser.verticalScrollBar().setValue(position)

@@ -4,7 +4,9 @@
   * admonition-блоки  !!! note "Заголовок"  (note/tip/warning/danger);
   * подсветка кода для bash/sh/yaml/json/ini/dockerfile/powershell (без Pygments);
   * автоссылки-термины [[термин]] -> подсказка из глоссария;
-  * переписывание относительных путей картинок на абсолютные (assets/img/...).
+  * переписывание относительных путей картинок на абсолютные (assets/img/...);
+  * таблицы: границы, отступы и фон заголовка вписываются прямо в HTML, потому что
+    Qt рисует содержимое QTextBrowser по своим правилам и границы из QSS не применяет.
 """
 
 from __future__ import annotations
@@ -14,6 +16,8 @@ import re
 from pathlib import Path
 
 import markdown
+
+from .theme import palette
 
 EXTENSIONS = ["fenced_code", "tables", "sane_lists", "attr_list", "nl2br"]
 
@@ -149,7 +153,90 @@ def _rewrite_images(text: str, content_root: Path) -> str:
     return re.sub(r"(\]\(|src=\")([^)\"]+)(\)|\")", repl, text)
 
 
-def render_lesson(body: str, content_root: Path, glossary: dict[str, dict] | None = None) -> str:
+TABLE_RE = re.compile(r"<table(?=[\s>])(\s[^>]*)?>", re.IGNORECASE)
+TH_RE = re.compile(r"<th(?=[\s>])(\s[^>]*)?>", re.IGNORECASE)
+TD_RE = re.compile(r"<td(?=[\s>])(\s[^>]*)?>", re.IGNORECASE)
+STYLE_ATTR_RE = re.compile(r'style="([^"]*)"', re.IGNORECASE)
+
+
+def _merge_style(tag_html: str, extra: str) -> str:
+    """Добавляет CSS к тегу, сохраняя уже существующий style="...".
+
+    Qt понимает только инлайновые стили для границ таблиц, поэтому базовые
+    свойства (границы, отступы, фон) вписываем прямо в теги.
+    """
+    match = STYLE_ATTR_RE.search(tag_html)
+    if match:
+        existing = match.group(1).strip().rstrip(";")
+        merged = f"{existing}; {extra}" if existing else extra
+        return tag_html[: match.start()] + f'style="{merged}"' + tag_html[match.end() :]
+    return tag_html[:-1] + f' style="{extra}">' if tag_html.endswith(">") else tag_html
+
+
+def style_tables(html_body: str, theme: str = "dark") -> str:
+    """Оформляет таблицы: границы, отступы, фон и разделение строк.
+
+    QSS из ``lesson_css`` Qt применяет не ко всему содержимому документа, поэтому
+    границы таблиц задаются инлайново (иначе таблица выглядит «слипшейся»).
+    """
+    if "<table" not in html_body:
+        return html_body
+
+    c = palette(theme)
+    table_style = f"border-collapse: collapse; border: 1px solid {c['border']}; margin: 12px 0; width: 100%;"
+    # text-align сюда не входит: markdown сам добавляет выравнивание из разметки,
+    # а продублированное свойство в style= перекрыло бы его (последнее значение важнее).
+    th_style = (
+        f"border: 1px solid {c['border']}; background-color: {c['panel_alt']}; color: {c['text']};"
+        " padding: 7px 10px; font-weight: 700;"
+    )
+    td_style = f"border: 1px solid {c['border']}; padding: 7px 10px; vertical-align: top;"
+
+    def style_header(match: re.Match) -> str:
+        """Заголовок: выравнивание из markdown важнее стиля по умолчанию."""
+        tag_html = match.group(0)
+        extra = th_style if "text-align" in tag_html.lower() else f"text-align: left; {th_style}"
+        return _merge_style(tag_html, extra)
+
+    html_body = TABLE_RE.sub(lambda m: _merge_style(m.group(0), table_style), html_body)
+    html_body = TH_RE.sub(style_header, html_body)
+    html_body = TD_RE.sub(lambda m: _merge_style(m.group(0), td_style), html_body)
+    return _zebra_rows(html_body, c)
+
+
+ROW_RE = re.compile(r"<tr(?=[\s>])(\s[^>]*)?>(.*?)</tr>", re.IGNORECASE | re.DOTALL)
+CELL_RE = re.compile(r"<td(?=[\s>])(\s[^>]*)?>", re.IGNORECASE)
+
+
+def _zebra_rows(html_body: str, colours: dict) -> str:
+    """Чередует фон строк тела таблицы — так таблицы читаются построчно."""
+    def style_row(match: re.Match) -> str:
+        row_html = match.group(0)
+        if "<th" in row_html.lower():
+            return row_html  # строку заголовка не трогаем
+        return CELL_RE.sub(
+            lambda m: _merge_style(m.group(0), f"background-color: {colours['bg_alt']};"), row_html
+        )
+
+    # Чётные строки (индекс 1, 3, ... в каждом tbody) получают подложку
+    def style_tbody(match: re.Match) -> str:
+        counter = {"index": 0}
+
+        def replace(row: re.Match) -> str:
+            counter["index"] += 1
+            return style_row(row) if counter["index"] % 2 == 0 else row.group(0)
+
+        return ROW_RE.sub(replace, match.group(0))
+
+    return re.sub(r"<tbody>.*?</tbody>", style_tbody, html_body, flags=re.IGNORECASE | re.DOTALL)
+
+
+def render_lesson(
+    body: str,
+    content_root: Path,
+    glossary: dict[str, dict] | None = None,
+    theme: str = "dark",
+) -> str:
     """Главная функция: markdown урока -> безопасный HTML для QTextBrowser."""
     prepared = _render_admonitions(body)
     prepared = _rewrite_images(prepared, content_root)
@@ -157,6 +244,7 @@ def render_lesson(body: str, content_root: Path, glossary: dict[str, dict] | Non
     MD.reset()
     html_body = MD.convert(prepared)
     html_body = _postprocess_code_blocks(html_body)
+    html_body = style_tables(html_body, theme)
     return html_body
 
 
@@ -174,7 +262,7 @@ def _postprocess_code_blocks(html_body: str) -> str:
     return CODE_BLOCK_RE.sub(repl, html_body)
 
 
-def render_plain(text: str) -> str:
+def render_plain(text: str, theme: str = "dark") -> str:
     """Рендер без глоссария/путей — для пояснений к тестам и задач."""
     MD.reset()
-    return MD.convert(text)
+    return style_tables(MD.convert(text), theme)

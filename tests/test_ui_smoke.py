@@ -117,6 +117,47 @@ def test_theme_toggle_persists(window):
     assert window.store.get("ui/theme") == "dark"
 
 
+def test_lesson_repaints_tables_on_theme_switch(course, window):
+    """При смене темы таблицы перерисовываются: цвета заданы инлайново в HTML."""
+    from devops_academy.theme import palette
+
+    module = next(m for m in course.modules if m.module_id == "intro")
+    window.open_module(module.module_id)
+    window.navigate_lesson(2)  # урок «Карта инструментов» — с таблицами
+
+    window.apply_theme("dark")
+    dark_html = window.lesson_view.browser.toHtml()
+    window.apply_theme("light")
+    light_html = window.lesson_view.browser.toHtml()
+
+    assert palette("dark")["border"] in dark_html
+    assert palette("light")["border"] in light_html
+    assert palette("light")["border"] != palette("dark")["border"]
+    # Содержимое урока не потерялось и таблица на месте
+    assert "Управление кодом" in window.lesson_view.browser.toPlainText()
+
+
+def test_every_lesson_table_is_styled(course):
+    """Во всех уроках курса таблицы получают границы (иначе Qt рисует их без сетки)."""
+    import re
+
+    from devops_academy.markdown_renderer import render_lesson
+
+    checked_tables = 0
+    for module in course.modules:
+        for lesson in module.lessons:
+            html = render_lesson(lesson.body, course.root, course.glossary, "dark")
+            tables = re.findall(r"<table(?=[\s>])[^>]*>", html)
+            if not tables:
+                continue
+            checked_tables += len(tables)
+            for tag in tables:
+                assert "border-collapse: collapse" in tag and "border: 1px solid" in tag, tag
+            for tag in re.findall(r"<t[hd](?=[\s>])[^>]*>", html):
+                assert "border: 1px solid" in tag, f"ячейка без границы: {tag}"
+    assert checked_tables >= 20, f"ожидались таблицы в уроках, найдено {checked_tables}"
+
+
 def test_progress_bar_updates(course, window):
     window.store.save_quiz_result(course.modules[0].module_id, 10, 10, True)
     window.dashboard.refresh()
