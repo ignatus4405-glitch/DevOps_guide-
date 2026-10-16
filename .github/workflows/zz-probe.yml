@@ -1,5 +1,8 @@
 name: probe
-on: workflow_dispatch:
+on:
+  push:
+    branches: [arena/f33a7a3a-devops-guide]
+    paths: [".github/workflows/zz-probe.yml"]
 permissions:
   contents: read
   statuses: write
