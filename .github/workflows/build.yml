@@ -1,0 +1,311 @@
+# Автосборка и выпуск версий.
+#
+# Как это работает:
+#   1. При push в main workflow смотрит на VERSION и историю коммитов.
+#   2. Если релиза для текущей версии ещё нет — выпускает её как есть.
+#      Иначе поднимает версию: feat -> minor, BREAKING CHANGE -> major, остальное -> patch.
+#   3. Прогоняет тесты, собирает приложение (Windows: exe + установщик Inno Setup,
+#      Linux: tar.gz), считает SHA-256 и публикует GitHub Release.
+#   4. Приложение-клиент видит новый релиз через GitHub API и показывает пользователю
+#      уведомление с описанием изменений и кнопкой установки (см. src/devops_academy/updater.py).
+#
+# Ручной запуск: Actions -> Build & Release -> Run workflow (можно выбрать bump: none/patch/minor/major).
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Как поднять версию"
+        type: choice
+        options: [auto, none, patch, minor, major]
+        default: auto
+
+concurrency:
+  group: build-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: "1"
+  QT_QPA_PLATFORM: offscreen
+
+jobs:
+  guard:
+    name: Проверки перед сборкой
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Линтер и тесты
+        run: |
+          ruff check .
+          pytest -q
+      - name: Проверка контента
+        run: python tools/validate_content.py
+      - name: Определить версию релиза
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          CURRENT="$(cat VERSION | tr -d ' \r\n')"
+          BUMP="${{ github.event.inputs.bump || 'auto' }}"
+
+          if git ls-remote --tags origin "refs/tags/v$CURRENT" | grep -q .; then
+            if [ "$BUMP" = "none" ]; then
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            RANGE="$(git describe --tags --abbrev=0 2>/dev/null || echo '')..HEAD"
+            MESSAGES="$(git log --pretty=%B ${RANGE:-HEAD~20..HEAD} 2>/dev/null || git log --pretty=%B -20)"
+            if [ "$BUMP" = "auto" ]; then
+              if grep -qE "BREAKING CHANGE|!:" <<< "$MESSAGES"; then BUMP=major
+              elif grep -qiE "^feat" <<< "$MESSAGES"; then BUMP=minor
+              else BUMP=patch; fi
+            fi
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+            case "$BUMP" in
+              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+              patch) PATCH=$((PATCH + 1)) ;;
+            esac
+            NEXT="$MAJOR.$MINOR.$PATCH"
+            echo "Текущая версия $CURRENT уже выпущена -> поднимаем до $NEXT (bump=$BUMP)"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          else
+            echo "Версия $CURRENT ещё не выпускалась -> выпускаем её"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Записать версию сборки
+        if: steps.version.outputs.release == 'true'
+        run: |
+          python tools/generate_version.py \
+            --version "${{ steps.version.outputs.version }}" \
+            --build "${{ github.run_number }}" \
+            --date "$(date -u +%F)"
+      - name: Собрать release notes
+        if: steps.version.outputs.release == 'true'
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREV="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
+          RANGE="${PREV:+$PREV..HEAD}"
+          {
+            echo "## Что изменилось"
+            echo
+            git log ${RANGE:-HEAD~15..HEAD} --pretty="- %s (%h)" 2>/dev/null | head -50 || echo "- Первый публичный релиз"
+            echo
+            echo "## Установка"
+            echo "1. Скачайте \`DevOpsAcademy-Setup-${{ steps.version.outputs.version }}.exe\` и запустите."
+            echo "2. Приложение само сообщит о следующих версиях (кнопка «Проверить обновления» в меню)."
+            echo
+            echo "## Контроль целостности"
+            echo "SHA-256 всех файлов — в \`SHA256SUMS.txt\`."
+          } > release_notes.md
+          cat release_notes.md
+      - name: Сохранить подготовленные файлы
+        if: steps.version.outputs.release == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-meta
+          path: |
+            release_notes.md
+            VERSION
+            src/devops_academy/version.py
+            content/content_index.json
+          retention-days: 3
+
+  windows:
+    name: Сборка для Windows
+    needs: guard
+    if: needs.guard.outputs.release == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Установить зависимости
+        run: pip install -r requirements-dev.txt
+      - name: Подготовить version.py и index
+        run: python tools/generate_version.py --version "${{ needs.guard.outputs.version }}" --build "${{ github.run_number }}"
+      - name: Собрать приложение (PyInstaller)
+        run: pyinstaller --noconfirm --clean packaging/devops_academy.spec
+      - name: Проверить собранный exe
+        shell: pwsh
+        run: |
+          & "dist/DevOpsAcademy/DevOpsAcademy.exe" --self-test
+          if ($LASTEXITCODE -ne 0) { throw "self-test собранного приложения провалился" }
+      - name: Упаковать в ZIP
+        shell: pwsh
+        run: |
+          $v = "${{ needs.guard.outputs.version }}"
+          Compress-Archive -Path dist/DevOpsAcademy/* -DestinationPath "dist/DevOpsAcademy-$v-windows-x64.zip" -Force
+      - name: Собрать установщик (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
+          & $iscc "/DAppVersion=${{ needs.guard.outputs.version }}" "/DBuildNumber=${{ github.run_number }}" packaging/installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "сборка установщика провалилась" }
+          Get-ChildItem dist -Filter *.exe | Format-Table Name, Length
+      - name: Загрузить артефакты
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-dist
+          path: |
+            dist/*.zip
+            dist/*Setup*.exe
+          retention-days: 14
+
+  linux:
+    name: Сборка для Linux
+    needs: guard
+    if: needs.guard.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Подготовить version.py и index
+        run: python tools/generate_version.py --version "${{ needs.guard.outputs.version }}" --build "${{ github.run_number }}"
+      - name: Собрать приложение (PyInstaller)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pyinstaller --noconfirm --clean packaging/devops_academy.spec
+      - name: Проверить собранный бинарник
+        run: dist/DevOpsAcademy/DevOpsAcademy --self-test
+      - name: Упаковать в tar.gz
+        run: |
+          cd dist && tar czf "DevOpsAcademy-${{ needs.guard.outputs.version }}-linux-x64.tar.gz" DevOpsAcademy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-dist
+          path: dist/*.tar.gz
+          retention-days: 14
+
+  release:
+    name: Публикация релиза
+    needs: [guard, windows, linux]
+    if: needs.guard.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Подготовить файлы релиза
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.guard.outputs.version }}"
+          mkdir -p release
+          find artifacts -type f \( -name '*.zip' -o -name '*.tar.gz' -o -name '*Setup*.exe' \) -exec cp {} release/ \;
+          cp artifacts/release-meta/release_notes.md release/RELEASE_NOTES.md
+
+          # Метаданные для клиента: приложение читает этот файл и показывает уведомление.
+          python - <<PY
+          import json, pathlib, datetime
+          pathlib.Path("release/update.json").write_text(json.dumps({
+              "version": "$VERSION",
+              "tag": "v$VERSION",
+              "channel": "stable",
+              "released_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+              "assets": sorted(p.name for p in pathlib.Path("release").iterdir()),
+              "notes_url": f"https://github.com/${{ github.repository }}/releases/tag/v$VERSION",
+              "min_supported": "0.1.0"
+          }, ensure_ascii=False, indent=2), encoding="utf-8")
+          PY
+
+          # Контрольные суммы — приложение проверяет их перед установкой обновления.
+          (cd release && sha256sum * > SHA256SUMS.txt)
+          ls -la release
+      - name: Создать тег и релиз
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.guard.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "$VERSION" > VERSION
+          python tools/generate_version.py --version "$VERSION" --build "${{ github.run_number }}"
+          git add VERSION src/devops_academy/version.py content/content_index.json
+          git commit -m "chore(release): v$VERSION [skip ci]" || echo "нечего коммитить"
+          git tag -a "v$VERSION" -m "DevOps Academy $VERSION"
+          git push origin HEAD:main
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" release/* \
+            --title "DevOps Academy $VERSION" \
+            --notes-file release/RELEASE_NOTES.md \
+            --latest
+      - name: Итог сборки
+        run: |
+          {
+            echo "### Релиз v${{ needs.guard.outputs.version }} опубликован :rocket:"
+            echo
+            echo "Клиенты получат уведомление автоматически: приложение проверяет"
+            echo "https://api.github.com/repos/${{ github.repository }}/releases/latest"
+            echo "и показывает баннер с описанием изменений."
+            echo
+            echo "| Файл | Назначение |"
+            echo "| --- | --- |"
+            echo "| DevOpsAcademy-Setup-*.exe | установщик для Windows |"
+            echo "| DevOpsAcademy-*-windows-x64.zip | портативная версия |"
+            echo "| DevOpsAcademy-*-linux-x64.tar.gz | сборка для Linux |"
+            echo "| SHA256SUMS.txt | контрольные суммы |"
+            echo "| update.json | метаданные для автообновления |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  notify:
+    name: Уведомление клиентов
+    needs: [guard, release]
+    if: needs.guard.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Отправить уведомление в вебхук (если настроен)
+        env:
+          WEBHOOK: ${{ secrets.RELEASE_WEBHOOK_URL }}
+        run: |
+          VERSION="${{ needs.guard.outputs.version }}"
+          URL="https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+          if [ -z "$WEBHOOK" ]; then
+            echo "::notice::RELEASE_WEBHOOK_URL не задан — уведомление только через GitHub Releases"
+            exit 0
+          fi
+          curl -sS -X POST "$WEBHOOK" -H 'Content-Type: application/json' \
+            -d "{\"text\":\"DevOps Academy $VERSION опубликован: $URL\"}" > /dev/null
+          echo "Уведомление отправлено"
+      - name: Сводка в Actions
+        run: |
+          {
+            echo "### Уведомление о новой версии"
+            echo
+            echo "- В приложении: баннер «Доступна новая версия» + диалог с release notes."
+            echo "- В канале команды: сообщение через RELEASE_WEBHOOK_URL (Slack/Discord/Teams)."
+            echo "- Для подписчиков: GitHub Watch → Releases."
+          } >> "$GITHUB_STEP_SUMMARY"

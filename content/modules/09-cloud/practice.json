@@ -1,0 +1,112 @@
+{
+  "title": "Практика модуля 10: облако руками",
+  "tasks": [
+    {
+      "id": "aws-cli-check",
+      "title": "Проверить окружение и права через AWS CLI",
+      "level": "easy",
+      "goal": "Научиться безопасно понимать, под кем вы работаете и какие права есть.",
+      "instructions": [
+        "Настройте профиль CLI без root-ключа (лучше — роль или SSO).",
+        "Определите текущую учётную запись и проверьте доступ к основным сервисам.",
+        "Соберите сводку: сколько инстансов и в каких зонах."
+      ],
+      "hints": [
+        "aws configure sso умеет работать с корпоративным SSO без долгоживущих ключей",
+        "Используйте --query и --output table для читаемых выводов"
+      ],
+      "solution": "aws sts get-caller-identity\naws ec2 describe-instances --query 'Reservations[].Instances[].{id:InstanceId,state:State.Name,az:Placement.AvailabilityZone}' --output table\naws s3 ls\naws iam list-roles --query 'Roles[].RoleName' | head",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "aws\\s+sts\\s+get-caller-identity",
+          "describe-instances|aws s3 ls",
+          "--query|--output"
+        ],
+        "feedback": "Так начинается любая работа в облаке: понять, под кем вы, и какие ресурсы есть в аккаунте."
+      },
+      "validation_hint": "Вывод содержит ARN вашей роли и список ресурсов без ошибок доступа."
+    },
+    {
+      "id": "vpc-terraform",
+      "title": "Описать VPC с публичными и приватными подсетями",
+      "level": "hard",
+      "goal": "Создать сеть, пригодную для прода: две AZ, разделение публичного и приватного.",
+      "instructions": [
+        "Опишите VPC с CIDR и две публичные, две приватные подсети в разных AZ.",
+        "Добавьте Internet Gateway, NAT и таблицы маршрутизации для каждой группы подсетей.",
+        "Пометьте ресурсы тегами (Project, Env, Owner) и примените через plan/apply."
+      ],
+      "hints": [
+        "Публичные подсети ассоциируются с таблицей, где маршрут 0.0.0.0/0 → IGW",
+        "Приватные — с таблицей, где 0.0.0.0/0 → NAT"
+      ],
+      "solution": "resource \"aws_vpc\" \"main\" {\n  cidr_block = var.vpc_cidr\n  enable_dns_hostnames = true\n  tags = { Name = \"${var.project}-vpc\", Env = var.env, Owner = \"platform\" }\n}\nresource \"aws_internet_gateway\" \"igw\" { vpc_id = aws_vpc.main.id }\nresource \"aws_subnet\" \"public\" {\n  count = 2\n  vpc_id = aws_vpc.main.id\n  cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index)\n  availability_zone = data.aws_availability_zones.available.names[count.index]\n  tags = { Tier = \"public\", Env = var.env }\n}\nresource \"aws_subnet\" \"private\" {\n  count = 2\n  vpc_id = aws_vpc.main.id\n  cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index + 10)\n  availability_zone = data.aws_availability_zones.available.names[count.index]\n  tags = { Tier = \"private\", Env = var.env }\n}\nresource \"aws_nat_gateway\" \"nat\" { count = 2, allocation_id = aws_eip.nat[count.index].id, subnet_id = aws_subnet.public[count.index].id }",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "aws_vpc",
+          "aws_subnet",
+          "availability_zone",
+          "aws_nat_gateway|aws_internet_gateway",
+          "tags"
+        ],
+        "feedback": "Сеть спроектирована правильно: две AZ, публичный и приватный уровни, теги для учёта."
+      },
+      "validation_hint": "terraform plan показывает создание VPC, четырёх подсетей, IGW и NAT; apply завершается успешно."
+    },
+    {
+      "id": "least-privilege",
+      "title": "Политика наименьших привилегий для CI",
+      "level": "hard",
+      "goal": "Дать пайплайну только те права, которые нужны для деплоя.",
+      "instructions": [
+        "Опишите политику, разрешающую только push образов в конкретный репозиторий и обновление сервиса.",
+        "Создайте роль с доверием через OIDC (без долгоживущих ключей).",
+        "Проверьте права через simulate-principal-policy: лишние действия должны быть запрещены."
+      ],
+      "hints": [
+        "Условие в trust policy: StringLike на sub: repo:org/repo:ref:refs/heads/main",
+        "simulate-principal-policy показывает, разрешено действие или нет"
+      ],
+      "solution": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Allow\",\n    \"Action\": [\"ecr:PutImage\", \"ecr:InitiateLayerUpload\", \"ecr:UploadLayerPart\", \"ecr:CompleteLayerUpload\"],\n    \"Resource\": \"arn:aws:ecr:eu-central-1:123456789012:repository/shop-api\"\n  }, {\n    \"Effect\": \"Allow\",\n    \"Action\": [\"ecs:UpdateService\"],\n    \"Resource\": \"arn:aws:ecs:eu-central-1:123456789012:service/prod/shop-api\"\n  }]\n}\n# trust policy с OIDC (без долгоживущих ключей)\n# {\"Effect\":\"Allow\",\"Principal\":{\"Federated\":\"arn:aws:iam::123:oidc-provider/token.actions.githubusercontent.com\"},\n#  \"Action\":\"sts:AssumeRoleWithWebIdentity\",\"Condition\":{\"StringLike\":{\"token.actions.githubusercontent.com:sub\":\"repo:org/repo:ref:refs/heads/main\"}}}\naws iam simulate-principal-policy --policy-source-arn arn:aws:iam::123:role/ci-deploy \\\n  --action-names ecr:PutImage --resource-arns arn:aws:ecr:eu-central-1:123456789012:repository/shop-api",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ecr:PutImage",
+          "Resource",
+          "sts:AssumeRoleWithWebIdentity|oidc|OIDC",
+          "simulate"
+        ],
+        "feedback": "Пайплайн получает ровно необходимые права и не может, например, удалить базу. Это и есть least privilege."
+      },
+      "validation_hint": "Симуляция: разрешён PutImage, запрещено ec2:TerminateInstances."
+    },
+    {
+      "id": "cost-review",
+      "title": "Ревизия стоимости: найти потери",
+      "level": "medium",
+      "goal": "Найти минимум три источника лишних расходов и предложить решения.",
+      "instructions": [
+        "Посмотрите расходы по сервисам за 30 дней.",
+        "Найдите незакреплённые тома, старые снапшоты и инстансы с низкой утилизацией.",
+        "Составьте отчёт: проблема — эффект в деньгах — предлагаемое решение."
+      ],
+      "hints": [
+        "aws ec2 describe-volumes --filters Name=status,Values=available",
+        "aws ec2 describe-snapshots --owner-ids self --query 'Snapshots[].{id:SnapshotId,start:StartTime,size:VolumeSize}'"
+      ],
+      "solution": "aws ce get-cost-and-usage --time-period Start=$(date -d '30 days ago' +%F),End=$(date +%F) \\\n  --granularity MONTHLY --metrics UnblendedCost --group-by Type=DIMENSION,Key=SERVICE --output table\naws ec2 describe-volumes --filters Name=status,Values=available --query 'Volumes[].{id:VolumeId,size:Size}' --output table\naws ec2 describe-snapshots --owner-ids self --query 'length(Snapshots[])'\n# Отчёт: сироты-тома, старые снапшоты, переразмеренные инстансы, отсутствие автостопа dev",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "get-cost-and-usage|Cost Explorer|cost",
+          "describe-volumes",
+          "snapshot"
+        ],
+        "feedback": "Правило FinOps: расходы нужно видеть в цифрах и в разрезе владельцев. Отчёт с рекомендациями — самый ценный артефакт для бизнеса."
+      },
+      "validation_hint": "В отчёте есть минимум три пункта с оценкой экономии и ответственным."
+    }
+  ]
+}

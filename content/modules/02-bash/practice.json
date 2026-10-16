@@ -1,0 +1,93 @@
+{
+  "title": "Практика модуля 3: пишем скрипты",
+  "tasks": [
+    {
+      "id": "args-script",
+      "title": "Скрипт с проверкой аргументов",
+      "level": "easy",
+      "goal": "Научиться писать безопасный вход в скрипт: обязательные аргументы и проверка существования файла.",
+      "instructions": [
+        "Создайте скрипт deploy.sh с shebang и set -euo pipefail.",
+        "Сделайте первый аргумент обязательным (подсказка: ${1:?...}).",
+        "Проверьте, что переданный каталог существует, иначе верните exit 1."
+      ],
+      "hints": [
+        "Обязательный аргумент: local dir=\"${1:?укажите каталог}\"",
+        "Проверка каталога: [[ -d \"$dir\" ]] || { echo \"нет каталога\" >&2; exit 1; }"
+      ],
+      "solution": "#!/usr/bin/env bash\nset -euo pipefail\n\ndir=\"${1:?укажите каталог для деплоя}\"\n[[ -d \"$dir\" ]] || { echo \"каталог $dir не найден\" >&2; exit 1; }\necho \"деплоим из $dir\"",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["#!/usr/bin/env bash", "set -euo pipefail", "\\$\\{1:\\?", "\\[\\[ -d"],
+        "feedback": "Так выглядит вход в любой безопасный скрипт: обязательный аргумент, проверка, понятная ошибка в stderr."
+      },
+      "validation_hint": "Запустите ./deploy.sh без аргументов (получите ошибку) и с существующим каталогом (получите сообщение)."
+    },
+    {
+      "id": "backup-script",
+      "title": "Скрипт бэкапа с проверкой и ротацией",
+      "level": "medium",
+      "goal": "Сделать бэкап, которому можно доверять: архив создаётся, проверяется и ротируется.",
+      "instructions": [
+        "Напишите скрипт, который архивирует каталог в /backup с именем вида app-2025-01-31.tar.gz.",
+        "Проверьте целостность архива через tar tzf.",
+        "Удалите архивы старше 7 дней через find -mtime."
+      ],
+      "hints": [
+        "Дата в имени: $(date +%F)",
+        "Проверка: tar tzf \"$archive\" >/dev/null"
+      ],
+      "solution": "#!/usr/bin/env bash\nset -euo pipefail\nSRC=/opt/app/data; DEST=/backup; KEEP_DAYS=7\nmkdir -p \"$DEST\"\narchive=\"$DEST/app-$(date +%F).tar.gz\"\ntar czf \"$archive\" -C \"$(dirname \"$SRC\")\" \"$(basename \"$SRC\")\"\ntar tzf \"$archive\" >/dev/null\nfind \"$DEST\" -name 'app-*.tar.gz' -mtime \"+$KEEP_DAYS\" -delete\necho \"готово: $archive\"",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["tar\\s+czf", "tar\\s+tzf", "find\\s+.*-mtime", "date\\s+\\+%F"],
+        "feedback": "Проверка архива и ротация — то, что отличает рабочий бэкап от «надеюсь, сработает»."
+      },
+      "validation_hint": "ls -la /backup показывает архив, который открывается командой tar tzf."
+    },
+    {
+      "id": "health-loop",
+      "title": "Health-check по списку сервисов",
+      "level": "medium",
+      "goal": "Проверить несколько сервисов и получить ненулевой код возврата, если хотя бы один лежит.",
+      "instructions": [
+        "Создайте массив сервисов (nginx, docker, ssh).",
+        "В цикле проверьте каждый через systemctl is-active --quiet.",
+        "Посчитайте сбои и завершитесь с кодом 1, если есть проблемы."
+      ],
+      "hints": [
+        "Массив: services=(nginx docker ssh)",
+        "Счётчик: ((fail++)) работает при set -e в форме fail=$((fail+1))"
+      ],
+      "solution": "#!/usr/bin/env bash\nset -uo pipefail\nservices=(nginx docker ssh)\nfail=0\nfor s in \"${services[@]}\"; do\n  if ! systemctl is-active --quiet \"$s\"; then\n    echo \"FAIL: $s не активен\" >&2\n    fail=$((fail + 1))\n  fi\ndone\necho \"проблем: $fail\"\n[[ \"$fail\" -eq 0 ]] || exit 1",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["services=\\(", "for\\s+\\w+\\s+in\\s+\"\\$\\{services", "systemctl\\s+is-active", "exit\\s+1"],
+        "feedback": "Скрипт возвращает корректный код — именно этого ждёт CI и система мониторинга."
+      },
+      "validation_hint": "echo $? после запуска: 0 — всё хорошо, 1 — есть проблемы."
+    },
+    {
+      "id": "timer",
+      "title": "Расписание через systemd timer",
+      "level": "hard",
+      "goal": "Настроить ежедневный запуск скрипта с логированием в journald и догоном пропущенных запусков.",
+      "instructions": [
+        "Создайте oneshot-сервис backup.service, вызывающий ваш скрипт бэкапа.",
+        "Создайте backup.timer с OnCalendar и Persistent=true.",
+        "Включите таймер и проверьте список активных таймеров."
+      ],
+      "hints": [
+        "Type=oneshot подходит для задач, которые завершаются",
+        "Проверка: systemctl list-timers backup.timer"
+      ],
+      "solution": "sudo tee /etc/systemd/system/backup.service >/dev/null <<'EOF'\n[Unit]\nDescription=Ночной бэкап\n[Service]\nType=oneshot\nUser=backup\nExecStart=/opt/scripts/backup.sh\nEOF\nsudo tee /etc/systemd/system/backup.timer >/dev/null <<'EOF'\n[Unit]\nDescription=Ежедневно в 02:30\n[Timer]\nOnCalendar=*-*-* 02:30:00\nPersistent=true\n[Install]\nWantedBy=timers.target\nEOF\nsudo systemctl daemon-reload\nsudo systemctl enable --now backup.timer\nsystemctl list-timers backup.timer\njournalctl -u backup.service -n 20",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["\\.timer", "OnCalendar", "Persistent=true", "enable", "list-timers"],
+        "feedback": "Таймер настроен. В отличие от cron, у вас есть логи, зависимости и догон пропущенных запусков."
+      },
+      "validation_hint": "systemctl list-timers показывает NEXT и LAST для backup.timer."
+    }
+  ]
+}

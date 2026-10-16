@@ -1,0 +1,90 @@
+# Проверка качества: контент, линтер, тесты, дымовой тест GUI.
+# Запускается на каждый push и pull request, чтобы сломанное изменение не попало в релиз.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: "1"
+  QT_QPA_PLATFORM: offscreen
+
+jobs:
+  content:
+    name: Контент курса
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Установить зависимости
+        run: pip install -r requirements-dev.txt
+      - name: Проверить структуру контента
+        run: python tools/validate_content.py
+      - name: Обновить index и убедиться, что он актуален
+        run: |
+          python tools/generate_version.py --version "$(cat VERSION)" --build "${{ github.run_number }}"
+          git diff --exit-code content/content_index.json || echo "::warning::content_index.json обновлён — закоммитьте его"
+
+  test:
+    name: Тесты (${{ matrix.os }}, python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Установить зависимости
+        run: pip install -r requirements-dev.txt
+      - name: Линтер (ruff)
+        run: ruff check .
+      - name: Тесты (pytest)
+        run: pytest -q
+      - name: Дымовой тест приложения
+        run: python tools/smoke_test.py
+      - name: Проверка режима --self-test
+        run: python src/devops_academy/main.py --self-test
+      - name: Артефакты отчётов
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ matrix.os }}-${{ matrix.python }}
+          path: |
+            reports/
+            .pytest_cache/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  windows-gui:
+    name: GUI-тесты на Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Прогон GUI-тестов в offscreen-режиме
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pytest tests/test_ui_smoke.py -q

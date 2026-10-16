@@ -1,0 +1,94 @@
+{
+  "title": "Практика модуля 11: наблюдаемость своими руками",
+  "tasks": [
+    {
+      "id": "prometheus-stack",
+      "title": "Поднять Prometheus и Grafana в Compose",
+      "level": "medium",
+      "goal": "Собрать стек мониторинга и увидеть в нём метрики приложения.",
+      "instructions": [
+        "Опишите prometheus, grafana и node-exporter в compose.yaml.",
+        "Добавьте конфигурацию scrape-целей для node-exporter и приложения.",
+        "Проверьте статус целей в Prometheus и постройте первый график в Grafana."
+      ],
+      "hints": [
+        "Порты по умолчанию: Prometheus 9090, Grafana 3000, node-exporter 9100",
+        "Проверка целей: http://localhost:9090/targets"
+      ],
+      "solution": "services:\n  prometheus:\n    image: prom/prometheus:v2.54.1\n    volumes: [\"./prometheus.yml:/etc/prometheus/prometheus.yml:ro\", \"./alerts.yml:/etc/prometheus/alerts.yml:ro\"]\n    ports: [\"9090:9090\"]\n  grafana:\n    image: grafana/grafana:11.1.4\n    ports: [\"3000:3000\"]\n    environment: { GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?пароль} }\n  node-exporter:\n    image: prom/node-exporter:v1.8.2\n    ports: [\"9100:9100\"]\n    pid: host\n\n# prometheus.yml\nscrape_configs:\n  - job_name: node\n    static_configs: [{ targets: [\"node-exporter:9100\"] }]",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["prom/prometheus", "grafana/grafana", "scrape_configs", "9090|3000"],
+        "feedback": "Стек поднят. Дальше добавьте метрики самого приложения и алерт по ошибкам."
+      },
+      "validation_hint": "На /targets все цели в состоянии UP; в Grafana доступен источник данных Prometheus."
+    },
+    {
+      "id": "slo-dashboard",
+      "title": "Построить дашборд по 4 золотым сигналам",
+      "level": "medium",
+      "goal": "Сделать дашборд, который отвечает на вопрос «как дела у сервиса» за 10 секунд.",
+      "instructions": [
+        "Добавьте панели: RPS, доля ошибок (5xx), p95 задержки, насыщение (CPU/память).",
+        "Сформулируйте SLI и цель SLO для вашего сервиса.",
+        "Рассчитайте error budget в минутах на 30 дней."
+      ],
+      "hints": [
+        "p95 считается через histogram_quantile по bucket-метрике",
+        "Бюджет 99,9 % за 30 дней ≈ 43 минуты"
+      ],
+      "solution": "Панели (PromQL):\n1) sum(rate(http_requests_total[5m]))\n2) sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))\n3) histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))\n4) 100 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))*100\n\nSLI: доля успешных запросов. SLO: 99.9% за 30 дней → бюджет ≈ 43 минуты.",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["rate\\(", "histogram_quantile", "5\\.\\.", "SLO|slo"],
+        "feedback": "Дашборд по золотым сигналам + формализованный SLO — это язык, на котором говорят инженеры и продукт."
+      },
+      "validation_hint": "На дашборде 4 панели; в описании есть SLI, цель и бюджет в минутах."
+    },
+    {
+      "id": "alert-runbook",
+      "title": "Алерт + ранбук к нему",
+      "level": "hard",
+      "goal": "Сделать алерт, по которому дежурный понимает, что делать, без чтения кода.",
+      "instructions": [
+        "Напишите правило алерта по доле ошибок 5xx с for: и severity.",
+        "Добавьте аннотации summary и runbook_url.",
+        "Напишите ранбук: первые проверки, действия, условия эскалации."
+      ],
+      "hints": [
+        "Проверьте алерт искусственно: заставьте сервис отвечать 500 в течение for:-периода",
+        "Ранбук пишите на языке «нажми/посмотри», а не «проанализируй»"
+      ],
+      "solution": "groups:\n- name: api-slo\n  rules:\n  - alert: HighErrorRate\n    expr: sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.02\n    for: 10m\n    labels: { severity: critical }\n    annotations:\n      summary: \"5xx > 2% десять минут\"\n      runbook_url: \"https://wiki/runbooks/api-5xx\"\n\n# Ранбук: 1) проверить свежие деплои 2) откатить при подтверждении 3) при 15 мин без восстановления — эскалация",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["alert:", "expr:", "for:", "runbook"],
+        "feedback": "Алерт проверен и снабжён ранбуком — дежурный действует по шагам, а не импровизирует под давлением."
+      },
+      "validation_hint": "Алерт появляется в Prometheus → Alerts после внесения ошибок в сервис."
+    },
+    {
+      "id": "postmortem",
+      "title": "Провести учебный инцидент и написать постмортем",
+      "level": "hard",
+      "goal": "Отработать полный цикл: сломать → заметить → починить → разобрать.",
+      "instructions": [
+        "Создайте учебный инцидент (например, уроните зависимость приложения).",
+        "Зафиксируйте таймлайн: когда заметили, когда начали митигацию, когда восстановили.",
+        "Напишите постмортем с корневой причиной и тремя action items с владельцами и сроками."
+      ],
+      "hints": [
+        "Таймлайн ведите в UTC, как договорено в ранбуке",
+        "Action items должны быть проверяемыми: «добавить тест на миграцию индексов»",
+        "MTTD = время от начала инцидента до алерта; MTTR = от начала до восстановления"
+      ],
+      "solution": "# Постмортем (шаблон)\n## Влияние: доля ошибок, число затронутых пользователей, бюджет\n## Таймлайн (UTC): деплой → алерт → митигация → восстановление\n## Корневая причина: системная, а не «человек ошибся»\n## Action items: | действие | владелец | срок |\n- добавить автотест на миграцию индексов — @dba — 3 дня\n- алерт на p95 при деплое — @sre — 5 дней\n- правило expand/contract в шаблоне миграций — @backend — неделя",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["таймлайн|Таимлайн|timeline", "корневая причина|root cause", "Action items|action items"],
+        "feedback": "Полный цикл пройден: инцидент превратился в конкретные улучшения — так работает зрелая команда."
+      },
+      "validation_hint": "В постмортеме есть таймлайн, корневая причина, три action items с владельцами и сроками."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "networks",
+  "order": 5,
+  "title": "Сети для DevOps",
+  "level": "beginner",
+  "summary": "TCP/IP, DNS, HTTP, TLS, балансировка, прокси и порядок диагностики сетевых инцидентов.",
+  "estimated_minutes": 200,
+  "objectives": [
+    "Объяснить путь запроса: DNS → TCP → TLS → HTTP → приложение",
+    "Понимать, чем занимаются балансировщик, reverse proxy и CDN",
+    "Диагностировать сбои с помощью dig, curl, openssl, ss, tcpdump",
+    "Спроектировать простую схему сети для веб-сервиса"
+  ],
+  "tags": ["сети", "диагностика"]
+}

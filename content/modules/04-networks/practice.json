@@ -1,0 +1,73 @@
+{
+  "title": "Практика модуля 5: сеть под контролем",
+  "tasks": [
+    {
+      "id": "diag-chain",
+      "title": "Пройти всю цепочку диагностики до сервиса",
+      "level": "medium",
+      "goal": "Отработать последовательность: DNS → порт → TLS → HTTP.",
+      "instructions": [
+        "Получите IP адреса домена и убедитесь, что DNS отвечает.",
+        "Проверьте доступность порта 443.",
+        "Проверьте TLS-сертификат и его срок действия.",
+        "Получите код ответа и время отклика через curl."
+      ],
+      "hints": [
+        "dig +short <домен> для адресов",
+        "nc -vz <домен> 443 для порта"
+      ],
+      "solution": "dig +short example.com\nnc -vz example.com 443\nopenssl s_client -connect example.com:443 -servername example.com </dev/null | openssl x509 -noout -dates\ncurl -sS -o /dev/null -w '%{http_code} %{time_total}s\\n' https://example.com",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["dig", "nc\\s+-vz", "openssl\\s+s_client", "curl"],
+        "feedback": "Именно этот порядок используют на дежурстве: сначала имя, потом порт, затем шифрование и только потом приложение."
+      },
+      "validation_hint": "Запишите код ответа и остаток дней до истечения сертификата."
+    },
+    {
+      "id": "nginx-proxy",
+      "title": "Поднять reverse proxy для приложения",
+      "level": "hard",
+      "goal": "Научиться публиковать приложение через nginx с корректными заголовками и балансировкой.",
+      "instructions": [
+        "Установите nginx и создайте конфиг для домена (или локального имени).",
+        "Настройте proxy_pass на бэкенд и заголовки X-Real-IP, X-Forwarded-For, Host.",
+        "Проверьте конфиг через nginx -t и перезагрузите сервис без простоя.",
+        "Убедитесь, что редирект с http на https работает."
+      ],
+      "hints": [
+        "После правки конфига всегда: nginx -t && systemctl reload nginx",
+        "Для теста без реального домена можно использовать сертификат self-signed"
+      ],
+      "solution": "sudo apt install -y nginx\nsudo tee /etc/nginx/conf.d/app.conf >/dev/null <<'EOF'\nupstream app_backend { server 127.0.0.1:8080 max_fails=3 fail_timeout=10s; }\nserver {\n  listen 80;\n  server_name app.local;\n  location / {\n    proxy_pass http://app_backend;\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n  }\n}\nEOF\nsudo nginx -t && sudo systemctl reload nginx\ncurl -sS -H 'Host: app.local' http://127.0.0.1/ -o /dev/null -w '%{http_code}\\n'",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["proxy_pass", "X-Forwarded-For", "nginx\\s+-t", "reload"],
+        "feedback": "Так публикуют приложения в 80 % компаний: nginx принимает трафик, приложение живёт на внутреннем порту."
+      },
+      "validation_hint": "curl с заголовком Host возвращает ответ приложения через nginx."
+    },
+    {
+      "id": "firewall",
+      "title": "Ограничить доступ к БД из облачной подсети",
+      "level": "medium",
+      "goal": "Настроить правило так, чтобы БД была доступна только из приложения, но не из интернета.",
+      "instructions": [
+        "Проверьте текущее состояние локального файрвола.",
+        "Разрешите доступ к порту 5432 только из подсети 10.0.1.0/24.",
+        "Убедитесь, что правило активно, и опишите, какое правило нужно в security group."
+      ],
+      "hints": [
+        "ufw: sudo ufw allow from 10.0.1.0/24 to any port 5432 proto tcp",
+        "В облаке секьюрити-группа — первый барьер, локальный файрвол — второй"
+      ],
+      "solution": "sudo ufw status verbose\nsudo ufw allow from 10.0.1.0/24 to any port 5432 proto tcp\nsudo ufw status numbered\n# В security group БД: ingress правило только от security group приложения",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["ufw\\s+status", "ufw\\s+allow\\s+from\\s+10\\.0\\.1\\.0/24", "5432"],
+        "feedback": "Правило «только из подсети приложения» — базовый принцип наименьших привилегий в сети."
+      },
+      "validation_hint": "nc -vz <ip-БД> 5432 работает из приложения и не работает с домашнего ноутбука."
+    }
+  ]
+}

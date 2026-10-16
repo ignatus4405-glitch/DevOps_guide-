@@ -1,0 +1,114 @@
+{
+  "title": "Практика модуля 13: портфолио и подготовка",
+  "tasks": [
+    {
+      "id": "capstone-plan",
+      "title": "Спланировать финальный проект",
+      "level": "medium",
+      "goal": "Зафиксировать проект так, чтобы его можно было начать сегодня и защитить через месяц.",
+      "instructions": [
+        "Опишите сервис, который будете делать (одна страница).",
+        "Составьте таблицу этапов из урока с конкретными артефактами.",
+        "Создайте репозиторий, README с описанием и заготовку структуры каталогов."
+      ],
+      "hints": [
+        "Начните с простого сервиса: /health, /ready, /metrics и одна бизнес-ручка",
+        "Заведите ADR-файл сразу — писать решения по ходу проще, чем восстанавливать потом"
+      ],
+      "solution": "mkdir -p task-api/{app/tests,.github/workflows,infra/terraform,infra/ansible,k8s/base,monitoring,docs/runbooks,docs/postmortems}\ncd task-api && git init\ngit checkout -b chore/bootstrap\nprintf '# Task API\\n\\nСервис с полным DevOps-контуром: CI/CD, k8s, Terraform, мониторинг.\\n\\n## Как запустить\\n\\nhardcode-начало\\n' > README.md\ngit add . && git commit -m 'chore: инициализация структуры проекта'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "README",
+          "git\\s+init|git\\s+checkout",
+          "commit",
+          "docs|infra|k8s|monitoring"
+        ],
+        "feedback": "Проект зафиксирован: структура, README, первый коммит. Дальше наполняйте по этапам — от CI до инцидента."
+      },
+      "validation_hint": "Репозиторий содержит структуру каталогов и README с описанием этапов."
+    },
+    {
+      "id": "capstone-ci",
+      "title": "Собрать CI/CD для финального проекта",
+      "level": "hard",
+      "goal": "Довести пайплайн до состояния: тесты → образ → деплой staging → approval → prod.",
+      "instructions": [
+        "Настройте ci.yml с тестами, линтером и security-сканами.",
+        "Настройте build.yml со сборкой и публикацией образа в реестр по digest.",
+        "Настройте деплой: staging автоматически, prod — через environment с approvers.",
+        "Проверьте откат: выполните rollout undo и убедитесь, что версия вернулась."
+      ],
+      "hints": [
+        "Публикация в GHCR: docker/login-action + docker/build-push-action",
+        "Для prod используйте environment: production — GitHub сам приостановит job до approval"
+      ],
+      "solution": "name: Deploy\non:\n  push: { branches: [main] }\npermissions: { contents: read, packages: write, id-token: write }\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: docker/login-action@v3\n        with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }\n      - uses: docker/build-push-action@v6\n        with: { push: true, tags: ghcr.io/${{ github.repository }}:${{ github.sha }} }\n  staging:\n    needs: build\n    environment: staging\n    runs-on: ubuntu-latest\n    steps:\n      - run: ./scripts/deploy.sh --env staging --image ghcr.io/${{ github.repository }}:${{ github.sha }}\n  prod:\n    needs: staging\n    environment: production\n    runs-on: ubuntu-latest\n    steps:\n      - run: ./scripts/deploy.sh --env prod --image ghcr.io/${{ github.repository }}:${{ github.sha }}\nkubectl -n prod rollout undo deploy/api      # проверка отката одной командой\nkubectl -n prod rollout status deploy/api",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "build-push-action|docker/build",
+          "environment",
+          "deploy",
+          "rollout\\s+undo|rollback|откат"
+        ],
+        "feedback": "Пайплайн выстроен как в проде: сборка один раз, staging автоматически, prod под approval, откат проверен."
+      },
+      "validation_hint": "Ветка main приводит к деплою staging; prod-джоба ждёт одобрения; после rollout undo приложение отвечает прежней версией."
+    },
+    {
+      "id": "capstone-observability",
+      "title": "Наблюдаемость и учебный инцидент",
+      "level": "hard",
+      "goal": "Сделать так, чтобы о проблеме вы узнавали от алерта, а не от пользователей.",
+      "instructions": [
+        "Включите экспорт метрик приложения и настройте scrape в Prometheus.",
+        "Постройте дашборд (4 золотых сигнала) и задайте SLI/SLO проекта.",
+        "Создайте 2 алерта с runbook, сымитируйте сбой и запишите MTTD/MTTR.",
+        "Напишите постмортем и закройте один action item реальным изменением в коде/конфиге."
+      ],
+      "hints": [
+        "Для FastAPI: prometheus-fastapi-instrumentator",
+        "Имитация сбоя: включите флаг, который добавляет задержку или возвращает 500"
+      ],
+      "solution": "# app/main.py\nfrom prometheus_fastapi_instrumentator import Instrumentator\nInstrumentator().instrument(app).expose(app)\n\n# monitoring/alerts.yml\n- alert: HighErrorRate\n  expr: sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.02\n  for: 10m\n  labels: { severity: critical }\n  annotations: { summary: \"5xx > 2%\", runbook_url: \"docs/runbooks/api-5xx.md\" }\n\n# docs/postmortems/2025-01-31-5xx.md — таймлайн, причина, action items",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "metrics|instrument",
+          "alert:",
+          "for:",
+          "postmortem|постмортем|MTTD|MTTR"
+        ],
+        "feedback": "Наблюдаемость доведена до практического результата: обнаружение автоматическое, разбор оформлен, улучшения внесены."
+      },
+      "validation_hint": "Искусственный сбой приводит к алерту за минуты; в постмортеме указаны MTTD/MTTR и закрытый action item."
+    },
+    {
+      "id": "resume",
+      "title": "Резюме и GitHub-профиль",
+      "level": "easy",
+      "goal": "Собрать материалы, которые видит работодатель, и убрать из них лишнее.",
+      "instructions": [
+        "Оформите резюме: опыт, навыки по проекту, ссылка на репозиторий с описанием.",
+        "Приведите GitHub-профиль в порядок: README профиля, закреплённые репозитории, понятные описания.",
+        "Пройдите по репозиторию проекта как «внешний человек»: можно ли понять проект за 5 минут?"
+      ],
+      "hints": [
+        "В описании репозитория укажите стек и одну строку результата",
+        "Проверьте, нет ли секретов и мусора в истории (gitleaks detect)"
+      ],
+      "solution": "# Резюме (структура)\n1. Заголовок и роль\n2. Ключевые навыки (по проекту, а не «список всего»)\n3. Проект: ссылка + 3 строки о результате (SLO, MTTR, экономия)\n4. Опыт работы: что автоматизировали, что измеримо улучшили\n5. Образование/сертификаты\n\n# Профиль GitHub\n- README профиля: кто вы, стек, ссылки\n- Закреплённые репозитории: 1-3 лучших проекта\n- В каждом: описание, README, лицензия\ngitleaks detect --source . --redact   # убедиться, что в истории нет секретов",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "README",
+          "gitleaks|секрет",
+          "репозитор|GitHub|github"
+        ],
+        "feedback": "Материалы готовы: резюме и профиль описывают проект результатами, а не списком инструментов."
+      },
+      "validation_hint": "Внешний человек по README понимает проект, стек и результат за 5 минут; в истории нет секретов."
+    }
+  ]
+}

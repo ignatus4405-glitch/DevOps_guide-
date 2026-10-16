@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="460" viewBox="0 0 900 460" role="img" aria-label="Ветвление в Git">
+<rect width="900" height="460" rx="14" fill="#0f172a"/>
+<title>Ветвление в Git</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="16" font-weight="700" fill="#e6edf7">Trunk-based / GitHub Flow: короткие ветки и pull request</text>
+<text x="60" y="100" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="13" font-weight="700" fill="#e6edf7">main</text>
+<text x="60" y="200" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="13" font-weight="700" fill="#e6edf7">feature/*</text>
+<text x="60" y="300" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="13" font-weight="700" fill="#e6edf7">release/*</text>
+<circle cx="130" cy="95" r="9" fill="#4f9cf9"/>
+<text x="130" y="70" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">c1</text>
+<circle cx="250" cy="95" r="9" fill="#4f9cf9"/>
+<text x="250" y="70" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">c2</text>
+<circle cx="370" cy="95" r="9" fill="#4f9cf9"/>
+<text x="370" y="70" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">c3</text>
+<circle cx="490" cy="95" r="9" fill="#4f9cf9"/>
+<text x="490" y="70" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">c4</text>
+<circle cx="610" cy="95" r="9" fill="#4f9cf9"/>
+<text x="610" y="70" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">c5</text>
+<circle cx="730" cy="95" r="9" fill="#4f9cf9"/>
+<text x="730" y="70" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">c6</text>
+<line x1="130" y1="95" x2="760" y2="95" stroke="#4f9cf9" stroke-width="2"/>
+<circle cx="250" cy="195" r="9" fill="#3ecf8e"/>
+<line x1="250" y1="195" x2="490" y2="195" stroke="#3ecf8e" stroke-width="2"/>
+<path d="M 250 95 C 250 140, 250 160, 250 186" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 490 195 C 490 160, 490 140, 490 104" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="370" y="230" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">PR + ревью + зелёный CI обязательны</text>
+<circle cx="610" cy="295" r="9" fill="#f0b429"/>
+<line x1="610" y1="295" x2="760" y2="295" stroke="#f0b429" stroke-width="2"/>
+<path d="M 610 95 C 610 180, 610 240, 610 286" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M 760 295 C 800 295, 800 110, 770 100" fill="none" stroke="#f0b429" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="450" y="360" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">Правила гигиены: ветка живёт часы-дни, коммит атомарный, сообщение объясняет «почему»</text>
+<rect x="70" y="380" width="340" height="60" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="240.0" y="406" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">git rebase -i</text>
+<text x="240.0" y="426" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">чистая история перед ревью</text>
+<rect x="490" y="380" width="340" height="60" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="660.0" y="406" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">git revert</text>
+<text x="660.0" y="426" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">безопасный откат в main</text>
+</svg>

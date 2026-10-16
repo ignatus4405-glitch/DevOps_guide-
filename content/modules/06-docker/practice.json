@@ -1,0 +1,114 @@
+{
+  "title": "Практика модуля 7: упаковать приложение",
+  "tasks": [
+    {
+      "id": "first-dockerfile",
+      "title": "Написать безопасный Dockerfile",
+      "level": "medium",
+      "goal": "Собрать образ, который запускается не от root и корректно обрабатывает сигналы.",
+      "instructions": [
+        "Создайте Dockerfile с базой python:3.12-slim и WORKDIR.",
+        "Добавьте создание пользователя и переключение на него через USER.",
+        "Используйте exec-форму CMD и добавьте HEALTHCHECK."
+      ],
+      "hints": [
+        "Создание пользователя: RUN groupadd -r app && useradd -r -g app app",
+        "Exec-форма: CMD [\"python\", \"-m\", \"app\"]"
+      ],
+      "solution": "FROM python:3.12-slim\nWORKDIR /app\nRUN groupadd -r app && useradd -r -g app -d /app app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY --chown=app:app app/ ./app/\nUSER app\nEXPOSE 8000\nHEALTHCHECK CMD python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')\"\nCMD [\"python\", \"-m\", \"app\"]",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "FROM python",
+          "WORKDIR",
+          "useradd",
+          "USER\\s+app",
+          "CMD\\s+\\[",
+          "HEALTHCHECK"
+        ],
+        "feedback": "Образ безопасный: не root, exec-форма, healthcheck. Ровно эти три пункта чаще всего проверяют на ревью Dockerfile."
+      },
+      "validation_hint": "docker run --rm imagem sh -c id — показывает непривилегированного пользователя."
+    },
+    {
+      "id": "multi-stage",
+      "title": "Уменьшить образ через multi-stage build",
+      "level": "hard",
+      "goal": "Убрать из прода компиляторы и dev-зависимости, измерить эффект.",
+      "instructions": [
+        "Соберите зависимости в отдельном этапе сборки (AS build).",
+        "Скопируйте в финальный этап только виртуальное окружение/артефакты.",
+        "Сравните размеры образов до и после через docker images."
+      ],
+      "hints": [
+        "Копирование между этапами: COPY --from=build /venv /venv",
+        "Измеряйте до и после: docker images --format '{{.Repository}} {{.Size}}'"
+      ],
+      "solution": "FROM python:3.12-slim AS build\nWORKDIR /build\nCOPY requirements.txt .\nRUN python -m venv /venv && /venv/bin/pip install --no-cache-dir -r requirements.txt\n\nFROM python:3.12-slim\nCOPY --from=build /venv /venv\nCOPY app/ /app/app/\nENV PATH=\"/venv/bin:$PATH\"\nCMD [\"python\", \"-m\", \"app\"]\ndocker build -t api:local .\ndocker images --format '{{.Repository}} {{.Size}}'   # сравнить до и после",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "AS build",
+          "COPY --from=build",
+          "docker (build|images)"
+        ],
+        "feedback": "Многоэтапная сборка — самый надёжный способ уменьшить образ. Фиксируйте результат в отчёте: было/стало."
+      },
+      "validation_hint": "Размер образа после multi-stage обычно меньше в 2-5 раз."
+    },
+    {
+      "id": "compose-stack",
+      "title": "Поднять стек в Compose с healthcheck",
+      "level": "medium",
+      "goal": "Запустить приложение и БД, чтобы API стартовал только после готовности базы.",
+      "instructions": [
+        "Опишите сервисы api и db в compose.yaml.",
+        "Добавьте healthcheck для БД и condition: service_healthy для api.",
+        "Добавьте лимиты ресурсов и рестарт-политику."
+      ],
+      "hints": [
+        "Для Postgres healthcheck: pg_isready -U app",
+        "Лимиты задаются в deploy.resources.limits"
+      ],
+      "solution": "services:\n  api:\n    build: .\n    depends_on:\n      db:\n        condition: service_healthy\n    ports: [\"127.0.0.1:8000:8000\"]\n    deploy:\n      resources:\n        limits: { cpus: \"1.0\", memory: 512M }\n    restart: unless-stopped\n  db:\n    image: postgres:16-alpine\n    environment:\n      POSTGRES_PASSWORD: ${DB_PASSWORD:?нужен пароль}\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U app\"]\n      interval: 10s\n      retries: 6\n    restart: unless-stopped",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "services:",
+          "service_healthy",
+          "pg_isready",
+          "limits"
+        ],
+        "feedback": "Стек запускается предсказуемо: API ждёт готовую БД, ресурсы ограничены, контейнеры перезапускаются после сбоя."
+      },
+      "validation_hint": "docker compose ps: оба сервиса healthy, лог api не содержит ошибок подключения к БД."
+    },
+    {
+      "id": "hardening",
+      "title": "Ужесточить запуск и отсканировать образ",
+      "level": "hard",
+      "goal": "Запустить контейнер с минимальными привилегиями и проверить уязвимости.",
+      "instructions": [
+        "Запустите контейнер с read-only ФС, tmpfs и cap-drop ALL.",
+        "Ограничьте память, CPU и количество процессов.",
+        "Отсканируйте образ на критические CVE и опишите план исправления."
+      ],
+      "hints": [
+        "Порядок флагов: docker run --read-only --tmpfs /tmp --cap-drop ALL --memory 512m",
+        "Скан: trivy image --severity HIGH,CRITICAL <образ>"
+      ],
+      "solution": "docker run -d --name api-hardened \\\n  --read-only --tmpfs /tmp \\\n  --cap-drop ALL --user 10001:10001 \\\n  --memory 512m --cpus 1 --pids-limit 256 \\\n  -p 127.0.0.1:8000:8000 myapi:local\n\ntrivy image --severity HIGH,CRITICAL myapi:local | tee trivy-report.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "--read-only",
+          "--cap-drop",
+          "--memory",
+          "trivy"
+        ],
+        "feedback": "Контейнер запущен в режиме минимальных привилегий, уязвимости зафиксированы — это стандарт для продакшена."
+      },
+      "validation_hint": "Приложение работает, а попытка записи в / (кроме /tmp) завершается ошибкой permission denied."
+    }
+  ]
+}

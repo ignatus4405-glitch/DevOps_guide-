@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="420" viewBox="0 0 880 420" role="img" aria-label="Права доступа в Linux">
+<rect width="880" height="420" rx="14" fill="#0f172a"/>
+<title>Права доступа в Linux</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="440" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">rwx: кто и что может делать с файлом</text>
+<rect x="60" y="70" width="760" height="120" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="440.0" y="96" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">chmod 754 script.sh   →   -rwxr-xr--   владелец: группа: остальные</text>
+<text x="440.0" y="116" text-anchor="middle" font-family="'Cascadia Mono','Consolas',monospace" font-size="12" fill="#9fb0cc">7 = 4(r) + 2(w) + 1(x)  — владелец: читает, пишет, исполняет</text>
+<text x="440.0" y="133" text-anchor="middle" font-family="'Cascadia Mono','Consolas',monospace" font-size="12" fill="#9fb0cc">5 = 4(r) + 1(x)         — группа: читает и исполняет</text>
+<text x="440.0" y="150" text-anchor="middle" font-family="'Cascadia Mono','Consolas',monospace" font-size="12" fill="#9fb0cc">4 = 4(r)                — остальные: только читают</text>
+<rect x="60" y="230" width="175" height="100" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="147.5" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">umask 022</text>
+<text x="147.5" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">новые файлы 644</text>
+<text x="147.5" y="293" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">каталоги 755</text>
+<rect x="255" y="230" width="175" height="100" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="342.5" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">chown user:grp</text>
+<text x="342.5" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">меняет владельца</text>
+<text x="342.5" y="293" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">нужен sudo</text>
+<rect x="450" y="230" width="175" height="100" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="537.5" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">setfacl -m</text>
+<text x="537.5" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">точечные права</text>
+<text x="537.5" y="293" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">для нескольких групп</text>
+<rect x="645" y="230" width="175" height="100" rx="12" fill="#4a1f1f" stroke="#f2635f" stroke-width="1.5"/>
+<text x="732.5" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">sudo visudo</text>
+<text x="732.5" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">права без пароля</text>
+<text x="732.5" y="293" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">только по делу</text>
+<text x="440" y="370" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">Проверка: ls -l, id, getfacl, sudo -l  |  Типовая ошибка: chmod 777 вместо группы и ACL</text>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="470" viewBox="0 0 920 470" role="img" aria-label="CI/CD конвейер">
+<rect width="920" height="470" rx="14" fill="#0f172a"/>
+<title>CI/CD конвейер</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="460" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Конвейер поставки: от коммита до продакшена</text>
+<rect x="30" y="90" width="112" height="84" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="86.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">commit</text>
+<text x="86.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">push / PR</text>
+<rect x="156" y="90" width="112" height="84" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="212.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">lint+test</text>
+<text x="212.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">pytest, ruff</text>
+<line x1="140" y1="132" x2="152" y2="132" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="282" y="90" width="112" height="84" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="338.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">build</text>
+<text x="338.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">артефакт, образ</text>
+<line x1="266" y1="132" x2="278" y2="132" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="408" y="90" width="112" height="84" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="464.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">security</text>
+<text x="464.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SAST, SBOM</text>
+<line x1="392" y1="132" x2="404" y2="132" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="534" y="90" width="112" height="84" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="590.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">staging</text>
+<text x="590.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">автотесты e2e</text>
+<line x1="518" y1="132" x2="530" y2="132" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="660" y="90" width="112" height="84" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="716.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">prod</text>
+<text x="716.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">canary, rollout</text>
+<line x1="644" y1="132" x2="656" y2="132" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="786" y="90" width="112" height="84" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="842.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">monitor</text>
+<text x="842.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SLI/SLO</text>
+<line x1="770" y1="132" x2="782" y2="132" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="40" y="230" width="400" height="170" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="240.0" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Обязательные свойства пайплайна</text>
+<text x="240.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">быстрый фидбэк: до 10 минут на PR</text>
+<text x="240.0" y="293" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">воспроизводимость: версии пинуются</text>
+<text x="240.0" y="310" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">артефакт собирается один раз</text>
+<text x="240.0" y="327" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">секреты только в vault/секретах CI</text>
+<text x="240.0" y="344" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">падение сборки — блокер для merge</text>
+<rect x="470" y="230" width="410" height="170" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="675.0" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Стратегии деплоя</text>
+<text x="675.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Rolling — по частям, дефолт k8s</text>
+<text x="675.0" y="293" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Blue/Green — два окружения, мгновенный откат</text>
+<text x="675.0" y="310" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Canary — 5% трафика, затем 100%</text>
+<text x="675.0" y="327" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Feature flags — релиз без деплоя</text>
+<text x="675.0" y="344" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Rollback должен быть одной командой</text>
+</svg>
