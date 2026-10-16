@@ -1,0 +1,17 @@
+name: probe
+on: workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: emit diagnostics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "::error title=probe-annotation::hello%0Asecond-line"
+          gh api "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state=failure -f context="probe-status" -f description="probe: FAILED tests/test_x.py::test_y" > /dev/null
+          echo done
