@@ -60,67 +60,25 @@ jobs:
         id: version
         shell: bash
         run: |
-          set -euo pipefail
-          git fetch --tags --force
-          CURRENT="$(cat VERSION | tr -d ' \r\n')"
-          BUMP="${{ github.event.inputs.bump || 'auto' }}"
-
-          if git ls-remote --tags origin "refs/tags/v$CURRENT" | grep -q .; then
-            if [ "$BUMP" = "none" ]; then
-              echo "release=false" >> "$GITHUB_OUTPUT"
-              echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            RANGE="$(git describe --tags --abbrev=0 2>/dev/null || echo '')..HEAD"
-            MESSAGES="$(git log --pretty=%B ${RANGE:-HEAD~20..HEAD} 2>/dev/null || git log --pretty=%B -20)"
-            if [ "$BUMP" = "auto" ]; then
-              if grep -qE "BREAKING CHANGE|!:" <<< "$MESSAGES"; then BUMP=major
-              elif grep -qiE "^feat" <<< "$MESSAGES"; then BUMP=minor
-              else BUMP=patch; fi
-            fi
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-            case "$BUMP" in
-              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-              patch) PATCH=$((PATCH + 1)) ;;
-            esac
-            NEXT="$MAJOR.$MINOR.$PATCH"
-            echo "Текущая версия $CURRENT уже выпущена -> поднимаем до $NEXT (bump=$BUMP)"
-            echo "release=true" >> "$GITHUB_OUTPUT"
-            echo "version=$NEXT" >> "$GITHUB_OUTPUT"
-          else
-            echo "Версия $CURRENT ещё не выпускалась -> выпускаем её"
-            echo "release=true" >> "$GITHUB_OUTPUT"
-            echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Записать версию сборки
-        if: steps.version.outputs.release == 'true'
-        run: |
-          python tools/generate_version.py \
-            --version "${{ steps.version.outputs.version }}" \
-            --build "${{ github.run_number }}" \
-            --date "$(date -u +%F)"
-      - name: Собрать release notes
+          # Логика покрыта тестами: tests/test_release_tools.py
+          python tools/next_version.py \
+            --bump "${{ github.event.inputs.bump || 'auto' }}" \
+            --remote origin \
+            >> "$GITHUB_OUTPUT"
+          echo "Версия для релиза: $(grep '^version=' "$GITHUB_OUTPUT" | tail -1)"
+      - name: Собрать release notes и запись в CHANGELOG
         if: steps.version.outputs.release == 'true'
         id: notes
         shell: bash
         run: |
-          set -euo pipefail
-          PREV="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
-          RANGE="${PREV:+$PREV..HEAD}"
-          {
-            echo "## Что изменилось"
-            echo
-            git log ${RANGE:-HEAD~15..HEAD} --pretty="- %s (%h)" 2>/dev/null | head -50 || echo "- Первый публичный релиз"
-            echo
-            echo "## Установка"
-            echo "1. Скачайте \`DevOpsAcademy-Setup-${{ steps.version.outputs.version }}.exe\` и запустите."
-            echo "2. Приложение само сообщит о следующих версиях (кнопка «Проверить обновления» в меню)."
-            echo
-            echo "## Контроль целостности"
-            echo "SHA-256 всех файлов — в \`SHA256SUMS.txt\`."
-          } > release_notes.md
+          # Группировка коммитов и CHANGELOG — в инструменте, покрытом тестами.
+          python tools/release_notes.py \
+            --version "${{ steps.version.outputs.version }}" \
+            --repo "${{ github.repository }}"
+          echo "--- release_notes.md ---"
           cat release_notes.md
+          echo "--- CHANGELOG.md (начало) ---"
+          head -40 CHANGELOG.md
       - name: Сохранить подготовленные файлы
         if: steps.version.outputs.release == 'true'
         uses: actions/upload-artifact@v4
@@ -128,6 +86,7 @@ jobs:
           name: release-meta
           path: |
             release_notes.md
+            CHANGELOG.md
             VERSION
             src/devops_academy/version.py
             content/content_index.json
@@ -232,20 +191,12 @@ jobs:
           mkdir -p release
           find artifacts -type f \( -name '*.zip' -o -name '*.tar.gz' -o -name '*Setup*.exe' \) -exec cp {} release/ \;
           cp artifacts/release-meta/release_notes.md release/RELEASE_NOTES.md
+          # Запись в CHANGELOG готовит предыдущий job: коммитим её вместе с версией.
+          cp artifacts/release-meta/CHANGELOG.md CHANGELOG.md
 
           # Метаданные для клиента: приложение читает этот файл и показывает уведомление.
-          python - <<PY
-          import json, pathlib, datetime
-          pathlib.Path("release/update.json").write_text(json.dumps({
-              "version": "$VERSION",
-              "tag": "v$VERSION",
-              "channel": "stable",
-              "released_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-              "assets": sorted(p.name for p in pathlib.Path("release").iterdir()),
-              "notes_url": f"https://github.com/${{ github.repository }}/releases/tag/v$VERSION",
-              "min_supported": "0.1.0"
-          }, ensure_ascii=False, indent=2), encoding="utf-8")
-          PY
+          # Инструмент покрыт тестами (tests/test_release_tools.py).
+          python tools/make_update_manifest.py --version "$VERSION" --repo "${{ github.repository }}" --dir release
 
           # Контрольные суммы — приложение проверяет их перед установкой обновления.
           (cd release && sha256sum * > SHA256SUMS.txt)
@@ -259,7 +210,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           echo "$VERSION" > VERSION
           python tools/generate_version.py --version "$VERSION" --build "${{ github.run_number }}"
-          git add VERSION src/devops_academy/version.py content/content_index.json
+          git add VERSION src/devops_academy/version.py content/content_index.json CHANGELOG.md
           git commit -m "chore(release): v$VERSION [skip ci]" || echo "нечего коммитить"
           git tag -a "v$VERSION" -m "DevOps Academy $VERSION"
           git push origin HEAD:main

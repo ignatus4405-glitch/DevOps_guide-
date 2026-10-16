@@ -56,7 +56,7 @@
 3. Портативный вариант — `DevOpsAcademy-<версия>-windows-x64.zip`.
 
 Альтернатива: запуск из исходников — `bash scripts/run_dev.sh` (Linux/macOS/WSL)
-или `python src/devops_academy/main.py` (нужен Python 3.10+, `pip install -r requirements.txt`).
+или `python run.py` (нужен Python 3.10+: `pip install -r requirements.txt`, затем `python run.py --self-test`).
 
 ## Как выходят версии
 
@@ -87,11 +87,25 @@
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 ruff check .                  # линтер
-pytest -q                     # 58 тестов: контент, прогресс, рендер, GUI, обновления
+pytest -q                     # 79 тестов: контент, прогресс, рендер, GUI, обновления, релиз
 python tools/validate_content.py     # структура курса
 python tools/smoke_test.py           # дымовой тест GUI в offscreen
+python run.py --self-test            # проверка контента и зависимостей
 bash scripts/build_local.sh          # полная сборка PyInstaller
 ```
+
+Служебные инструменты (`tools/`):
+
+| Файл | Назначение |
+| --- | --- |
+| `validate_content.py` | проверка структуры курса (модули, уроки, тесты, задачи) |
+| `generate_version.py` | `version.py` + `content/content_index.json` |
+| `next_version.py` | расчёт следующей версии релиза по Conventional Commits |
+| `release_notes.py` | release notes и автоматическая запись в `CHANGELOG.md` |
+| `make_update_manifest.py` | `update.json` для автообновления |
+| `make_diagrams.py` | генерация SVG-иллюстраций курса |
+| `smoke_test.py` | дымовой тест GUI в offscreen-режиме |
+| `ci_annotate.py` | сводка ошибок CI в аннотацию проверки |
 
 ## Ссылки
 

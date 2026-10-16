@@ -38,7 +38,8 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 | Интерфейс | `src/devops_academy/ui/**` | тест в `tests/test_ui_smoke.py` |
 | Модель контента | `src/devops_academy/content.py` | `tools/validate_content.py`, тесты |
 | Обновления | `src/devops_academy/updater.py` | `tests/test_updater.py`, `docs/RELEASING.md` |
-| CI/CD | `.github/workflows/**` | `docs/RELEASING.md` |
+| CI/CD | `.github/workflows/**` | `docs/RELEASING.md`, проверить `python -c "import yaml,glob; yaml.safe_load(open(f))"` |
+| Версии и релизы | `tools/next_version.py`, `tools/release_notes.py`, `tools/make_update_manifest.py` | `tests/test_release_tools.py`, `tests/test_release_notes.py` |
 | Сборка | `packaging/**` | `docs/RELEASING.md`, проверить локальную сборку |
 
 ## Локальное окружение
@@ -46,7 +47,7 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest -q                                            # 58 тестов
+pytest -q                                            # 79 тестов
 ```
 
 В headless-средах (сервер, контейнер) Qt требует библиотек; используйте
@@ -58,6 +59,20 @@ pytest -q                                            # 58 тестов
 
 Автоматически, см. `docs/RELEASING.md`. Вручную — Actions → **Build & Release** →
 Run workflow (выбор bump). Отдельно тег ставить не нужно: релизный job делает тег сам.
+
+## Если упал CI
+
+1. `gh run list` → `gh run view <id>` — видно, какой шаг упал.
+2. Логи скачиваются не всегда; сводка провала есть в аннотациях:
+   `gh api repos/<owner>/<repo>/check-runs/<id>/annotations --jq '.[].message'`.
+   Шаг pytest сам оставляет там последние строки вывода (`tools/ci_annotate.py`).
+3. Полный лог — в артефакте `reports-<os>-<python>` (`reports/pytest.log`).
+4. Перед пушем воспроизведите локально те же команды, что в workflow:
+   `ruff check . && pytest -q && python tools/validate_content.py && python run.py --self-test`.
+5. Особенности ОС: на Windows git может выложить файлы с CRLF — хеши контента
+   считаются от LF (не возвращайте прямое чтение байтов без нормализации);
+   на Ubuntu без `libgl1/libegl1/libxkbcommon0/libdbus-1-3` PySide6 не импортируется
+   даже с `QT_QPA_PLATFORM=offscreen`.
 
 ## Подводные камни
 

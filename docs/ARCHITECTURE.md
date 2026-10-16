@@ -26,9 +26,13 @@
 │ content/               │          │ tools/                              │
 │  modules/NN-slug/      │          │  validate_content.py  проверка схемы│
 │   module.json          │          │  generate_version.py  версия+index  │
-│   lessons/*.md         │          │  make_diagrams.py     SVG-схемы     │
-│   quiz.json            │          │  smoke_test.py        дымовой тест  │
-│   practice.json        │          └─────────────────────────────────────┘
+│   lessons/*.md         │          │  next_version.py      номер релиза  │
+│   quiz.json            │          │  release_notes.py     notes+CHANGELOG│
+│   practice.json        │          │  make_update_manifest.py update.json │
+│                        │          │  make_diagrams.py     SVG-схемы      │
+│                        │          │  smoke_test.py        дымовой тест   │
+│                        │          │  ci_annotate.py       аннотации CI   │
+│                        │          └─────────────────────────────────────┘
 │  glossary.json         │
 │  assets/img/*.svg      │
 │  content_index.json    │  хеши файлов (для диагностики сборки)
@@ -71,6 +75,9 @@
 | Проверка задач | `tests/test_task_checker.py` | типы проверок и пограничные случаи |
 | Обновления | `tests/test_updater.py` | сравнение версий, разбор релиза, интервалы |
 | Инструменты | `tests/test_version_tooling.py` | генерация версии, индекс контента, независимость хешей от CRLF |
+| Релиз | `tests/test_release_tools.py` | расчёт следующей версии по коммитам, манифест обновления |
+| Заметки | `tests/test_release_notes.py` | группировка коммитов, запись в CHANGELOG |
+| Запуск | `tests/test_launcher.py` | `run.py --version/--self-test/--help` |
 | GUI | `tests/test_ui_smoke.py` | окно, все уроки, тесты, практика, экзамен, темы |
 
 GUI-тесты работают в offscreen-режиме (`QT_QPA_PLATFORM=offscreen`) — их можно

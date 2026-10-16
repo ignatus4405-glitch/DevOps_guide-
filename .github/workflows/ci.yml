@@ -82,7 +82,7 @@ jobs:
       - name: Дымовой тест приложения
         run: python tools/smoke_test.py
       - name: Проверка режима --self-test
-        run: python src/devops_academy/main.py --self-test
+        run: python run.py --self-test
       - name: Артефакты отчётов
         if: always()
         uses: actions/upload-artifact@v4

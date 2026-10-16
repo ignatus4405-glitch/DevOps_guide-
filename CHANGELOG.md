@@ -18,5 +18,19 @@
   сборка (PyInstaller) для Windows и Linux, установщик Inno Setup, релиз по тегу,
   автоматический подъём версии по истории коммитов, Dependabot.
 - Инструменты: `tools/validate_content.py`, `tools/generate_version.py`,
-  `tools/make_diagrams.py`, `tools/smoke_test.py`.
+  `tools/make_diagrams.py`, `tools/smoke_test.py`, `tools/next_version.py`,
+  `tools/release_notes.py`, `tools/make_update_manifest.py`, `tools/ci_annotate.py`.
 - Документация: архитектура, гайд по контенту, инструкция для агентов, релизный процесс.
+- Скрипты разработки: `scripts/run_dev.sh`, `scripts/build_local.sh`; pre-commit
+  (gitleaks, ruff, проверка контента) и шаблоны issue/PR.
+- Установщик Inno Setup (`packaging/installer.iss`) с поддержкой тихой установки
+  и спецификация PyInstaller (`packaging/devops_academy.spec`) с иконкой приложения.
+
+### Исправлено
+- Единые переводы строк (`.gitattributes`): хеши контента больше не расходятся
+  между Linux и Windows; индекс контента пересчитывается от LF-версии файлов.
+- Автопроверка задач: эталонные решения проходят собственные шаблоны (`regex_all`).
+- Сборка на Ubuntu: установка системных библиотек Qt (`libgl1`, `libegl1`,
+  `libxkbcommon0`, `libdbus-1-3`) — без них PySide6 не импортируется даже offscreen.
+- Запуск из исходников через `python run.py` (точка входа PyInstaller вынесена в
+  `packaging/entry.py`, чтобы относительные импорты работали в собранном виде).
