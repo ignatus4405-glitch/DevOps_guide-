@@ -1,4 +1,5 @@
 name: win-diag
+# временный workflow: проверка UTF-8 и пофайловая диагностика тестов на Windows
 on:
   push:
     branches: [arena/f33a7a3a-devops-guide]

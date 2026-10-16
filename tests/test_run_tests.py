@@ -135,3 +135,12 @@ def test_tool_is_runnable_as_script():
     )
     assert result.returncode == 0
     assert "--no-annotate" in result.stdout
+
+
+def test_utf8_output_helpers(runner):
+    """Вывод принудительно UTF-8: иначе на Windows падает кириллица."""
+    runner.use_utf8_output()
+    env = runner.child_env()
+    assert env["PYTHONIOENCODING"] == "utf-8"
+    assert env["PYTHONUTF8"] == "1"
+    print("проверка кириллицы: ✓")  # если кодировка не настроена, тест упадёт

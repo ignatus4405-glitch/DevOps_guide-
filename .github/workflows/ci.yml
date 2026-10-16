@@ -18,6 +18,9 @@ permissions:
 
 env:
   PYTHONUNBUFFERED: "1"
+  # На Windows вывод по умолчанию в cp1252 — русский текст в логах ломает шаги.
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: "1"
   QT_QPA_PLATFORM: offscreen
 
 jobs:

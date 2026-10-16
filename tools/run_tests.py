@@ -67,6 +67,29 @@ def build_command(pytest_args: str, junit: pathlib.Path) -> list[str]:
     return [sys.executable, "-m", "pytest", *pytest_args.split(), f"--junitxml={junit}"]
 
 
+def use_utf8_output() -> None:
+    """Переводит вывод на UTF-8: на Windows по умолчанию cp1252 и кириллица ломается.
+
+    Без этого любой print с русским текстом падает с UnicodeEncodeError, и шаг CI
+    завершается ошибкой без внятного сообщения.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):  # pragma: no cover - экзотические потоки
+                pass
+
+
+def child_env() -> dict[str, str]:
+    """Окружение для pytest: тоже UTF-8, иначе тесты упадут на Windows."""
+    env = dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    return env
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Запуск тестов с логом и аннотацией")
     parser.add_argument("--pytest-args", default="-q", help="аргументы pytest")
@@ -75,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-annotate", action="store_true", help="не печатать аннотацию при провале")
     args = parser.parse_args(argv)
 
+    use_utf8_output()
     junit = pathlib.Path(args.junitxml)
     log_path = pathlib.Path(args.log)
     junit.parent.mkdir(parents=True, exist_ok=True)
@@ -82,7 +106,9 @@ def main(argv: list[str] | None = None) -> int:
 
     command = build_command(args.pytest_args, junit)
     print(f"$ {' '.join(command)}", flush=True)
-    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    result = subprocess.run(
+        command, capture_output=True, text=True, encoding="utf-8", errors="replace", env=child_env()
+    )
     output = (result.stdout or "") + (result.stderr or "")
     log_path.write_text(output, encoding="utf-8")
     print(output, flush=True)
