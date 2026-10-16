@@ -6,16 +6,22 @@ import json
 
 from PySide6.QtCore import QSettings
 
+from devops_academy import progress
 from devops_academy.progress import ProgressData, ProgressStore
 
 
 def isolate_user_data(tmp_path, monkeypatch) -> None:
-    """Переносит пользовательские данные в tmp: на Windows это LOCALAPPDATA/APPDATA,
-    на Linux/macOS — HOME. Без подмены всех переменных тест может прочитать
-    реальный файл прогресса и упасть (так и случилось в CI на Windows)."""
+    """Переносит пользовательские данные в tmp-каталог.
+
+    Подменяем и переменные окружения, и саму функцию пути: ``Path.home()`` на Windows
+    игнорирует ``HOME`` и читает реальный профиль пользователя, из-за чего тесты
+    видели чужой прогресс (падение в CI на Windows).
+    """
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setattr(progress, "user_data_dir", lambda: tmp_path)
 
 
 def make_store(tmp_path, monkeypatch) -> ProgressStore:

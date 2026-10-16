@@ -62,9 +62,12 @@ def failed_tests(text: str, limit: int = 12) -> list[str]:
     return collected
 
 
-def build_command(pytest_args: str, junit: pathlib.Path) -> list[str]:
-    """Команда запуска pytest через текущий интерпретатор (одинаково на всех ОС)."""
-    return [sys.executable, "-m", "pytest", *pytest_args.split(), f"--junitxml={junit}"]
+def build_command(pytest_args: str, junit: pathlib.Path, pytest_module: str = "pytest") -> list[str]:
+    """Команда запуска pytest через текущий интерпретатор (одинаково на всех ОС).
+
+    ``pytest_module`` можно подменить (используется в тестах для герметичного прогона).
+    """
+    return [sys.executable, "-m", pytest_module, *pytest_args.split(), f"--junitxml={junit}"]
 
 
 def use_utf8_output() -> None:
@@ -96,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--junitxml", default="reports/pytest.xml")
     parser.add_argument("--log", default="reports/pytest.log")
     parser.add_argument("--no-annotate", action="store_true", help="не печатать аннотацию при провале")
+    parser.add_argument("--pytest-module", default="pytest", help="модуль для запуска (по умолчанию pytest)")
     args = parser.parse_args(argv)
 
     use_utf8_output()
@@ -104,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     junit.parent.mkdir(parents=True, exist_ok=True)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    command = build_command(args.pytest_args, junit)
+    command = build_command(args.pytest_args, junit, args.pytest_module)
     print(f"$ {' '.join(command)}", flush=True)
     result = subprocess.run(
         command, capture_output=True, text=True, encoding="utf-8", errors="replace", env=child_env()

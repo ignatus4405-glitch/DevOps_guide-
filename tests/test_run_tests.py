@@ -58,6 +58,8 @@ def test_failed_tests_deduplicates(runner):
 
 
 def test_build_command_uses_current_interpreter(runner, tmp_path):
+    command = runner.build_command("-q tests", tmp_path / "pytest.xml", "custom_pytest")
+    assert "custom_pytest" in command
     command = runner.build_command("-q tests", tmp_path / "pytest.xml")
     assert command[0] == sys.executable
     assert command[1:3] == ["-m", "pytest"]
@@ -65,54 +67,94 @@ def test_build_command_uses_current_interpreter(runner, tmp_path):
     assert any(arg.startswith("--junitxml=") for arg in command)
 
 
-def test_main_passes_on_green_suite(runner, tmp_path, capsys):
-    """На зелёном файле тестов инструмент возвращает 0 и пишет лог."""
-    test_file = tmp_path / "test_ok.py"
-    test_file.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
-    code = runner.main(
-        [
-            "--pytest-args",
-            f"{test_file} -q",
-            "--junitxml",
-            str(tmp_path / "pytest.xml"),
-            "--log",
-            str(tmp_path / "pytest.log"),
-        ]
-    )
+STUB_MODULE = """
+import sys
+
+code = int(__import__("os").environ.get("STUB_EXIT", "0"))
+args = sys.argv[1:]
+junit = next((a.split("=", 1)[1] for a in args if a.startswith("--junitxml=")), "")
+print("stub pytest:", " ".join(args))
+if code == 0:
+    print("1 passed in 0.01s")
+else:
+    print("=========================== short test summary info ============================")
+    print("FAILED tests/test_stub.py::test_нарочно - AssertionError: сломано")
+    print("1 failed in 0.01s")
+if junit:
+    open(junit, "w", encoding="utf-8").write("<testsuite/>")
+sys.exit(code)
+"""
+
+
+@pytest.fixture()
+def stub_pytest(tmp_path, monkeypatch) -> Path:
+    """Заглушка pytest: герметично проверяем логику инструментальной обёртки."""
+    module_dir = tmp_path / "stub"
+    module_dir.mkdir()
+    (module_dir / "stub_pytest.py").write_text(STUB_MODULE, encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(module_dir))
+    return module_dir
+
+
+def test_main_passes_on_green_suite(runner, tmp_path, stub_pytest, monkeypatch, capsys):
+    """Зелёный прогон: код 0, лог и junit-xml созданы, аннотации нет."""
+    monkeypatch.setenv("STUB_EXIT", "0")
+    log = tmp_path / "pytest.log"
+    junit = tmp_path / "pytest.xml"
+    code = runner.main(["--pytest-module", "stub_pytest", "--junitxml", str(junit), "--log", str(log)])
     captured = capsys.readouterr().out
-    log_text = (tmp_path / "pytest.log").read_text(encoding="utf-8")
-    assert code == 0, f"дочерний прогон провалился:\n{log_text}\n--- вывод инструмента ---\n{captured}"
+
+    assert code == 0, captured
+    assert log.exists() and "1 passed" in log.read_text(encoding="utf-8")
+    assert junit.exists()
     assert "::error" not in captured
 
 
-def test_main_reports_failure_with_annotation(runner, tmp_path, capsys):
-    """На красном файле — код 1 и аннотация с именем упавшего теста."""
-    test_file = tmp_path / "test_bad.py"
-    test_file.write_text("def test_bad():\n    assert False, 'нарочно'\n", encoding="utf-8")
-    code = runner.main(
-        [
-            "--pytest-args",
-            f"{test_file} -q",
-            "--junitxml",
-            str(tmp_path / "pytest.xml"),
-            "--log",
-            str(tmp_path / "pytest.log"),
-        ]
-    )
+def test_main_reports_failure_with_annotation(runner, tmp_path, stub_pytest, monkeypatch, capsys):
+    """Красный прогон: код 1 и аннотация с именем упавшего теста."""
+    monkeypatch.setenv("STUB_EXIT", "1")
+    log = tmp_path / "pytest.log"
+    junit = tmp_path / "pytest.xml"
+    code = runner.main(["--pytest-module", "stub_pytest", "--junitxml", str(junit), "--log", str(log)])
     output = capsys.readouterr().out
+
     assert code == 1
     assert "::error title=Провал тестов" in output
-    assert "test_bad" in output
-    assert (tmp_path / "pytest.xml").exists()
+    assert "test_нарочно" in output
+    assert "FAILED" in output
 
 
-def test_main_no_annotate_flag(runner, tmp_path, capsys):
-    test_file = tmp_path / "test_bad2.py"
-    test_file.write_text("def test_bad2():\n    assert False\n", encoding="utf-8")
+def test_real_pytest_end_to_end(runner, tmp_path):
+    r"""Настоящий pytest на настоящем файле: инструмент должен вернуть 0.
+
+    Явно задаём rootdir и basetemp: без этого на Windows pytest уходит искать
+    конфигурацию вверх по диску и спотыкается о служебные каталоги (`C:\Documents and Settings`).
+    """
+    workdir = tmp_path / "e2e"
+    workdir.mkdir()
+    (workdir / "test_ok.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
     code = runner.main(
         [
             "--pytest-args",
-            f"{test_file} -q",
+            f"{workdir} -q --rootdir {workdir} -p no:cacheprovider --basetemp {workdir / 'tmp'}",
+            "--junitxml",
+            str(workdir / "pytest.xml"),
+            "--log",
+            str(workdir / "pytest.log"),
+            "--no-annotate",
+        ]
+    )
+    log_text = (workdir / "pytest.log").read_text(encoding="utf-8")
+    assert code == 0, log_text
+    assert "1 passed" in log_text
+
+
+def test_main_no_annotate_flag(runner, tmp_path, stub_pytest, monkeypatch, capsys):
+    monkeypatch.setenv("STUB_EXIT", "3")
+    code = runner.main(
+        [
+            "--pytest-module",
+            "stub_pytest",
             "--no-annotate",
             "--log",
             str(tmp_path / "pytest.log"),
@@ -123,6 +165,7 @@ def test_main_no_annotate_flag(runner, tmp_path, capsys):
     out = capsys.readouterr().out
     assert code == 1
     assert "::error" not in out
+    assert "tests: FAILED" in out
 
 
 def test_tool_is_runnable_as_script():

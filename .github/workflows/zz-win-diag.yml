@@ -1,5 +1,5 @@
 name: win-diag
-# временный workflow: повторная проверка тестов на Windows после правок
+# временный workflow: проверка тестов на Windows после правок изоляции
 on:
   push:
     branches: [arena/f33a7a3a-devops-guide]
