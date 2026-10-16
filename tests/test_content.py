@@ -125,4 +125,6 @@ def test_content_index_is_fresh(course):
         assert path.exists(), f"в индексе есть несуществующий файл {relative}"
         import hashlib
 
-        assert hashlib.sha256(path.read_bytes()).hexdigest()[:16] == digest, f"{relative}: хеш не совпадает"
+        # Хеш считается от содержимого с LF — проверка не зависит от переводов строк.
+        data = path.read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(data).hexdigest()[:16] == digest, f"{relative}: хеш не совпадает"

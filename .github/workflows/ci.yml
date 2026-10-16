@@ -36,8 +36,11 @@ jobs:
         run: python tools/validate_content.py
       - name: Обновить index и убедиться, что он актуален
         run: |
+          mkdir -p reports
           python tools/generate_version.py --version "$(cat VERSION)" --build "${{ github.run_number }}"
-          git diff --exit-code content/content_index.json || echo "::warning::content_index.json обновлён — закоммитьте его"
+          if ! git diff --exit-code -- content/content_index.json; then
+            echo "::warning title=content_index.json устарел::Запустите python tools/generate_version.py и закоммитьте результат"
+          fi
 
   test:
     name: Тесты (${{ matrix.os }}, python ${{ matrix.python }})
@@ -53,12 +56,29 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
+      - name: Системные библиотеки Qt (Linux)
+        if: runner.os == 'Linux'
+        # PySide6 требует libGL/libEGL/libxkbcommon/libdbus даже в offscreen-режиме.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1 libegl1 libxkbcommon0 libdbus-1-3 libfontconfig1
       - name: Установить зависимости
         run: pip install -r requirements-dev.txt
       - name: Линтер (ruff)
         run: ruff check .
       - name: Тесты (pytest)
-        run: pytest -q
+        shell: bash
+        run: |
+          mkdir -p reports
+          set -o pipefail
+          pytest -q --junitxml=reports/pytest.xml 2>&1 | tee reports/pytest.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Сводка провала — в аннотацию: её видно в проверках без скачивания логов.
+            python tools/ci_annotate.py reports/pytest.log --title "Провал тестов"
+            exit "$status"
+          fi
       - name: Дымовой тест приложения
         run: python tools/smoke_test.py
       - name: Проверка режима --self-test

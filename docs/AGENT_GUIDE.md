@@ -46,7 +46,7 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest -q                                            # 54 теста
+pytest -q                                            # 58 тестов
 ```
 
 В headless-средах (сервер, контейнер) Qt требует библиотек; используйте

@@ -1,0 +1,13 @@
+# Единые переводы строк: контент и код всегда с LF, чтобы хеши контента
+# (content_index.json) и тесты совпадали на Linux и Windows.
+* text=auto eol=lf
+
+# Бинарные файлы не трогаем
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary
+*.exe binary
+*.gz binary
+*.svg text eol=lf

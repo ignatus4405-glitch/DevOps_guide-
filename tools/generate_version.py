@@ -58,6 +58,21 @@ __version__ = APP_VERSION
 '''
 
 
+def normalize_bytes(data: bytes) -> bytes:
+    """Содержимое без привязки к переводам строк.
+
+    Хеши контента считаются от LF-версии, поэтому индекс, собранный на Linux,
+    совпадает с проверками на Windows (где git может выложить файлы с CRLF).
+    """
+    return data.replace(b"\r\n", b"\n")
+
+
+def file_digest(path: Path) -> tuple[str, int]:
+    """Возвращает (короткий sha256, размер нормализованного содержимого)."""
+    data = normalize_bytes(path.read_bytes())
+    return hashlib.sha256(data).hexdigest()[:16], len(data)
+
+
 def build_content_index() -> dict:
     """Хеши файлов контента — для проверки целостности и диагностики сборки."""
     content_dir = ROOT / "content"
@@ -66,9 +81,9 @@ def build_content_index() -> dict:
     for path in sorted(content_dir.rglob("*")):
         if not path.is_file() or path.name == "content_index.json":
             continue
-        data = path.read_bytes()
-        total_bytes += len(data)
-        files[str(path.relative_to(content_dir)).replace("\\", "/")] = hashlib.sha256(data).hexdigest()[:16]
+        digest, size = file_digest(path)
+        total_bytes += size
+        files[str(path.relative_to(content_dir)).replace("\\", "/")] = digest
     return {
         "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "files": len(files),

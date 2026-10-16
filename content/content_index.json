@@ -1,7 +1,7 @@
 {
-  "generated": "2026-10-16T17:57:33+00:00",
+  "generated": "2026-10-16T18:05:57+00:00",
   "files": 85,
-  "total_bytes": 564513,
+  "total_bytes": 566711,
   "hashes": {
     "assets/img/aws-architecture.svg": "f1d67b79e306bf95",
     "assets/img/career-roadmap.svg": "d180469d5e6c4a9b",
@@ -50,12 +50,12 @@
     "modules/05-cicd/lessons/01-pipeline-basics.md": "ff5c1d9cd2ac068b",
     "modules/05-cicd/lessons/02-cd-and-deploy.md": "6617bea4d07b5033",
     "modules/05-cicd/module.json": "724e0523a7156344",
-    "modules/05-cicd/practice.json": "c5ab370bab04c114",
+    "modules/05-cicd/practice.json": "bb199e7d6c2c56b6",
     "modules/05-cicd/quiz.json": "25e7ca3f1d1275bf",
     "modules/06-docker/lessons/01-images-containers.md": "779a38edbe9ce322",
     "modules/06-docker/lessons/02-compose-security.md": "7eefe1e50c24ec3b",
     "modules/06-docker/module.json": "0a8df1a047d74655",
-    "modules/06-docker/practice.json": "4fe281fd4c236437",
+    "modules/06-docker/practice.json": "6349fc1b9c28e25d",
     "modules/06-docker/quiz.json": "b1fd394e7738bbc5",
     "modules/07-kubernetes/lessons/01-architecture.md": "6de3c0387013fa52",
     "modules/07-kubernetes/lessons/02-manifests.md": "45fbfaa052ac3e57",
@@ -66,12 +66,12 @@
     "modules/08-iac/lessons/01-terraform.md": "7e53db77b88cdd23",
     "modules/08-iac/lessons/02-ansible.md": "2496f9659ad2a16f",
     "modules/08-iac/module.json": "96d9dea6dfefbcff",
-    "modules/08-iac/practice.json": "b77b224e1bdfbfe4",
+    "modules/08-iac/practice.json": "3aa877750353688b",
     "modules/08-iac/quiz.json": "930176279a593016",
     "modules/09-cloud/lessons/01-architecture-and-iam.md": "c3f97c25b5f4363d",
     "modules/09-cloud/lessons/02-cost-reliability.md": "65a5b2a3a32f1780",
     "modules/09-cloud/module.json": "78e1f2cde828e999",
-    "modules/09-cloud/practice.json": "03b75aeda10bf77b",
+    "modules/09-cloud/practice.json": "a1558b064dd9ef3c",
     "modules/09-cloud/quiz.json": "bc9248f77185bafc",
     "modules/10-observability/lessons/01-metrics-logs-traces.md": "59f4525f45b01596",
     "modules/10-observability/lessons/02-slo-alerts-incidents.md": "f5eb805e111985ed",
@@ -86,7 +86,7 @@
     "modules/12-career/lessons/01-capstone-project.md": "942935258d1ec252",
     "modules/12-career/lessons/02-interview-and-growth.md": "999ee5b1725a09c0",
     "modules/12-career/module.json": "10fadf6ad53b5e8d",
-    "modules/12-career/practice.json": "49def621f3e5cc92",
+    "modules/12-career/practice.json": "699d1e314252365b",
     "modules/12-career/quiz.json": "3370426f168959f0"
   }
 }

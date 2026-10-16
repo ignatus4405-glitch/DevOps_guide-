@@ -188,6 +188,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - name: Системные библиотеки Qt (Linux)
+        # PySide6 требует libGL/libEGL/libxkbcommon/libdbus даже в offscreen-режиме.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1 libegl1 libxkbcommon0 libdbus-1-3 libfontconfig1
       - run: pip install -r requirements-dev.txt
       - name: Подготовить version.py и index
         run: python tools/generate_version.py --version "${{ needs.guard.outputs.version }}" --build "${{ github.run_number }}"
