@@ -105,6 +105,7 @@ bash scripts/build_local.sh          # полная сборка PyInstaller
 | `make_update_manifest.py` | `update.json` для автообновления |
 | `make_diagrams.py` | генерация SVG-иллюстраций курса |
 | `smoke_test.py` | дымовой тест GUI в offscreen-режиме |
+| `run_tests.py` | запуск pytest в CI: лог, junit-xml и аннотация провалов |
 | `ci_annotate.py` | сводка ошибок CI в аннотацию проверки |
 
 ## Ссылки

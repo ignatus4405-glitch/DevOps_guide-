@@ -23,3 +23,6 @@ dist/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Отчёты CI и локальных прогонов
+reports/

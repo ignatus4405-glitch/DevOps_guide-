@@ -19,7 +19,8 @@
   автоматический подъём версии по истории коммитов, Dependabot.
 - Инструменты: `tools/validate_content.py`, `tools/generate_version.py`,
   `tools/make_diagrams.py`, `tools/smoke_test.py`, `tools/next_version.py`,
-  `tools/release_notes.py`, `tools/make_update_manifest.py`, `tools/ci_annotate.py`.
+  `tools/release_notes.py`, `tools/make_update_manifest.py`, `tools/ci_annotate.py`,
+  `tools/run_tests.py` (запуск тестов с логом и аннотацией для CI).
 - Документация: архитектура, гайд по контенту, инструкция для агентов, релизный процесс.
 - Скрипты разработки: `scripts/run_dev.sh`, `scripts/build_local.sh`; pre-commit
   (gitleaks, ruff, проверка контента) и шаблоны issue/PR.

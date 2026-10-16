@@ -68,17 +68,10 @@ jobs:
       - name: Линтер (ruff)
         run: ruff check .
       - name: Тесты (pytest)
-        shell: bash
-        # Внимание: GitHub запускает bash с `-e`, поэтому проверку статуса делаем
-        # через `if !` — иначе шаг упадёт до того, как успеет оставить аннотацию.
-        run: |
-          set -uo pipefail
-          mkdir -p reports
-          if ! pytest -q --junitxml=reports/pytest.xml 2>&1 | tee reports/pytest.log; then
-            # Сводка провала — в аннотацию: её видно в проверках без скачивания логов.
-            python tools/ci_annotate.py reports/pytest.log --title "Провал тестов"
-            exit 1
-          fi
+        # Запуск через Python: одинаково работает в Linux и Windows, пишет
+        # reports/pytest.log + reports/pytest.xml и на провале печатает аннотацию
+        # (её видно в проверках, даже если сервис логов недоступен).
+        run: python tools/run_tests.py
       - name: Дымовой тест приложения
         run: python tools/smoke_test.py
       - name: Проверка режима --self-test
