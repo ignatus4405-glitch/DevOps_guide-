@@ -29,12 +29,16 @@ GROUPS: list[tuple[str, tuple[str, ...]]] = [
 ]
 
 BREAKING_RE = re.compile(r"BREAKING CHANGE|^[a-z]+(\([^)]*\))?!:")
+
+# Служебные коммиты, которые не должны попадать в описание релиза
+NOISE_RE = re.compile(r"^(chore\(release\)|Merge |Release )|\[skip ci\]")
 SUBJECT_RE = re.compile(r"^(?P<type>[a-z]+)(?:\([^)]*\))?(?P<breaking>!)?:\s*(?P<text>.+)$")
 
 
 def git_log(repo: Path, previous: str) -> list[tuple[str, str]]:
     """Список (hash, subject) с последнего тега (или последние 50 коммитов)."""
-    args = ["log", "--pretty=%h%x09%s"] + ([f"{previous}..HEAD"] if previous else ["-50"])
+    # --no-merges: сообщения «Merge pull request #N» не несут смысла для пользователя
+    args = ["log", "--no-merges", "--pretty=%h%x09%s"] + ([f"{previous}..HEAD"] if previous else ["-50"])
     result = subprocess.run(
         ["git", *args],
         cwd=str(repo),
@@ -81,6 +85,8 @@ def classify(commits: list[tuple[str, str]]) -> dict[str, list[str]]:
     for _short, raw in commits:
         lines = raw.splitlines()
         summary = lines[0].strip() if lines else ""
+        if NOISE_RE.search(summary):
+            continue  # релизные и merge-коммиты не описываем пользователю
         body = "\n".join(lines[1:])
         match = SUBJECT_RE.match(summary)
         text = match.group("text") if match else summary

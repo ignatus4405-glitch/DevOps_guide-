@@ -145,3 +145,36 @@ def test_main_writes_notes_and_changelog(notes_tool, tmp_path, monkeypatch):
     changelog = (repo / "CHANGELOG.md").read_text(encoding="utf-8")
     assert "## [0.5.0] — 2026-03-03" in changelog
     assert "### Добавлено" in changelog and "### Исправлено" in changelog
+
+
+def test_classify_skips_service_commits(notes_tool):
+    """Merge-коммиты и релизные коммиты не попадают в описание релиза."""
+    commits = [
+        ("aaa1111", "feat: полезное изменение"),
+        ("bbb2222", "Merge pull request #7 from user/branch"),
+        ("ccc3333", "chore(release): v0.2.0 [skip ci]"),
+    ]
+    grouped = notes_tool.classify(commits)
+    assert grouped["Добавлено"] == ["Полезное изменение"]
+    assert grouped["Прочее"] == []
+    assert grouped["Инфраструктура и тесты"] == []
+
+
+def test_git_log_ignores_merges(notes_tool, tmp_path):
+    """git log вызывается с --no-merges, поэтому merge-коммиты не мешают."""
+    repo = tmp_path / "merge_repo"
+    repo.mkdir()
+    (repo / "VERSION").write_text("0.1.0\n", encoding="utf-8")
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "add", "VERSION")
+    _git(repo, "commit", "-q", "-m", "feat: первый коммит")
+    _git(repo, "checkout", "-q", "-b", "feature")
+    (repo / "extra.txt").write_text("материал\n", encoding="utf-8")
+    _git(repo, "add", "extra.txt")
+    _git(repo, "commit", "-q", "-m", "fix: правка в ветке")
+    _git(repo, "checkout", "-q", "main")
+    _git(repo, "merge", "-q", "--no-ff", "-m", "Merge branch 'feature'", "feature")
+
+    subjects = [subject for _short, subject in notes_tool.git_log(repo, "")]
+    assert "Merge branch 'feature'" not in subjects
+    assert "fix: правка в ветке" in subjects
