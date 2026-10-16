@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500" role="img" aria-label="Наблюдаемость">
+<rect width="900" height="500" rx="14" fill="#0f172a"/>
+<title>Наблюдаемость</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Три столпа наблюдаемости и цикл реакции</text>
+<rect x="50" y="80" width="250" height="130" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="175.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Метрики</text>
+<text x="175.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Prometheus, VictoriaMetrics</text>
+<text x="175.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">counters, gauges, histograms</text>
+<text x="175.0" y="160" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">RED-метрики: Rate, Errors, Duration</text>
+<rect x="325" y="80" width="250" height="130" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="450.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Логи</text>
+<text x="450.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Loki, ELK, CloudWatch</text>
+<text x="450.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">структурированный JSON</text>
+<text x="450.0" y="160" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">trace_id для корреляции</text>
+<rect x="600" y="80" width="250" height="130" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="725.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Трейсы</text>
+<text x="725.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">OpenTelemetry, Jaeger</text>
+<text x="725.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">сквозной путь запроса</text>
+<text x="725.0" y="160" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">поиск узкого места</text>
+<rect x="50" y="250" width="380" height="120" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="240.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Алерты, которые не шумят</text>
+<text x="240.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">алерт на симптом для пользователя (SLO), а не на каждый чих</text>
+<text x="240.0" y="313" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">runbook в описании алерта</text>
+<text x="240.0" y="330" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">дежурства и эскалации</text>
+<text x="240.0" y="347" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">постмортем без поиска виноватых</text>
+<rect x="470" y="250" width="380" height="120" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="660.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">SLI / SLO / Error budget</text>
+<text x="660.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SLI: измеримая метрика (например, доля успешных запросов)</text>
+<text x="660.0" y="313" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SLO: цель, например 99.9% за 30 дней</text>
+<text x="660.0" y="330" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">error budget: сколько сбоев допустимо</text>
+<text x="660.0" y="347" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">бюджет исчерпан — только надёжность, без фич</text>
+<rect x="50" y="395" width="800" height="80" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="450.0" y="421" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Дашборды Grafana</text>
+<text x="450.0" y="441" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">сначала 4 золотых сигнала: latency, traffic, errors, saturation</text>
+<text x="450.0" y="458" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">затем детализация по сервисам и зависимостям</text>
+<text x="450.0" y="475" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">на дашборде видно, когда сломалось и что изменилось</text>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500" role="img" aria-label="Базовая архитектура в AWS">
+<rect width="900" height="500" rx="14" fill="#0f172a"/>
+<title>Базовая архитектура в AWS</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Минимальный прод-контур в облаке</text>
+<rect x="40" y="60" width="820" height="230" rx="10" fill="#222c3d" stroke="#8fa3bf" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="450" y="84" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="14" font-weight="700" fill="#e6edf7">VPC 10.0.0.0/16</text>
+<rect x="60" y="100" width="230" height="80" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="175.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Public subnet</text>
+<text x="175.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">ALB / NAT Gateway</text>
+<text x="175.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">bastion</text>
+<rect x="320" y="100" width="240" height="80" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="440.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Private subnet (app)</text>
+<text x="440.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">EC2/ASG или EKS</text>
+<text x="440.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">выходит в интернет через NAT</text>
+<rect x="590" y="100" width="250" height="80" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="715.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Private subnet (data)</text>
+<text x="715.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">RDS Multi-AZ</text>
+<text x="715.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">бэкапы и шифрование</text>
+<line x1="295" y1="140" x2="315" y2="140" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="565" y1="140" x2="585" y2="140" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="60" y="200" width="230" height="76" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="175.0" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">IAM</text>
+<text x="175.0" y="246" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">роли, least privilege</text>
+<text x="175.0" y="263" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">MFA для админов</text>
+<rect x="320" y="200" width="240" height="76" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="440.0" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">S3</text>
+<text x="440.0" y="246" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">артефакты, бэкапы</text>
+<text x="440.0" y="263" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">lifecycle-политики</text>
+<rect x="590" y="200" width="250" height="76" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="715.0" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">CloudWatch</text>
+<text x="715.0" y="246" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">метрики, логи, алерты</text>
+<rect x="40" y="310" width="400" height="160" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="240.0" y="336" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Гигиена стоимости</text>
+<text x="240.0" y="356" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">rightsizing инстансов по метрикам</text>
+<text x="240.0" y="373" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Spot/Fargate для некритичных задач</text>
+<text x="240.0" y="390" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">S3 Intelligent-Tiering для бэкапов</text>
+<text x="240.0" y="407" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">budget alert на 80% и 100%</text>
+<text x="240.0" y="424" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">теги: owner, project, env — обязательны</text>
+<rect x="470" y="310" width="390" height="160" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="665.0" y="336" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Надёжность</text>
+<text x="665.0" y="356" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">мульти-AZ по умолчанию</text>
+<text x="665.0" y="373" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">IaC вместо кликов в консоли</text>
+<text x="665.0" y="390" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">RTO/RPO зафиксированы и протестированы</text>
+<text x="665.0" y="407" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">restore бэкапа проверяется раз в квартал</text>
+<text x="665.0" y="424" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">плановая игра «погаси AZ» (chaos game)</text>
+</svg>

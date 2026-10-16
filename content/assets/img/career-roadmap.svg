@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="500" viewBox="0 0 920 500" role="img" aria-label="Дорожная карта DevOps-инженера">
+<rect width="920" height="500" rx="14" fill="#0f172a"/>
+<title>Дорожная карта DevOps-инженера</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="460" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">С чего начать и куда расти</text>
+<rect x="10" y="90" width="190" height="120" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="105.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Junior</text>
+<text x="105.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Linux, git, bash</text>
+<text x="105.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">первый конвейер</text>
+<text x="105.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Docker</text>
+<rect x="230" y="90" width="190" height="120" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="325.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Middle</text>
+<text x="325.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">k8s, Terraform</text>
+<text x="325.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">облако, мониторинг</text>
+<text x="325.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">инциденты</text>
+<rect x="450" y="90" width="190" height="120" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="545.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Senior</text>
+<text x="545.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">архитектура</text>
+<text x="545.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SLO и стоимость</text>
+<text x="545.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">менторинг</text>
+<rect x="670" y="90" width="190" height="120" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="765.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Lead/Platform</text>
+<text x="765.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Standards, Developer</text>
+<text x="765.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Experience, стратегия</text>
+<line x1="205" y1="150" x2="215" y2="150" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="425" y1="150" x2="435" y2="150" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="645" y1="150" x2="655" y2="150" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="60" y="250" width="380" height="220" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="250.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Что показать работодателю</text>
+<text x="250.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">публичный репозиторий с CI/CD и IaC</text>
+<text x="250.0" y="313" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">развёрнутое демо-приложение в облаке</text>
+<text x="250.0" y="330" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">описанные инциденты и постмортемы</text>
+<text x="250.0" y="347" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">дашборд мониторинга со SLO</text>
+<text x="250.0" y="364" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">сертификат (CKA, AWS SA) — как усилитель, не замена</text>
+<rect x="480" y="250" width="380" height="220" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="670.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Как учиться эффективно</text>
+<text x="670.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">каждый день 1 час практики важнее лекций</text>
+<text x="670.0" y="313" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">делайте проект, а не только курсы</text>
+<text x="670.0" y="330" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">читайте SRE Book и документацию инструментов</text>
+<text x="670.0" y="347" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">ведите свой devlog/заметки</text>
+<text x="670.0" y="364" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">разбирайте чужие постмортемы и RFC</text>
+</svg>

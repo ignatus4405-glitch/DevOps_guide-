@@ -1,0 +1,93 @@
+{
+  "title": "Практика модуля 12: безопасность в конвейере",
+  "tasks": [
+    {
+      "id": "secrets-hygiene",
+      "title": "Убрать секреты из репозитория и поставить защиту",
+      "level": "medium",
+      "goal": "Сделать так, чтобы секрет не смог попасть в Git незаметно.",
+      "instructions": [
+        "Удалите секрет из файла и замените его на переменную окружения с шаблоном .env.example.",
+        "Настройте pre-commit с gitleaks и detect-private-key.",
+        "Проверьте, что попытка закоммитить ключ блокируется."
+      ],
+      "hints": [
+        "gitleaks detect --redact покажет находки без раскрытия значений",
+        "Если секрет уже в истории — сначала отзовите его, потом чистите историю filter-repo"
+      ],
+      "solution": "# 1. Убрать секрет из кода\nsed -i 's/SECRET_KEY=.*/SECRET_KEY=${SECRET_KEY:?}/' app/config.py\ncat > .env.example <<'EOF'\nSECRET_KEY=получите-у-администратора\nEOF\n\n# 2. Защита\npip install pre-commit\ncat > .pre-commit-config.yaml <<'EOF'\nrepos:\n  - repo: https://github.com/gitleaks/gitleaks\n    rev: v8.18.4\n    hooks: [{ id: gitleaks }]\n  - repo: https://github.com/pre-commit/pre-commit-hooks\n    rev: v4.6.0\n    hooks: [{ id: detect-private-key }]\nEOF\npre-commit install\npre-commit run --all-files",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["\\.env\\.example|\\.env\\.sample", "gitleaks", "pre-commit", "SECRET_KEY|\\$\\{"],
+        "feedback": "Секрет вынесен из кода, а pre-commit ловит новые утечки до коммита."
+      },
+      "validation_hint": "Попытка закоммитить тестовый ключ AWS заканчивается блокировкой хука."
+    },
+    {
+      "id": "security-pipeline",
+      "title": "Security-пайплайн для репозитория",
+      "level": "hard",
+      "goal": "Встроить четыре уровня сканирования в CI и выводить отчёты в Security tab.",
+      "instructions": [
+        "Добавьте gitleaks (секреты) и osv-scanner (зависимости).",
+        "Добавьте semgrep (SAST) и checkov (IaC) с выгрузкой SARIF.",
+        "Ограничьте права workflow и проверьте результат на тестовой ветке."
+      ],
+      "hints": [
+        "fetch-depth: 0 нужен gitleaks для сканирования истории",
+        "SARIF загружается в Security → Code scanning alerts"
+      ],
+      "solution": "name: Security\non: [pull_request]\npermissions: { contents: read, security-events: write }\njobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with: { fetch-depth: 0 }\n      - uses: gitleaks/gitleaks-action@v2\n      - uses: google/osv-scanner-action/osv-scanner-action@v1\n        with: { scan-args: \"-r --skip-git ./\" }\n      - run: pip install semgrep checkov && semgrep --config=p/ci --sarif -o semgrep.sarif . || true\n      - run: checkov -d . --output sarif --output-file checkov.sarif || true\n      - if: always()\n        uses: github/codeql-action/upload-sarif@v3\n        with: { sarif_file: . }",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["gitleaks", "osv", "semgrep", "checkov", "sarif"],
+        "feedback": "Пайплайн проверяет секреты, зависимости, код и конфигурацию, а находки видны в Security tab."
+      },
+      "validation_hint": "В Security → Code scanning появились замечания с привязкой к строкам кода."
+    },
+    {
+      "id": "supply-chain",
+      "title": "SBOM и подпись образа",
+      "level": "hard",
+      "goal": "Сделать артефакт проверяемым: узнать состав и подтвердить происхождение.",
+      "instructions": [
+        "Соберите образ и сгенерируйте SBOM в формате SPDX.",
+        "Отсканируйте SBOM на критичные уязвимости.",
+        "Подпишите образ и проверьте подпись."
+      ],
+      "hints": [
+        "syft <образ> -o spdx-json > sbom.spdx.json",
+        "grype sbom:sbom.spdx.json --fail-on high"
+      ],
+      "solution": "docker build -t ghcr.io/org/api:lab .\nsyft ghcr.io/org/api:lab -o spdx-json > sbom.spdx.json\ngrype sbom:sbom.spdx.json --fail-on high\ncosign sign --yes ghcr.io/org/api:lab\ncosign verify ghcr.io/org/api:lab --certificate-identity-regexp 'github.com/org/*' \\\n  --certificate-oidc-issuer https://token.actions.githubusercontent.com",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["syft|sbom", "grype", "cosign\\s+sign", "cosign\\s+verify"],
+        "feedback": "Теперь известно, что внутри образа, и подтверждено, кто его собрал — это основа доверия к цепочке поставки."
+      },
+      "validation_hint": "sbom.spdx.json содержит список пакетов; cosign verify завершается успешно."
+    },
+    {
+      "id": "access-review",
+      "title": "Ревизия доступов: найти лишние права",
+      "level": "medium",
+      "goal": "Ограничить права сервисов и CI до необходимого минимума.",
+      "instructions": [
+        "Проверьте, какие права имеет ваш сервисный аккаунт в Kubernetes.",
+        "Проверьте права workflow (permissions) и уберите лишние.",
+        "Составьте список найденных избыточных прав и решения."
+      ],
+      "hints": [
+        "kubectl auth can-i --list --as=system:serviceaccount:<ns>:<sa>",
+        "Для AWS: aws iam generate-service-last-accessed-details покажет неиспользуемые разрешения"
+      ],
+      "solution": "kubectl auth can-i --list --as=system:serviceaccount:prod:api -n prod\nkubectl get rolebinding,clusterrolebinding -A | grep api\n# В workflow:\npermissions:\n  contents: read\n  id-token: write   # только если нужен OIDC для деплоя\n# Итог: таблица «право — используется? — решение»",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["can-i", "serviceaccount|rolebinding", "permissions", "read"],
+        "feedback": "Ревизия доступов — регулярная практика: права, которые не используются, должны быть удалены."
+      },
+      "validation_hint": "В отчёте есть минимум один пример лишнего права с решением по его удалению."
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "title": "Практика модуля 1: план обучения и рабочий стенд",
+  "tasks": [
+    {
+      "id": "plan",
+      "title": "Составить план обучения на 12 недель",
+      "level": "easy",
+      "goal": "Зафиксировать план так, чтобы его видела система контроля версий, а не блокнот.",
+      "instructions": [
+        "Создайте локальный репозиторий devops-journey.",
+        "Добавьте файл PLAN.md со списком модулей этого курса и датами.",
+        "Сделайте первый коммит."
+      ],
+      "hints": [
+        "Команда создания репозитория: git init",
+        "Файл можно создать любым редактором, а затем добавить командой git add"
+      ],
+      "solution": "git init devops-journey\ncd devops-journey\nprintf '# План обучения DevOps\\n\\n| Неделя | Модуль |\\n| --- | --- |\\n| 1 | Linux |\\n' > PLAN.md\ngit add PLAN.md\ngit commit -m \"docs: план обучения на 12 недель\"",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["git\\s+init", "git\\s+add\\s+(\\.|PLAN\\.md)", "git\\s+commit"],
+        "feedback": "План закоммичен — это первый шаг портфолио. В модуле про Git мы добавим ветки и pull request."
+      },
+      "validation_hint": "git log --oneline показывает первый коммит, git status — чистый worktree."
+    },
+    {
+      "id": "standd",
+      "title": "Развернуть рабочий стенд (WSL2 или ВМ)",
+      "level": "easy",
+      "goal": "Получить Linux-окружение, в котором можно свободно экспериментировать.",
+      "instructions": [
+        "Установите WSL2 с Ubuntu одной командой в PowerShell с правами администратора.",
+        "Проверьте версию дистрибутива и ядра внутри Linux.",
+        "Обновите индекс пакетов."
+      ],
+      "hints": [
+        "Установка: wsl --install -d Ubuntu",
+        "Внутри Linux версия ядра: uname -r"
+      ],
+      "solution": "wsl --install -d Ubuntu\n# затем внутри Ubuntu:\nlsb_release -a\nuname -r\nsudo apt update",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["wsl\\s+--install", "uname\\s+-r", "apt\\s+update"],
+        "feedback": "Стенд готов. Дальше 90 % практики курса выполняется внутри него."
+      },
+      "validation_hint": "wsl -l -v в PowerShell показывает версию 2 и состояние Running; apt update завершается без ошибок."
+    },
+    {
+      "id": "dora",
+      "title": "Измерить процесс своей команды (или учебного проекта)",
+      "level": "medium",
+      "goal": "Применить метрики DORA к реальности: понять, где узкое место.",
+      "instructions": [
+        "Возьмите любой свой проект или учебную задачу.",
+        "Оцените четыре метрики: частота деплоя, lead time, доля сбоев, MTTR.",
+        "Запишите вывод в DORA.md: какая метрика страдает сильнее всего и почему."
+      ],
+      "hints": [
+        "Lead time удобно считать по времени от ветки до merge",
+        "Если деплой ручной — зафиксируйте это как узкое место"
+      ],
+      "solution": "Заполненный DORA.md с оценкой: например, «деплой — раз в месяц вручную, lead time 3 недели, откат занимает день; узкое место — отсутствие CI и IaC».",
+      "check": {
+        "type": "manual",
+        "feedback": "Главная ценность — честная оценка. В модулях 5–9 вы будете целиться именно в эти метрики."
+      },
+      "validation_hint": "В DORA.md должны быть все четыре метрики и хотя бы один вывод о причине."
+    },
+    {
+      "id": "github-account",
+      "title": "Prepare: аккаунт GitHub и публичный репозиторий",
+      "level": "easy",
+      "goal": "Получить площадку, где будут жить все артефакты курса (CI настраивается в модуле 5).",
+      "instructions": [
+        "Создайте публичный репозиторий devops-journey на GitHub.",
+        "Свяжите локальный репозиторий с удалённым и отправьте первый коммит.",
+        "Добавьте README.md с описанием цели обучения."
+      ],
+      "hints": [
+        "git remote add origin git@github.com:<логин>/devops-journey.git",
+        "Первая отправка: git push -u origin main"
+      ],
+      "solution": "git remote add origin git@github.com:<логин>/devops-journey.git\ngit branch -M main\ngit push -u origin main",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["git\\s+remote\\s+add\\s+origin", "git\\s+push"],
+        "feedback": "Репозиторий на GitHub готов — в модуле про CI мы подключим к нему автосборку."
+      },
+      "validation_hint": "Страница репозитория открывается, в ней виден README.md и коммит."
+    }
+  ]
+}

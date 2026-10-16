@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="SRE-практики">
+<rect width="900" height="520" rx="14" fill="#0f172a"/>
+<title>SRE-практики</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Надёжность как инженерная задача</text>
+<rect x="50" y="80" width="370" height="130" rx="12" fill="#4a1f1f" stroke="#f2635f" stroke-width="1.5"/>
+<text x="235.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Инцидент</text>
+<text x="235.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">детект → алерт → дежурный</text>
+<text x="235.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">тriage: влияние на пользователя</text>
+<text x="235.0" y="160" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">rollback раньше, чем debug</text>
+<rect x="480" y="80" width="370" height="130" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="665.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Митигация</text>
+<text x="665.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">коммуникация в канале</text>
+<text x="665.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">статус на статус-странице</text>
+<text x="665.0" y="160" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">после — стабилизация</text>
+<rect x="50" y="240" width="370" height="130" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="235.0" y="266" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Постмортем</text>
+<text x="235.0" y="286" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">таймлайн без обвинений</text>
+<text x="235.0" y="303" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">корневые причины</text>
+<text x="235.0" y="320" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">action items с владельцами</text>
+<rect x="480" y="240" width="370" height="130" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="665.0" y="266" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Профилактика</text>
+<text x="665.0" y="286" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">автотесты на сценарий</text>
+<text x="665.0" y="303" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">алерт до отказа</text>
+<text x="665.0" y="320" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">chaos-эксперименты</text>
+<rect x="50" y="400" width="800" height="90" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="450.0" y="426" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Три метрики, по которым вас оценят на работе</text>
+<text x="450.0" y="446" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">MTTD — как быстро замечаем | MTTR — как быстро восстанавливаем | частота инцидентов за квартал</text>
+</svg>

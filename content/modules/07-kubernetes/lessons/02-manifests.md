@@ -1,0 +1,196 @@
+---
+id: k8s-manifests
+title: Манифесты: Deployment, Service, Ingress, конфигурация
+minutes: 45
+---
+
+# Манифесты: Deployment, Service, Ingress, конфигурация
+
+## Deployment и Service
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+  labels: { app: api }
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }   # без потери доступности
+  selector:
+    matchLabels: { app: api }                            # ДОЛЖЕН совпадать с шаблоном
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001 }
+      containers:
+        - name: api
+          image: ghcr.io/org/api@sha256:9f0c...          # digest вместо тега
+          ports: [{ containerPort: 8000, name: http }]
+          envFrom:
+            - configMapRef: { name: api-config }
+            - secretRef: { name: api-secrets }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+          readinessProbe:
+            httpGet: { path: /ready, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          startupProbe:                     # для медленно стартующих приложений
+            httpGet: { path: /health, port: http }
+            failureThreshold: 30
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: api, namespace: prod }
+spec:
+  selector: { app: api }            # совпадает с labels pod'ов
+  ports:
+    - { name: http, port: 80, targetPort: http }
+```
+
+## Три типа проверок — и почему их три
+
+| Проверка | Что делает при провале | Для чего нужна |
+| --- | --- | --- |
+| livenessProbe | перезапускает контейнер | приложение зависло (deadlock) |
+| readinessProbe | убирает pod из Service | приложение не готово принимать трафик |
+| startupProbe | ждёт успешного старта, отключая остальные | медленный старт (JIT, миграции) |
+
+!!! danger "Осторожно"
+    Классическая ошибка: **liveness проверяет доступность базы данных**. Кратковременный
+    сбой БД → все pod'ы перезапускаются одновременно → лавина перезапусков. Liveness
+    должен проверять сам процесс; зависимости — в readiness (или вообще отдельно).
+
+## ConfigMap и Secret
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: api-config, namespace: prod }
+data:
+  LOG_LEVEL: info
+  FEATURE_NEW_UI: "false"
+---
+apiVersion: v1
+kind: Secret
+metadata: { name: api-secrets, namespace: prod }
+type: Opaque
+stringData:                       # удобно, но небезопасно в Git
+  DATABASE_URL: postgresql://app:pass@db:5432/shop
+```
+
+```bash
+kubectl -n prod create secret generic api-secrets \
+  --from-literal=DATABASE_URL='postgresql://...' \
+  --dry-run=client -o yaml > secret.yaml        # НЕ коммитить в Git
+```
+
+Правильно хранить секреты: sealed-secrets, External Secrets Operator (подтягивает из
+Vault/AWS Secrets Manager), SOPS. ConfigMap для несекретных настроек — норма для Git.
+
+## Ingress и TLS
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  namespace: prod
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [api.example.com]
+      secretName: api-tls
+  rules:
+    - host: api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port: { name: http }
+```
+
+Ingress-контроллер (nginx-ingress, Traefik, ALB) реализует правила: смотрит на объекты
+Ingress и настраивает себя. cert-manager автоматически получает и обновляет сертификаты.
+
+## Автомасштабирование и доступность
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: api, namespace: prod }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: api }
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+  behavior:
+    scaleDown: { stabilizationWindowSeconds: 300 }   # не «дёргать» масштаб
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: api, namespace: prod }
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app: api } }
+```
+
+PDB гарантирует, что при обновлении узлов или вытеснении часть реплик останется
+работать. Без PDB плановое обслуживание узла может унести весь сервис.
+
+## Полезные команды
+
+```bash
+kubectl apply -f manifests/          # применить
+kubectl diff -f manifests/           # что изменится (безопасно)
+kubectl rollout status deploy/api -n prod
+kubectl rollout history deploy/api -n prod
+kubectl rollout undo deploy/api -n prod
+kubectl -n prod scale deploy/api --replicas=5
+kubectl -n prod get pods -o wide --sort-by=.status.startTime
+kubectl -n prod get events --sort-by=.lastTimestamp | tail -20
+kubectl -n prod top pods
+kubectl kustomize overlays/prod | kubectl diff -f -   # рендер kustomize
+```
+
+## Короткое резюме
+
+- Deployment описывает pod'ы и стратегию обновления; Service — стабильный адрес по меткам.
+- liveness перезапускает, readiness выводит из балансировки, startup ждёт медленный старт.
+- Конфигурация через ConfigMap/Secret, секреты — из внешнего хранилища.
+- HPA масштабирует, PDB сохраняет доступность, `kubectl diff` показывает последствия.
+
+## Проверьте себя
+
+1. Почему liveness не должен проверять внешние зависимости?
+2. Что произойдёт, если selector Deployment не совпадает с labels шаблона?
+3. Зачем PDB, если у Deployment уже несколько реплик?

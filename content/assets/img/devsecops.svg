@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470" role="img" aria-label="DevSecOps">
+<rect width="900" height="470" rx="14" fill="#0f172a"/>
+<title>DevSecOps</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Безопасность встроена в конвейер, а не в конце</text>
+<rect x="35" y="80" width="128" height="90" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="99.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Код</text>
+<text x="99.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">pre-commit</text>
+<text x="99.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">gitleaks</text>
+<rect x="177" y="80" width="128" height="90" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="241.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Сборка</text>
+<text x="241.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">dependabot</text>
+<text x="241.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SBOM</text>
+<line x1="163" y1="125" x2="173" y2="125" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="319" y="80" width="128" height="90" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="383.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Тест</text>
+<text x="383.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SAST: semgrep</text>
+<text x="383.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">DAST: ZAP</text>
+<line x1="305" y1="125" x2="315" y2="125" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="461" y="80" width="128" height="90" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="525.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Образ</text>
+<text x="525.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">trivy scan</text>
+<text x="525.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">подпись cosign</text>
+<line x1="447" y1="125" x2="457" y2="125" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="603" y="80" width="128" height="90" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="667.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Деплой</text>
+<text x="667.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">OPA/Gatekeeper</text>
+<text x="667.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">least privilege</text>
+<line x1="589" y1="125" x2="599" y2="125" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="745" y="80" width="128" height="90" rx="12" fill="#4a1f1f" stroke="#f2635f" stroke-width="1.5"/>
+<text x="809.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Эксплуатация</text>
+<text x="809.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">audit-логи</text>
+<text x="809.0" y="143" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SIEM</text>
+<line x1="731" y1="125" x2="741" y2="125" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="40" y="210" width="400" height="200" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="240.0" y="236" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Практики на каждый день</text>
+<text x="240.0" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">секреты только в vault/secret manager, ротация</text>
+<text x="240.0" y="273" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">принцип least privilege для IAM и RBAC</text>
+<text x="240.0" y="290" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">2FA и короткоживущие токены CI</text>
+<text x="240.0" y="307" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">фиксировать версии базовых образов по digest</text>
+<text x="240.0" y="324" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">проверять SBOM и критичные CVE перед релизом</text>
+<text x="240.0" y="341" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">логировать доступ к данным</text>
+<rect x="460" y="210" width="400" height="200" rx="12" fill="#4a1f1f" stroke="#f2635f" stroke-width="1.5"/>
+<text x="660.0" y="236" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Как ломают чаще всего</text>
+<text x="660.0" y="256" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">секрет в git-истории</text>
+<text x="660.0" y="273" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">непривилегированный сервис с root-правами</text>
+<text x="660.0" y="290" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">открытый в интернет порт БД</text>
+<text x="660.0" y="307" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">устаревшая зависимость с CVE</text>
+<text x="660.0" y="324" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">человеческий фактор: фишинг, слабый пароль</text>
+<text x="660.0" y="341" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">избыточные права CI-токена</text>
+</svg>

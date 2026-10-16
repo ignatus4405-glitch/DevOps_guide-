@@ -1,0 +1,117 @@
+{
+  "title": "Практика модуля 2: Linux-команды на реальном стенде",
+  "tasks": [
+    {
+      "id": "rights",
+      "title": "Настроить права для конфига с секретами",
+      "level": "easy",
+      "goal": "Секретный файл должен читаться только владельцем и группой приложения.",
+      "instructions": [
+        "Создайте файл /opt/app/secrets.env (каталог тоже создайте).",
+        "Сделайте владельцем пользователя deploy и группу devs.",
+        "Выставьте права 640 и убедитесь, что они применились."
+      ],
+      "hints": [
+        "Каталоги можно создавать с -p: mkdir -p /opt/app",
+        "Владелец и группа меняются одной командой chown user:group"
+      ],
+      "solution": "sudo mkdir -p /opt/app\nsudo touch /opt/app/secrets.env\nsudo chown deploy:devs /opt/app/secrets.env\nsudo chmod 640 /opt/app/secrets.env\nls -l /opt/app/secrets.env",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["mkdir\\s+-p\\s+/opt/app", "chown\\s+deploy:devs", "chmod\\s+640"],
+        "feedback": "Права 640 для секретов — верно: пишет владелец, читает только группа, остальные не видят файл."
+      },
+      "validation_hint": "ls -l показывает -rw-r----- deploy devs."
+    },
+    {
+      "id": "systemd-unit",
+      "title": "Написать и запустить systemd-юнит для приложения",
+      "level": "medium",
+      "goal": "Сервис должен запускаться от отдельного пользователя, автоматически при загрузке и перезапускаться при падении.",
+      "instructions": [
+        "Создайте юнит-файл /etc/systemd/system/myapp.service с User=appsvc, Restart=on-failure и ExecStart.",
+        "Перечитайте конфигурацию systemd.",
+        "Включите автозапуск и запустите сервис.",
+        "Проверьте статус и последние строки лога."
+      ],
+      "hints": [
+        "Для чтения изменений юнитов нужен systemctl daemon-reload",
+        "enable --now делает и автозапуск, и старт"
+      ],
+      "solution": "sudo tee /etc/systemd/system/myapp.service >/dev/null <<'EOF'\n[Unit]\nDescription=MyApp\nAfter=network-online.target\n\n[Service]\nUser=appsvc\nExecStart=/opt/app/run.sh\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\nEOF\nsudo systemctl daemon-reload\nsudo systemctl enable --now myapp\nsystemctl status myapp\njournalctl -u myapp -n 30 --no-pager",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["/etc/systemd/system/myapp\\.service", "daemon-reload", "systemctl\\s+enable", "journalctl\\s+-u\\s+myapp"],
+        "feedback": "Юнит создан и запущен. Так выглядит стандартная установка любого сервиса на сервер."
+      },
+      "validation_hint": "systemctl status myapp показывает active (running) и процессы."
+    },
+    {
+      "id": "find-cleanup",
+      "title": "Найти и освободить место на диске",
+      "level": "medium",
+      "goal": "Решить типовой инцидент «закончилось место на /var» без удаления нужных данных.",
+      "instructions": [
+        "Определите, какой каталог внутри /var занимает больше всего места.",
+        "Найдите логи старше 7 дней в /var/log.",
+        "Освободите место: сожмите или удалите только старые файлы (сначала посмотрите список, только потом удаляйте)."
+      ],
+      "hints": [
+        "du -sh /var/* сортирует по размеру, если добавить | sort -h",
+        "find /var/log -type f -mtime +7 покажет старые логи"
+      ],
+      "solution": "sudo du -sh /var/* 2>/dev/null | sort -h | tail -5\nsudo find /var/log -type f -mtime +7 -name '*.log*' -print\nsudo find /var/log -type f -mtime +7 -name '*.log*' -delete\nsudo df -h /var",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["du\\s+-sh\\s+/var", "find\\s+/var/log.*-mtime", "df\\s+-h"],
+        "feedback": "Порядок верный: сначала измеряем, потом ищем, и только затем удаляем. Никогда не удаляйте каталоги, которые не проверили."
+      },
+      "validation_hint": "df -h до и после показывает изменение занятого места."
+    },
+    {
+      "id": "port-diag",
+      "title": "Диагностировать «сервис не отвечает на порту»",
+      "level": "medium",
+      "goal": "Отработать порядок проверки: сервис → порт → доступность извне.",
+      "instructions": [
+        "Проверьте, слушает ли порт 8080 (или порт вашего сервиса).",
+        "Проверьте доступность порта с другого хоста командой nc.",
+        "Проверьте HTTP-ответ через curl с выводом кода и времени.",
+        "Посмотрите логи сервиса за последние 20 минут."
+      ],
+      "hints": [
+        "ss -tulpn | grep 8080 покажет и процесс, владеющий портом",
+        "У curl есть замечательный -w для вывода кода ответа и времени"
+      ],
+      "solution": "ss -tulpn | grep 8080\nnc -vz 127.0.0.1 8080\ncurl -sS -o /dev/null -w '%{http_code} %{time_total}s\\n' http://127.0.0.1:8080/health\njournalctl --since '20 min ago' -p warning --no-pager | tail -30",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["ss\\s+-tulpn", "nc\\s+-vz", "curl\\s+.*(http_code|-w)", "journalctl"],
+        "feedback": "Это и есть рабочий чек-лист инцидента: локально ли слушает, доступно ли снаружи, как отвечает приложение, что в логах."
+      },
+      "validation_hint": "Запишите вывод: код ответа, время и найденные ошибки в логе."
+    },
+    {
+      "id": "ssh-config",
+      "title": "Настроить удобный SSH-доступ",
+      "level": "easy",
+      "goal": "Входить на сервер одной командой по ключу, без пароля и без указания параметров.",
+      "instructions": [
+        "Сгенерируйте ключ ed25519.",
+        "Скопируйте публичный ключ на тестовый сервер (или виртуальную машину).",
+        "Добавьте алиас сервера в ~/.ssh/config и проверьте вход."
+      ],
+      "hints": [
+        "ssh-keygen -t ed25519 -C comment",
+        "В конфиге указываются Host alias, HostName, User, IdentityFile"
+      ],
+      "solution": "ssh-keygen -t ed25519 -f ~/.ssh/id_lab -C 'lab key'\nssh-copy-id -i ~/.ssh/id_lab.pub user@10.0.0.10\nprintf 'Host lab\\n    HostName 10.0.0.10\\n    User user\\n    IdentityFile ~/.ssh/id_lab\\n' >> ~/.ssh/config\nssh lab 'hostname && uptime'",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["ssh-keygen", "ssh-copy-id", "\\.ssh/config", "ssh\\s+lab"],
+        "feedback": "Вход по ключу с алиасом — стандарт работы. Пароли по SSH отключаются на сервере в sshd_config."
+      },
+      "validation_hint": "ssh lab hostname возвращает имя хоста без запроса пароля."
+    }
+  ]
+}

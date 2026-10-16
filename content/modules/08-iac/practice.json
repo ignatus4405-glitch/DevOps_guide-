@@ -1,0 +1,114 @@
+{
+  "title": "Практика модуля 9: инфраструктура кодом",
+  "tasks": [
+    {
+      "id": "tf-basics",
+      "title": "Первый Terraform-проект с переменными и выводами",
+      "level": "medium",
+      "goal": "Научиться описывать ресурсы, применять план и использовать outputs.",
+      "instructions": [
+        "Опишите провайдера и версии (versions.tf).",
+        "Создайте ресурс с параметром из переменной и тегом проекта.",
+        "Добавьте output с идентификатором ресурса, выполните init/validate/plan/apply."
+      ],
+      "hints": [
+        "Для локальной практики можно использовать провайдер local или docker",
+        "terraform fmt -recursive приводит файлы к стандартному формату"
+      ],
+      "solution": "terraform {\n  required_providers { local = { source = \"hashicorp/local\", version = \"~> 2.5\" } }\n}\nvariable \"project\" { type = string, default = \"devops-academy\" }\nresource \"local_file\" \"example\" {\n  filename = \"${path.module}/out/${var.project}.txt\"\n  content  = \"infra managed by terraform\"\n}\noutput \"file_path\" { value = local_file.example.filename }\nterraform init && terraform validate && terraform plan && terraform apply",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "terraform\\s*\\{",
+          "required_providers|provider\\s+\"",
+          "variable\\s+\"",
+          "output\\s+\"",
+          "terraform\\s+(init|validate|plan|apply)"
+        ],
+        "feedback": "Проект собран по канонам: версии, переменные, ресурсы, outputs. Так же описывается и реальная инфраструктура в облаке."
+      },
+      "validation_hint": "terraform apply создаёт файл, terraform output печатает путь, terraform destroy удаляет ресурс."
+    },
+    {
+      "id": "tf-remote-state",
+      "title": "Перевести state в удалённый backend",
+      "level": "hard",
+      "goal": "Организовать командное хранение состояния с блокировкой и шифрованием.",
+      "instructions": [
+        "Создайте бакет для state и таблицу блокировок (или используйте эквивалент в вашем облаке).",
+        "Опишите backend-блок и выполните terraform init с миграцией состояния.",
+        "Проверьте, что state лежит в бакете, а локальный файл больше не используется."
+      ],
+      "hints": [
+        "Миграция: terraform init -migrate-state",
+        "Проверка: aws s3 ls s3://<bucket>/<key>"
+      ],
+      "solution": "terraform {\n  backend \"s3\" {\n    bucket         = \"org-tfstate-lab\"\n    key            = \"lab/terraform.tfstate\"\n    region         = \"eu-central-1\"\n    dynamodb_table = \"tf-locks\"\n    encrypt        = true\n  }\n}\n# затем: terraform init -migrate-state",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "backend\\s+\"",
+          "bucket",
+          "dynamodb_table|lock",
+          "encrypt"
+        ],
+        "feedback": "State теперь общий, зашифрованный и с блокировкой — команда может работать параллельно без риска разрушить состояние."
+      },
+      "validation_hint": "После init в бакете появился файл state, локальный terraform.tfstate не обновляется."
+    },
+    {
+      "id": "ansible-role",
+      "title": "Роль Ansible для веб-сервера",
+      "level": "hard",
+      "goal": "Настроить сервер ролью: пакеты, конфиг из шаблона, сервис, обработчик.",
+      "instructions": [
+        "Создайте структуру роли (tasks, handlers, templates, defaults).",
+        "Настройте установку nginx и шаблон конфига с портом из переменной.",
+        "Добавьте handler для reload и проверьте идемпотентность повторным запуском."
+      ],
+      "hints": [
+        "ansible-galaxy init roles/nginx создаёт скелет роли",
+        "Проверка идемпотентности: второй прогон должен дать 0 changed"
+      ],
+      "solution": "# roles/nginx/tasks/main.yml\n- name: Установить nginx\n  ansible.builtin.apt: { name: nginx, state: present, update_cache: true }\n- name: Конфиг из шаблона\n  ansible.builtin.template:\n    src: app.conf.j2\n    dest: /etc/nginx/conf.d/app.conf\n    mode: \"0644\"\n  notify: reload nginx\n- name: Сервис запущен\n  ansible.builtin.systemd: { name: nginx, state: started, enabled: true }\n\n# roles/nginx/handlers/main.yml\n- name: reload nginx\n  ansible.builtin.systemd: { name: nginx, state: reloaded }",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ansible.builtin.(apt|package)",
+          "ansible.builtin.template",
+          "notify",
+          "handler"
+        ],
+        "feedback": "Роль идемпотентна и повторно используема: конфиг меняется — handler перезагружает сервис, иначе ничего не происходит."
+      },
+      "validation_hint": "Первый прогон: changed; второй прогон: changed=0."
+    },
+    {
+      "id": "iac-pipeline",
+      "title": "IaC в пайплайне с ревью плана",
+      "level": "hard",
+      "goal": "Сделать так, чтобы инфраструктурные изменения проходили проверки до применения.",
+      "instructions": [
+        "Добавьте в workflow шаги fmt -check, validate, tflint и plan.",
+        "Ограничьте apply веткой main и добавьте ручное подтверждение (environment).",
+        "Проверьте, что PR с ошибкой форматирования не проходит пайплайн."
+      ],
+      "hints": [
+        "План можно сохранять как артефакт и применять тот же файл",
+        "Для ручного подтверждения используйте environment с required reviewers"
+      ],
+      "solution": "jobs:\n  terraform:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: hashicorp/setup-terraform@v3\n      - run: terraform fmt -check -recursive\n      - run: terraform init\n      - run: terraform validate\n      - run: tflint --recursive\n      - run: terraform plan -out=tfplan\n      - uses: actions/upload-artifact@v4\n        with: { name: tfplan, path: tfplan }\n  apply:\n    needs: terraform\n    if: github.ref == 'refs/heads/main'\n    environment: production\n    steps:\n      - run: terraform apply -auto-approve tfplan",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "fmt\\s+-check",
+          "validate",
+          "plan",
+          "environment|apply"
+        ],
+        "feedback": "Теперь изменения инфраструктуры проходят ревью, линтеры и утверждение — это стандарт для прод-окружений."
+      },
+      "validation_hint": "PR с плохим форматированием падает на шаге fmt -check; apply требует подтверждения."
+    }
+  ]
+}

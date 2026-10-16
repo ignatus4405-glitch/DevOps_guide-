@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="540" viewBox="0 0 920 540" role="img" aria-label="Архитектура Kubernetes">
+<rect width="920" height="540" rx="14" fill="#0f172a"/>
+<title>Архитектура Kubernetes</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="460" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Кластер Kubernetes: control plane и worker-узлы</text>
+<rect x="40" y="60" width="380" height="200" rx="10" fill="#222c3d" stroke="#8fa3bf" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="230" y="84" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Control plane</text>
+<rect x="60" y="100" width="175" height="70" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="147.5" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">kube-apiserver</text>
+<text x="147.5" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">точка входа API</text>
+<rect x="245" y="100" width="175" height="70" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="332.5" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">etcd</text>
+<text x="332.5" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">состояние кластера</text>
+<rect x="60" y="180" width="175" height="70" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="147.5" y="206" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">scheduler</text>
+<text x="147.5" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">выбор узла для pod</text>
+<rect x="245" y="180" width="175" height="70" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="332.5" y="206" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">controller-manager</text>
+<text x="332.5" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">следит за desired state</text>
+<rect x="470" y="60" width="410" height="200" rx="10" fill="#222c3d" stroke="#8fa3bf" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="675" y="84" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Worker-узел</text>
+<rect x="490" y="100" width="185" height="70" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="582.5" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">kubelet</text>
+<text x="582.5" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">запускает контейнеры</text>
+<rect x="685" y="100" width="185" height="70" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="777.5" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">kube-proxy</text>
+<text x="777.5" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">сетевые правила</text>
+<rect x="490" y="180" width="185" height="70" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="582.5" y="206" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">containerd</text>
+<text x="582.5" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">runtime</text>
+<rect x="685" y="180" width="185" height="70" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="777.5" y="206" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Pods</text>
+<text x="777.5" y="226" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">приложение + sidecar</text>
+<line x1="445" y1="160" x2="465" y2="160" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="40" y="300" width="840" height="100" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="460.0" y="326" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Объекты, которые описывают приложение</text>
+<text x="460.0" y="346" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Deployment → ReplicaSet → Pod  |  Service (ClusterIP/NodePort/LoadBalancer)  |  Ingress → роутинг по домену</text>
+<text x="460.0" y="363" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">ConfigMap и Secret → конфигурация  |  HPA → автомасштабирование по CPU/RPS  |  PDB → доступность при обновлении</text>
+<rect x="40" y="430" width="400" height="90" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="240.0" y="456" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Проверки живости и готовности</text>
+<text x="240.0" y="476" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">livenessProbe — перезапуск зависшего pod</text>
+<text x="240.0" y="493" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">readinessProbe — трафик только в здоровый pod</text>
+<text x="240.0" y="510" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">startupProbe — медленный старт</text>
+<rect x="470" y="430" width="410" height="90" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="675.0" y="456" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Отладка</text>
+<text x="675.0" y="476" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">kubectl get/describe -n ns</text>
+<text x="675.0" y="493" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">kubectl logs -f, exec -it</text>
+<text x="675.0" y="510" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">kubectl get events --sort-by=.lastTimestamp</text>
+</svg>

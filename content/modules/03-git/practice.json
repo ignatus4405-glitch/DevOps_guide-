@@ -1,0 +1,93 @@
+{
+  "title": "Практика модуля 4: Git-флоу с ревью",
+  "tasks": [
+    {
+      "id": "branch-pr",
+      "title": "Полный цикл: ветка → коммит → пуш → PR",
+      "level": "easy",
+      "goal": "Пройти путь изменения, который используется в реальной команде.",
+      "instructions": [
+        "Создайте ветку с осмысленным именем (feature/...).",
+        "Сделайте коммит с сообщением по Conventional Commits.",
+        "Отправьте ветку и создайте pull request через gh или веб-интерфейс."
+      ],
+      "hints": [
+        "gh pr create --fill создаёт PR из коммитов",
+        "Проверьте, что ветка создана от актуального main (git switch main && git pull)"
+      ],
+      "solution": "git switch main && git pull --ff-only\ngit switch -c feature/health-check\necho 'GET /health' >> docs/api.md\ngit add docs/api.md\ngit commit -m 'docs(api): описать health endpoint'\ngit push -u origin feature/health-check\ngh pr create --fill --base main",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["git\\s+switch\\s+-c", "git\\s+commit", "git\\s+push", "(gh\\s+pr\\s+create|pull request)"],
+        "feedback": "Это основной рабочий цикл DevOps-инженера: короткая ветка, понятный коммит, PR на ревью."
+      },
+      "validation_hint": "На GitHub виден открытый PR с зелёными проверками (если CI уже подключён)."
+    },
+    {
+      "id": "conflict",
+      "title": "Разрешить конфликт осознанно",
+      "level": "medium",
+      "goal": "Понять механику конфликта и научиться разрешать его без паники.",
+      "instructions": [
+        "Создайте две ветки, изменяющие одну и ту же строку файла.",
+        "Смержите вторую в первую и получите конфликт.",
+        "Разрешите конфликт, закоммитьте и проверьте результат (git log --graph)."
+      ],
+      "hints": [
+        "git status показывает файлы в состоянии unmerged",
+        "После правки файла: git add <файл> && git commit"
+      ],
+      "solution": "printf 'timeout=30\\n' > app.conf\ngit add app.conf && git commit -m 'feat: timeout 30'\ngit switch -c expire\necho 'timeout=60' > app.conf && git add app.conf && git commit -m 'feat: timeout 60'\ngit switch -  # назад в ветку с 30\ngit merge expire   # конфликт\n# правим файл: timeout=45, убираем маркеры\ngit add app.conf && git commit -m 'fix: итоговое значение timeout'\ngit log --oneline --graph -5",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["git\\s+merge", "git\\s+add", "git\\s+commit", "git\\s+log.*graph"],
+        "feedback": "Важно: решение конфликта — это смысловое решение (какое значение верное), а не просто удаление маркеров."
+      },
+      "validation_hint": "git log --graph показывает merge-коммит и обе ветки истории."
+    },
+    {
+      "id": "recover",
+      "title": "Восстановить «потерянную» работу",
+      "level": "medium",
+      "goal": "Освоить reflog — спасательный круг при ошибках с историей.",
+      "instructions": [
+        "Сделайте коммит, затем «потеряйте» его командой git reset --hard HEAD~1.",
+        "Найдите коммит через git reflog.",
+        "Восстановите его в ветке и убедитесь, что файлы на месте."
+      ],
+      "hints": [
+        "reflog показывает HEAD@{1}, HEAD@{2} ...",
+        "Восстановление: git switch -c rescue <hash>"
+      ],
+      "solution": "echo 'важно' > important.txt && git add . && git commit -m 'feat: важный файл'\ngit reset --hard HEAD~1        # файл «потерян»\ngit reflog | head -5           # находим хеш\ngit switch -c rescue <hash>    # восстановление\ncat important.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["git\\s+reset\\s+--hard", "git\\s+reflog", "git\\s+switch\\s+-c"],
+        "feedback": "Именно поэтому Git почти невозможно «сломать» окончательно: всё остаётся в reflog."
+      },
+      "validation_hint": "После восстановления git log показывает коммит, а файл существует."
+    },
+    {
+      "id": "protection",
+      "title": "Настроить защиту main и обязательный CI",
+      "level": "hard",
+      "goal": "Сделать main веткой, в которую нельзя случайно залить несогласованное изменение.",
+      "instructions": [
+        "Создайте простой workflow в .github/workflows/ci.yml, который выполняется на pull_request.",
+        "Включите branch protection для main и добавьте этот check как обязательный.",
+        "Проверьте: прямой push в main запрещён, PR без зелёного CI не мержится."
+      ],
+      "hints": [
+        "gh api поддерживает установку защиты ветки, но проще через UI: Settings → Branches",
+        "Название check берётся из job name в workflow"
+      ],
+      "solution": "mkdir -p .github/workflows\ncat > .github/workflows/ci.yml <<'EOF'\nname: CI\non: [pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: echo 'тесты пройдены'\nEOF\ngit add .github/workflows/ci.yml && git commit -m 'ci: обязательный тест для PR'\ngit push\n# Settings → Branches → Add rule: main, Require status checks → CI / test",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["\\.github/workflows", "pull_request", "actions/checkout", "ci"],
+        "feedback": "Теперь main защищена: любое изменение проходит через PR и проверки — это стандарт безопасной работы."
+      },
+      "validation_hint": "Попытка прямого push в main отклоняется, PR показывает требуемый check."
+    }
+  ]
+}

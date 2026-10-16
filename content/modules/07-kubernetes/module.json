@@ -1,0 +1,15 @@
+{
+  "id": "kubernetes",
+  "order": 8,
+  "title": "Kubernetes",
+  "level": "intermediate",
+  "summary": "Кластер, pod, deployment, service, ingress, конфигурация, probes, автомасштабирование и отладка.",
+  "estimated_minutes": 300,
+  "objectives": [
+    "Объяснить архитектуру кластера и назначение её компонентов",
+    "Описывать приложение манифестами: Deployment, Service, Ingress, ConfigMap, Secret",
+    "Настроить проверки живости, лимиты ресурсов и автомасштабирование",
+    "Диагностировать сбои pod'ов через describe, logs, events"
+  ],
+  "tags": ["kubernetes", "оркестрация"]
+}

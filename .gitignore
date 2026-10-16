@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Build artifacts
+build/
+dist/
+*.spec
+!packaging/*.spec
+*.exe
+*.zip
+
+# Local runtime data
+*.log
+.arena/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Отчёты CI и локальных прогонов
+reports/

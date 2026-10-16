@@ -1,0 +1,93 @@
+{
+  "title": "Практика модуля 8: приложение в Kubernetes",
+  "tasks": [
+    {
+      "id": "minikube-deploy",
+      "title": "Развернуть приложение в локальном кластере",
+      "level": "medium",
+      "goal": "Пройти путь от пустого окружения до работающего сервиса внутри кластера.",
+      "instructions": [
+        "Запустите локальный кластер (minikube или kind).",
+        "Создайте namespace и примените Deployment с образом приложения.",
+        "Дождитесь готовности pod'ов и проверьте статус rollout."
+      ],
+      "hints": [
+        "minikube start --cpus=2 --memory=4g",
+        "kubectl create ns prod && kubectl -n prod apply -f deployment.yaml"
+      ],
+      "solution": "minikube start --cpus=2 --memory=4g\nkubectl create ns prod\nkubectl -n prod apply -f deployment.yaml\nkubectl -n prod get pods -w\nkubectl -n prod rollout status deploy/api",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["minikube\\s+start|kind\\s+create\\s+cluster", "kubectl\\s+create\\s+ns", "kubectl.*apply\\s+-f", "rollout\\s+status"],
+        "feedback": "Кластер и деплой готовы. Дальше — сервис, ingress и проверки, чтобы приложение было доступно и отказоустойчиво."
+      },
+      "validation_hint": "kubectl -n prod get pods показывает RUNNING и 3 реплики."
+    },
+    {
+      "id": "service-ingress",
+      "title": "Опубликовать приложение через Service и Ingress",
+      "level": "hard",
+      "goal": "Сделать приложение доступным по доменному имени с корректными endpoints.",
+      "instructions": [
+        "Создайте Service типа ClusterIP с селектором по меткам pod'ов.",
+        "Проверьте, что endpoints заполнены (kubectl get endpoints).",
+        "Добавьте Ingress с правилом по хосту и включите HTTPS-аннотацию через cert-manager."
+      ],
+      "hints": [
+        "Если endpoints пусты — проверьте selector и readinessProbe",
+        "Для локального теста: minikube addons enable ingress"
+      ],
+      "solution": "kubectl -n prod apply -f - <<'EOF'\napiVersion: v1\nkind: Service\nmetadata: { name: api, namespace: prod }\nspec:\n  selector: { app: api }\n  ports: [{ name: http, port: 80, targetPort: 8000 }]\n---\napiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: api\n  namespace: prod\n  annotations: { cert-manager.io/cluster-issuer: letsencrypt-prod }\nspec:\n  ingressClassName: nginx\n  tls: [{ hosts: [api.example.com], secretName: api-tls }]\n  rules:\n    - host: api.example.com\n      http:\n        paths:\n          - path: /\n            pathType: Prefix\n            backend: { service: { name: api, port: { name: http } } }\nEOF\nkubectl -n prod get endpoints api\nkubectl -n prod get ingress",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["kind:\\s+Service", "selector:", "kind:\\s+Ingress", "cert-manager", "get endpoints"],
+        "feedback": "Приложение опубликовано, endpoints не пусты, TLS автоматизирован через cert-manager."
+      },
+      "validation_hint": "curl -H 'Host: api.example.com' http://<ingress-ip>/health возвращает 200."
+    },
+    {
+      "id": "probes-limits",
+      "title": "Настроить проверки, лимиты и автомасштабирование",
+      "level": "hard",
+      "goal": "Сделать сервис устойчивым: корректная обработка старта, ограничение ресурсов, автомасштаб.",
+      "instructions": [
+        "Добавьте startupProbe, readinessProbe и livenessProbe с разумными таймаутами.",
+        "Задайте requests/limits для CPU и памяти.",
+        "Создайте HPA на 3–10 реплик по CPU 70 % и PDB minAvailable=2."
+      ],
+      "hints": [
+        "startupProbe отключает liveness и readiness до успеха",
+        "Для HPA нужен metrics-server: minikube addons enable metrics-server"
+      ],
+      "solution": "kubectl -n prod patch deploy api --type=strategic -p '{\n \"spec\":{\"template\":{\"spec\":{\"containers\":[{\n   \"name\":\"api\",\n   \"resources\":{\"requests\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"},\"limits\":{\"cpu\":\"500m\",\"memory\":\"512Mi\"}},\n   \"startupProbe\":{\"httpGet\":{\"path\":\"/health\",\"port\":8000},\"failureThreshold\":30,\"periodSeconds\":5},\n   \"readinessProbe\":{\"httpGet\":{\"path\":\"/ready\",\"port\":8000},\"periodSeconds\":10},\n   \"livenessProbe\":{\"httpGet\":{\"path\":\"/health\",\"port\":8000},\"periodSeconds\":20}\n }]}}}}'\nkubectl -n prod autoscale deploy api --min=3 --max=10 --cpu-percent=70\nkubectl -n prod get hpa -w",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["startupProbe", "readinessProbe", "livenessProbe", "limits", "autoscale|HorizontalPodAutoscaler"],
+        "feedback": "Три проверки + лимиты + HPA — это минимальный набор, при котором сервис в кластере ведёт себя предсказуемо."
+      },
+      "validation_hint": "kubectl get hpa показывает текущие и целевые метрики, реплики меняются под нагрузкой."
+    },
+    {
+      "id": "debug-hunt",
+      "title": "Разобрать сломанный pod по шагам",
+      "level": "medium",
+      "goal": "Отработать диагностику: от статуса pod до причины сбоя.",
+      "instructions": [
+        "Создайте Deployment с заведомо неправильным образом или портом.",
+        "Найдите причину сбоя через describe, logs и events.",
+        "Исправьте манифест и добейтесь статуса Running и готовности."
+      ],
+      "hints": [
+        "Смотрите секцию Events в kubectl describe pod — там прямая причина",
+        "Для предыдущего контейнера: kubectl logs <pod> --previous"
+      ],
+      "solution": "kubectl -n prod get pods\nkubectl -n prod describe pod api-broken | sed -n '/Events/,$p'\nkubectl -n prod logs api-broken --previous\n# исправляем образ/порт в манифесте и применяем снова\nkubectl -n prod apply -f deployment.yaml\nkubectl -n prod rollout status deploy/api",
+      "check": {
+        "type": "regex_all",
+        "patterns": ["describe\\s+pod", "(logs\\s+.*(--previous|-p)|--previous)", "get\\s+events|describe", "apply\\s+-f"],
+        "feedback": "Порядок «статус → describe → logs → исправление → rollout status» — это рабочий алгоритм дежурного."
+      },
+      "validation_hint": "После исправления pod'ы в статусе Running и READY 1/1."
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="Слои образа Docker">
+<rect width="900" height="520" rx="14" fill="#0f172a"/>
+<title>Слои образа Docker</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Dockerfile → слои образа → контейнер</text>
+<rect x="60" y="80" width="480" height="44" rx="12" fill="#222c3d" stroke="#8fa3bf" stroke-width="1.5"/>
+<text x="300.0" y="106" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">FROM python:3.12-slim</text>
+<text x="560" y="107" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">базовый образ</text>
+<rect x="60" y="132" width="480" height="44" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="300.0" y="158" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">COPY requirements.txt .</text>
+<text x="560" y="159" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">кэшируется отдельно</text>
+<rect x="60" y="184" width="480" height="44" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="300.0" y="210" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">RUN pip install -r requirements.txt</text>
+<text x="560" y="211" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">меняется при смене зависимостей</text>
+<rect x="60" y="236" width="480" height="44" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="300.0" y="262" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">COPY app/ /app</text>
+<text x="560" y="263" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">код меняется часто — сверху</text>
+<rect x="60" y="288" width="480" height="44" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="300.0" y="314" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">RUN useradd -m app &amp;&amp; USER app</text>
+<text x="560" y="315" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">непривилегированный пользователь</text>
+<rect x="60" y="340" width="480" height="44" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="300.0" y="366" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">CMD [&quot;python&quot;, &quot;-m&quot;, &quot;app&quot;]</text>
+<text x="560" y="367" text-anchor="start" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">точка входа</text>
+<line x1="600" y1="430" x2="600" y2="380" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="560" y="440" width="300" height="60" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="710.0" y="466" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">docker run / compose up</text>
+<text x="710.0" y="486" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">контейнер = слои + writable layer</text>
+<rect x="60" y="400" width="470" height="100" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="295.0" y="426" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Правила образов</text>
+<text x="295.0" y="446" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">multi-stage build уменьшает размер в 5-10 раз</text>
+<text x="295.0" y="463" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">не запускать от root, ставить USER</text>
+<text x="295.0" y="480" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">HEALTHCHECK и корректный CMD (exec-форма)</text>
+<text x="295.0" y="497" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">.dockerignore исключает .git, venv, кэши</text>
+</svg>

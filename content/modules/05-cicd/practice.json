@@ -1,0 +1,115 @@
+{
+  "title": "Практика модуля 6: свои руками пайплайн",
+  "tasks": [
+    {
+      "id": "first-workflow",
+      "title": "Первый workflow с линтером и тестами",
+      "level": "medium",
+      "goal": "Автоматизировать проверку репозитория на каждом push и pull request.",
+      "instructions": [
+        "Создайте .github/workflows/ci.yml с триггерами push и pull_request.",
+        "Добавьте шаги: checkout, setup-python с кэшем, установка зависимостей, линтер и тесты.",
+        "Запушьте ветку, откройте PR и добейтесь зелёного статуса."
+      ],
+      "hints": [
+        "cache: pip в actions/setup-python включает кэш автоматически",
+        "Для наглядности добавьте шаг с выводом версии Python"
+      ],
+      "solution": "mkdir -p .github/workflows\ncat > .github/workflows/ci.yml <<'EOF'\nname: CI\non:\n  push:\n  pull_request:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.12'\n          cache: pip\n      - run: pip install -r requirements-dev.txt\n      - run: ruff check .\n      - run: pytest -q\nEOF\ngit add .github/workflows/ci.yml && git commit -m 'ci: тесты и линтер на PR'\ngit push",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "\\.github/workflows",
+          "pull_request",
+          "actions/setup-python",
+          "cache:\\s*pip",
+          "pytest"
+        ],
+        "feedback": "Пайплайн собран правильно: кэш зависимостей и запуск на каждый PR — база любого проекта."
+      },
+      "validation_hint": "Во вкладке Actions видно зелёный запуск; в PR появился status check."
+    },
+    {
+      "id": "matrix-artifact",
+      "title": "Матрица версий и артефакт сборки",
+      "level": "medium",
+      "goal": "Проверить проект на нескольких версиях языка и сохранить результат сборки.",
+      "instructions": [
+        "Добавьте в workflow матрицу из двух версий Python.",
+        "Настройте fail-fast: false.",
+        "Соберите пакет и загрузите dist как артефакт с retention-days."
+      ],
+      "hints": [
+        "matrix: python: ['3.11','3.12']",
+        "actions/upload-artifact@v4 с параметром name и path"
+      ],
+      "solution": "strategy:\n  fail-fast: false\n  matrix:\n    python: ['3.11','3.12']\nsteps:\n  - uses: actions/setup-python@v5\n    with: { python-version: '${{ matrix.python }}' }\n  - run: pip install build && python -m build\n  - uses: actions/upload-artifact@v4\n    with:\n      name: dist-${{ matrix.python }}\n      path: dist/*\n      retention-days: 14",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "matrix",
+          "fail-fast",
+          "upload-artifact",
+          "retention-days"
+        ],
+        "feedback": "Артефакты сохраняются для следующих шагов (и для релиза) — собираем один раз, деплоим один и тот же файл."
+      },
+      "validation_hint": "В разделе Artifacts запуска доступны файлы сборки для обеих версий."
+    },
+    {
+      "id": "concurrency-secrets",
+      "title": "Отмена устаревших запусков и работа с секретами",
+      "level": "medium",
+      "goal": "Настроить экономию минут и корректное использование секретов и окружений.",
+      "instructions": [
+        "Добавьте блок concurrency с cancel-in-progress.",
+        "Ограничьте права токена (permissions: contents: read).",
+        "Добавьте job с environment: production, который использует секрет из окружения."
+      ],
+      "hints": [
+        "group: ci-${{ github.ref }} — уникальная группа на ветку",
+        "Секреты окружения задаются в Settings → Environments"
+      ],
+      "solution": "concurrency:\n  group: ci-${{ github.ref }}\n  cancel-in-progress: true\npermissions:\n  contents: read\njobs:\n  deploy:\n    environment: production\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo \"деплой с секретом ${{ secrets.DEPLOY_TOKEN }}\" | sed 's/.\\(*.\\{4\\}\\)/****\\1/'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "concurrency",
+          "cancel-in-progress",
+          "permissions",
+          "environment"
+        ],
+        "feedback": "Права ограничены, лишние запуски отменяются, секреты привязаны к окружению с approval — так выглядит зрелый пайплайн."
+      },
+      "validation_hint": "Два быстрых push подряд: первый запуск помечается как cancelled."
+    },
+    {
+      "id": "release-tag",
+      "title": "Релиз по тегу: сборка и публикация",
+      "level": "hard",
+      "goal": "Сделать так, чтобы выпуск версии запускался автоматически по тегу и публиковал файлы.",
+      "instructions": [
+        "Создайте workflow с триггером push тега v*.",
+        "Соберите артефакт и создайте GitHub Release с описанием.",
+        "Добавьте генерацию контрольных сумм SHA256 для файлов релиза."
+      ],
+      "hints": [
+        "Триггер: on: push: tags: ['v*']",
+        "Для релиза: gh release create ${{ github.ref_name }} dist/* --generate-notes",
+        "Суммы: sha256sum dist/* > SHA256SUMS.txt"
+      ],
+      "solution": "name: Release\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\njobs:\n  release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with: { python-version: '3.12' }\n      - run: pip install build && python -m build\n      - run: sha256sum dist/* > dist/SHA256SUMS.txt\n      - run: gh release create \"${{ github.ref_name }}\" dist/* --generate-notes\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "tags:\\s*\\[?'?v\\*",
+          "sha256sum",
+          "gh\\s+release\\s+create",
+          "contents:\\s*write"
+        ],
+        "feedback": "Теперь любой тег v1.2.0 автоматически публикует релиз с файлами и контрольными суммами — это и есть автообновление для клиентов."
+      },
+      "validation_hint": "После git push origin v0.1.0 в разделе Releases появился релиз с прикреплёнными файлами."
+    }
+  ]
+}
