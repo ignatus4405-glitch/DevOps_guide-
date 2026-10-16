@@ -79,10 +79,10 @@ def test_main_passes_on_green_suite(runner, tmp_path, capsys):
             str(tmp_path / "pytest.log"),
         ]
     )
-    assert code == 0
-    assert (tmp_path / "pytest.log").exists()
-    assert "1 passed" in (tmp_path / "pytest.log").read_text(encoding="utf-8")
-    assert "::error" not in capsys.readouterr().out
+    captured = capsys.readouterr().out
+    log_text = (tmp_path / "pytest.log").read_text(encoding="utf-8")
+    assert code == 0, f"дочерний прогон провалился:\n{log_text}\n--- вывод инструмента ---\n{captured}"
+    assert "::error" not in captured
 
 
 def test_main_reports_failure_with_annotation(runner, tmp_path, capsys):

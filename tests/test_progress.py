@@ -9,9 +9,18 @@ from PySide6.QtCore import QSettings
 from devops_academy.progress import ProgressData, ProgressStore
 
 
+def isolate_user_data(tmp_path, monkeypatch) -> None:
+    """Переносит пользовательские данные в tmp: на Windows это LOCALAPPDATA/APPDATA,
+    на Linux/macOS — HOME. Без подмены всех переменных тест может прочитать
+    реальный файл прогресса и упасть (так и случилось в CI на Windows)."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+
+
 def make_store(tmp_path, monkeypatch) -> ProgressStore:
     """Store на временных данных, чтобы не трогать реальные настройки."""
-    monkeypatch.setenv("HOME", str(tmp_path))
+    isolate_user_data(tmp_path, monkeypatch)
     settings = QSettings(str(tmp_path / "settings.ini"), QSettings.IniFormat)
     return ProgressStore(settings)
 
@@ -82,7 +91,7 @@ def test_progress_round_trip(course, tmp_path, monkeypatch):
 
 
 def test_corrupted_progress_does_not_crash(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path))
+    isolate_user_data(tmp_path, monkeypatch)
     settings = QSettings(str(tmp_path / "broken.ini"), QSettings.IniFormat)
     settings.setValue("progress/json", "{ это не json")
     store = ProgressStore(settings)
