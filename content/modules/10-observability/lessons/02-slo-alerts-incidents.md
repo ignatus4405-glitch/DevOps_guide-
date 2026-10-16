@@ -6,6 +6,9 @@ minutes: 40
 
 # SLI/SLO, алерты и разбор инцидентов
 
+
+![Практики SRE: SLO, error budget, blameless-разборы](assets/img/sre-practices.svg)
+
 ## SLI, SLO, SLA и error budget
 
 | Термин | Что это | Пример |

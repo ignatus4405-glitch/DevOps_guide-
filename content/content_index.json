@@ -1,7 +1,7 @@
 {
-  "generated": "2026-10-16T18:54:33+00:00",
+  "generated": "2026-10-16T18:56:27+00:00",
   "files": 85,
-  "total_bytes": 566711,
+  "total_bytes": 567319,
   "hashes": {
     "assets/img/aws-architecture.svg": "f1d67b79e306bf95",
     "assets/img/career-roadmap.svg": "d180469d5e6c4a9b",
@@ -56,7 +56,7 @@
     "modules/06-docker/lessons/02-compose-security.md": "7eefe1e50c24ec3b",
     "modules/06-docker/module.json": "0a8df1a047d74655",
     "modules/06-docker/practice.json": "6349fc1b9c28e25d",
-    "modules/06-docker/quiz.json": "b1fd394e7738bbc5",
+    "modules/06-docker/quiz.json": "62ac9689a4cba7b5",
     "modules/07-kubernetes/lessons/01-architecture.md": "6de3c0387013fa52",
     "modules/07-kubernetes/lessons/02-manifests.md": "45fbfaa052ac3e57",
     "modules/07-kubernetes/lessons/03-operations.md": "b6f85fd436cf17bf",
@@ -74,7 +74,7 @@
     "modules/09-cloud/practice.json": "a1558b064dd9ef3c",
     "modules/09-cloud/quiz.json": "bc9248f77185bafc",
     "modules/10-observability/lessons/01-metrics-logs-traces.md": "59f4525f45b01596",
-    "modules/10-observability/lessons/02-slo-alerts-incidents.md": "f5eb805e111985ed",
+    "modules/10-observability/lessons/02-slo-alerts-incidents.md": "d0ca0b3eb5a6453d",
     "modules/10-observability/module.json": "66747a9a92a45d7f",
     "modules/10-observability/practice.json": "25418574ff98141a",
     "modules/10-observability/quiz.json": "ca3e75e7626dce7c",
@@ -84,7 +84,7 @@
     "modules/11-devsecops/practice.json": "94e903ec1fc682eb",
     "modules/11-devsecops/quiz.json": "55ab4dbbae12b537",
     "modules/12-career/lessons/01-capstone-project.md": "942935258d1ec252",
-    "modules/12-career/lessons/02-interview-and-growth.md": "999ee5b1725a09c0",
+    "modules/12-career/lessons/02-interview-and-growth.md": "5201d4fe99f0cf7c",
     "modules/12-career/module.json": "10fadf6ad53b5e8d",
     "modules/12-career/practice.json": "699d1e314252365b",
     "modules/12-career/quiz.json": "3370426f168959f0"
