@@ -1,5 +1,16 @@
 # История изменений
 
+## [0.2.0] — 2026-10-16
+
+### Добавлено
+- Подключаем схемы SRE-практик и карьерной карты к урокам
+
+### Исправлено
+- Убираем хвост «(.dockerignore)» из объяснения теста Docker
+
+### Прочее
+- Merge pull request #7 from ignatus4405-glitch/arena/f33a7a3a-devops-guide
+
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версии — по [Semantic Versioning](https://semver.org/lang/ru/).
 Новые записи добавляются автоматически при выпуске релиза (см. `.github/workflows/build.yml`).

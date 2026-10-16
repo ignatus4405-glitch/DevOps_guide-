@@ -2,8 +2,8 @@
 
 APP_NAME = "DevOps Academy"
 APP_ID = "DevOpsAcademy"
-APP_VERSION = "0.1.0"
-BUILD_NUMBER = "3"
+APP_VERSION = "0.2.0"
+BUILD_NUMBER = "4"
 BUILD_DATE = "2026-10-16"
 GITHUB_REPO = "ignatus4405-glitch/DevOps_guide-"
 GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
