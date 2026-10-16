@@ -80,6 +80,7 @@
 | Заметки | `tests/test_release_notes.py` | группировка коммитов, запись в CHANGELOG |
 | Запуск | `tests/test_launcher.py` | `run.py --version/--self-test/--help` |
 | CI-обвязка | `tests/test_run_tests.py` | экранирование аннотаций, сводка упавших тестов |
+| Сборка | `tests/test_entry_point.py` | журнал ошибок, потоки вывода, коды возврата, содержимое spec |
 | GUI | `tests/test_ui_smoke.py` | окно, все уроки, тесты, практика, экзамен, темы |
 
 GUI-тесты работают в offscreen-режиме (`QT_QPA_PLATFORM=offscreen`) — их можно
