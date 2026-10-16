@@ -178,3 +178,22 @@ def test_git_log_ignores_merges(notes_tool, tmp_path):
     subjects = [subject for _short, subject in notes_tool.git_log(repo, "")]
     assert "Merge branch 'feature'" not in subjects
     assert "fix: правка в ветке" in subjects
+
+
+def test_update_changelog_consumes_unreleased_section(notes_tool, tmp_path):
+    """Раздел «Не выпущено» заменяется записью релиза, а не остаётся рядом с ней."""
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_text(
+        "# История изменений\n\n"
+        "## [Не выпущено]\n\n### Исправлено\n- Что-то поправили\n\n"
+        "## [0.2.1] — 2026-01-01\n\n- Прошлый релиз\n",
+        encoding="utf-8",
+    )
+    notes_tool.update_changelog(
+        changelog, "## [0.3.0] — 2026-02-01\n\n### Добавлено\n- Новое\n", "0.3.0"
+    )
+
+    text = changelog.read_text(encoding="utf-8")
+    assert "Не выпущено" not in text
+    assert text.index("## [0.3.0]") < text.index("## [0.2.1]")
+    assert "- Прошлый релиз" in text

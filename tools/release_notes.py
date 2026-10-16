@@ -156,12 +156,23 @@ def release_notes(version: str, grouped: dict[str, list[str]], commits: list[tup
     return "\n".join(lines) + "\n"
 
 
+UNRELEASED_RE = re.compile(r"\n*## \[Не выпущено\][\s\S]*?(?=\n## \[|\Z)")
+
+
 def update_changelog(path: Path, section: str, version: str) -> None:
-    """Вставляет новую версию в CHANGELOG.md сразу после заголовка файла."""
+    """Вставляет новую версию в CHANGELOG.md сразу после заголовка файла.
+
+    Раздел «Не выпущено» (если он был) убирается: его содержание уже описано
+    записью релиза, иначе в истории оставались дубли.
+    """
     header = "# История изменений"
     text = path.read_text(encoding="utf-8") if path.exists() else header + "\n"
+    if UNRELEASED_RE.search(text):
+        text = UNRELEASED_RE.sub("\n", text)
+        print("раздел «Не выпущено» заменён записью релиза")
     if f"## [{version}]" in text:
         print(f"CHANGELOG.md уже содержит версию {version} — пропускаем")
+        path.write_text(text, encoding="utf-8")
         return
 
     lines = text.splitlines()
