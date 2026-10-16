@@ -121,9 +121,20 @@ jobs:
         run: pyinstaller --noconfirm --clean packaging/devops_academy.spec
       - name: Проверить собранный exe
         shell: pwsh
+        env:
+          DEVOPS_ACADEMY_LOG: ${{ github.workspace }}\dist\self-test.log
         run: |
-          & "dist/DevOpsAcademy/DevOpsAcademy.exe" --self-test
-          if ($LASTEXITCODE -ne 0) { throw "self-test собранного приложения провалился" }
+          # Важно: PowerShell не ждёт GUI-приложения (console=False) при вызове через &,
+          # поэтому запускаем через Start-Process -Wait и смотрим ExitCode процесса.
+          $out = "${{ github.workspace }}\dist\self-test.out"
+          $err = "${{ github.workspace }}\dist\self-test.err"
+          $proc = Start-Process -FilePath "dist\DevOpsAcademy\DevOpsAcademy.exe" `
+            -ArgumentList "--self-test" -Wait -PassThru -NoNewWindow `
+            -RedirectStandardOutput $out -RedirectStandardError $err
+          Get-Content $out -ErrorAction SilentlyContinue
+          Get-Content $err -ErrorAction SilentlyContinue
+          if (Test-Path $env:DEVOPS_ACADEMY_LOG) { Get-Content $env:DEVOPS_ACADEMY_LOG }
+          if ($proc.ExitCode -ne 0) { throw "self-test собранного приложения провалился: код $($proc.ExitCode)" }
       - name: Упаковать в ZIP
         shell: pwsh
         run: |
@@ -171,7 +182,11 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: pyinstaller --noconfirm --clean packaging/devops_academy.spec
       - name: Проверить собранный бинарник
-        run: dist/DevOpsAcademy/DevOpsAcademy --self-test
+        env:
+          DEVOPS_ACADEMY_LOG: ${{ github.workspace }}/dist/self-test.log
+        run: |
+          dist/DevOpsAcademy/DevOpsAcademy --self-test
+          [ -f "$DEVOPS_ACADEMY_LOG" ] && cat "$DEVOPS_ACADEMY_LOG" || true
       - name: Упаковать в tar.gz
         run: |
           cd dist && tar czf "DevOpsAcademy-${{ needs.guard.outputs.version }}-linux-x64.tar.gz" DevOpsAcademy
