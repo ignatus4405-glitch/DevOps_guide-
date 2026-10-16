@@ -69,15 +69,15 @@ jobs:
         run: ruff check .
       - name: Тесты (pytest)
         shell: bash
+        # Внимание: GitHub запускает bash с `-e`, поэтому проверку статуса делаем
+        # через `if !` — иначе шаг упадёт до того, как успеет оставить аннотацию.
         run: |
+          set -uo pipefail
           mkdir -p reports
-          set -o pipefail
-          pytest -q --junitxml=reports/pytest.xml 2>&1 | tee reports/pytest.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
+          if ! pytest -q --junitxml=reports/pytest.xml 2>&1 | tee reports/pytest.log; then
             # Сводка провала — в аннотацию: её видно в проверках без скачивания логов.
             python tools/ci_annotate.py reports/pytest.log --title "Провал тестов"
-            exit "$status"
+            exit 1
           fi
       - name: Дымовой тест приложения
         run: python tools/smoke_test.py
