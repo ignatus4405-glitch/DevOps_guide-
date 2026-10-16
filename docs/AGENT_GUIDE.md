@@ -69,10 +69,24 @@ Run workflow (выбор bump). Отдельно тег ставить не ну
 3. Полный лог — в артефакте `reports-<os>-<python>` (`reports/pytest.log`).
 4. Перед пушем воспроизведите локально те же команды, что в workflow:
    `ruff check . && pytest -q && python tools/validate_content.py && python run.py --self-test`.
-5. Особенности ОС: на Windows git может выложить файлы с CRLF — хеши контента
-   считаются от LF (не возвращайте прямое чтение байтов без нормализации);
-   на Ubuntu без `libgl1/libegl1/libxkbcommon0/libdbus-1-3` PySide6 не импортируется
-   даже с `QT_QPA_PLATFORM=offscreen`.
+5. Особенности ОС (всё это уже ловили в CI, не повторяйте ошибок):
+   - **Windows + CRLF**: git может выложить файлы с CRLF, поэтому хеши контента
+     считаются от LF-версии (не читайте байты без `normalize_bytes`);
+   - **Windows + кодировка**: стандартный вывод в cp1252 — печать русского текста
+     падает с `UnicodeEncodeError`. В workflow заданы `PYTHONIOENCODING: utf-8` и
+     `PYTHONUTF8: "1"`, а собственные скрипты вызывают `sys.stdout.reconfigure(encoding="utf-8")`;
+   - **Windows + `Path.home()`**: игнорирует `HOME`, читает реальный профиль.
+     Тесты обязаны изолировать данные (`monkeypatch.setattr(progress, "user_data_dir", ...)`
+     и переменные `USERPROFILE`/`LOCALAPPDATA`/`APPDATA`), иначе прогресс «протекает» между тестами;
+   - **Windows + вложенный pytest**: дочерний прогон без явных `--rootdir` и `--basetemp`
+     уходит искать конфигурацию вверх по диску и спотыкается о `C:\Documents and Settings`
+     (`PermissionError`); для тестов обёрток используйте подменяемый модуль pytest
+     (`--pytest-module stub_pytest`);
+   - **Ubuntu + Qt**: без `libgl1 libegl1 libxkbcommon0 libdbus-1-3` PySide6 не импортируется
+     даже с `QT_QPA_PLATFORM=offscreen` (эти пакеты ставятся в обоих workflow);
+   - **Ubuntu + bash шагов**: GitHub запускает bash с `-e`, поэтому проверки вида
+     «запустить и обработать провал» пишите через `if ! command; then ...; fi`
+     или запускайте из Python (`tools/run_tests.py`).
 
 ## Подводные камни
 
