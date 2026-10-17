@@ -494,7 +494,21 @@ class MainWindow(QMainWindow):
         checker.wait()
         if self._close_after_checker:
             self._close_after_checker = False
-            self.close()
+            if self.isVisible():
+                self.close()
+
+    def _finish_deferred_close(self) -> None:
+        """Закрывает окно, когда фоновой checker действительно остановился."""
+        if not self._close_after_checker:
+            return
+        checker = self.checker
+        if checker is not None and checker.isRunning():
+            QTimer.singleShot(25, self._finish_deferred_close)
+            return
+        if checker is not None:
+            checker.wait()
+        # Keep the flag until finished is delivered; late result signals must not open dialogs.
+        self.close()
 
     def on_no_updates(self, manual: bool) -> None:
         mark_checked(self.store)
@@ -556,6 +570,7 @@ class MainWindow(QMainWindow):
         if self.checker is not None and self.checker.isRunning():
             self._close_after_checker = True
             self.checker.requestInterruption()
+            QTimer.singleShot(25, self._finish_deferred_close)
             self.statusBar().showMessage("Завершаем фоновую проверку обновлений перед закрытием…")
             event.ignore()
             return

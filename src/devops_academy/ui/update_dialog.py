@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QDialog,
@@ -134,7 +134,7 @@ class UpdateDialog(QDialog):
             self.worker.wait()
         if self._close_when_worker_stops:
             self._close_when_worker_stops = False
-            self.reject()
+            super().reject()
             return
         if self._download_error:
             self.install_button.setEnabled(True)
@@ -168,13 +168,28 @@ class UpdateDialog(QDialog):
     def _defer_close_for_worker(self) -> bool:
         if self.worker is None or not self.worker.isRunning():
             return False
-        self._close_when_worker_stops = True
+        if not self._close_when_worker_stops:
+            self._close_when_worker_stops = True
+            QTimer.singleShot(25, self._finish_deferred_close)
         self.worker.requestInterruption()
         self.install_button.setEnabled(False)
         self.later_button.setEnabled(False)
         self.skip_button.setEnabled(False)
         self.status.setText("Останавливаем загрузку перед закрытием…")
         return True
+
+    def _finish_deferred_close(self) -> None:
+        """Закрывает диалог по таймеру, даже если queued finished ещё не обработан."""
+        if not self._close_when_worker_stops:
+            return
+        worker = self.worker
+        if worker is not None and worker.isRunning():
+            QTimer.singleShot(25, self._finish_deferred_close)
+            return
+        if worker is not None:
+            worker.wait()
+        # Keep the flag until finished is delivered so a late result cannot launch install.
+        super().reject()
 
     def reject(self) -> None:
         # Escape вызывает reject(), минуя closeEvent; тоже безопасно ждём QThread.
