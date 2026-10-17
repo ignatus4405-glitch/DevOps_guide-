@@ -267,6 +267,52 @@ requests/limits для подов, где они не указаны.
 - Конфигурация через ConfigMap/Secret, секреты — из внешнего хранилища.
 - HPA масштабирует, PDB сохраняет доступность, `kubectl diff` показывает последствия.
 
+## Путь манифеста через API
+
+`kubectl apply` отправляет объект в API-сервер. До записи в etcd он проходит:
+
+1. **аутентификацию** (кто вы);
+2. **авторизацию** (RBAC: можно ли);
+3. **mutating admission** — плагины могут изменить объект (sidecar, defaults);
+4. **валидацию схемы** — типы и обязательные поля;
+5. **validating admission** — политики (запрет privileged, проверка registry);
+6. **запись в etcd**.
+
+Понимание порядка объясняет, почему объект «есть», но под не создаётся:
+например, mutating-webhook добавил неверный toleration, или validating-webhook
+отклонил.
+
+### Defaults и неявное поведение
+
+Kubernetes подставляет значения: `restartPolicy: Always`, `terminationGracePeriod:
+30`, `imagePullPolicy`, resource limits из LimitRange. Неявные defaults — частая
+причина расхождений между окружениями. Фиксируйте важные поля явно.
+
+### Server-side apply
+
+`kubectl apply` хранит последнюю конфигурацию в аннотации. Проблемы: конфликты
+при нескольких владельцах, раздутые аннотации. Server-side apply переносит
+расчёт diff на сервер и отслеживает field ownership:
+
+```bash
+kubectl apply --server-side -f app.yaml
+kubectl diff -f app.yaml
+```
+
+`kubectl diff` — обязательная привычка: сначала посмотреть, что изменится.
+
+### Схемы и версии API
+
+`apiVersion` меняется при эволюции. Deprecated-версии перестают работать после
+обновления кластера. Проверяйте `kubectl api-resources` и `kubectl explain`.
+Инструмент `pluto`/`kube-no-trouble` находит устаревшие API до апгрейда.
+
+### Валидация
+
+Схема ловит типы, но не смысл. `replicas: -1` может пройти схему и упасть в
+контроллере. Валидируйте бизнес-правила политиками и тестами манифестов
+(kubeconform, conftest).
+
 ## Проверьте себя
 
 1. Почему liveness не должен проверять внешние зависимости?

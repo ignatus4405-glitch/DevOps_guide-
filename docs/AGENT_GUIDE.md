@@ -30,17 +30,17 @@ QT_QPA_PLATFORM=offscreen python tools/smoke_test.py
 python tools/generate_version.py --version "$(cat VERSION)" --build local   # если менялся content/
 ```
 
-## Текущее состояние контента (0.4.0)
+## Текущее состояние контента (0.5.0)
 
 | Показатель | Значение |
 | --- | --- |
-| Модулей | 13 |
-| Уроков | 85 |
-| Вопросов | 365 |
-| Задач с автопроверкой | 128 |
-| Иллюстраций | 18 |
-| Терминов глоссария | 93 |
-| Объём | ~55 000 слов, ~63 часа |
+| Модулей | 14 |
+| Уроков | 131 |
+| Вопросов | 409 |
+| Задач с автопроверкой | 140 |
+| Иллюстраций | 20 |
+| Терминов глоссария | 107 |
+| Объём | ~75 000 слов, ~85 часов |
 
 Правила, которые проверяются тестами и валидатором:
 
@@ -57,8 +57,13 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
   `src/devops_academy/version.py` и `VERSION`, если версия ещё не выпускается.
 
 Схемы, добавленные в 0.4.0: `kubernetes-networking.svg`, `incident-response.svg`,
-`terraform-state.svg`. Они строятся функциями в `tools/make_diagrams.py`; правьте
-код схемы, а не SVG руками.
+`terraform-state.svg`; в 0.5.0 — `consistency-spectrum.svg` и
+`resilience-patterns.svg`. Все они строятся функциями в `tools/make_diagrams.py`;
+правьте код схемы, а не SVG руками.
+
+Новый модуль 0.5.0 — `content/modules/13-distributed-systems` (order 13),
+карьерный модуль переехал на order 14. При добавлении модуля не забудьте
+проверить порядок `order` у остальных.
 
 ## Куда что класть
 
@@ -78,7 +83,7 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest -q                                            # 135 тестов
+pytest -q                                            # 137 тестов
 ```
 
 В headless-средах (сервер, контейнер) Qt требует библиотек; используйте

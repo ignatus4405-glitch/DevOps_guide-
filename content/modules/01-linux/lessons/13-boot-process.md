@@ -1,0 +1,93 @@
+---
+id: boot-process
+title: Загрузка Linux: от firmware до systemd
+minutes: 30
+---
+
+# Загрузка Linux: от firmware до systemd
+
+Сервер не поднялся — и непонятно, где искать. Понимание цепочки загрузки сужает
+диагностику до конкретного этапа.
+
+## Цепочка
+
+```text
+firmware (BIOS/UEFI) → bootloader (GRUB) → kernel → initramfs → init/systemd → target
+```
+
+Каждый этап передаёт управление следующему. Если сбой до ядра — нет логов ОС;
+если после — есть dmesg/journal.
+
+## UEFI и GRUB
+
+UEFI находит EFI-раздел и загрузчик. GRUB читает конфигурацию, показывает меню,
+загружает ядро и initramfs, передаёт параметры (`root=`, `console=`, `quiet`).
+
+Полезные действия в GRUB: `e` — редактировать параметры, добавить
+`systemd.unit=rescue.target` или `init=/bin/bash` для восстановления.
+
+`grub-mkconfig -o /boot/grub/grub.cfg` пересобирает конфигурацию; ошибка здесь
+делает систему незагружаемой.
+
+## Ядро
+
+Ядро инициализирует память, драйверы, монтирует root. Модули могут быть
+встроены или загружаться из initramfs.
+
+Параметры ядра:
+
+- `root=/dev/mapper/vg-root` — где корень;
+- `ro`/`rw` — режим монтирования;
+- `console=ttyS0` — последовательная консоль;
+- `nomodeset` — без KMS-драйверов.
+
+`dmesg` показывает, что ядро нашло и где ошиблось.
+
+## initramfs
+
+Мини-образ с драйверами и скриптами, нужными, чтобы найти и смонтировать
+настоящий корень: LVM, RAID, шифрование, сеть.
+
+Если initramfs не содержит нужный модуль, система падает в rescue shell. Лечение:
+`dracut --force`/`update-initramfs -u` после изменения конфигурации.
+
+## systemd
+
+systemd — PID 1. Он поднимает юниты по зависимостям и достигает target
+(`multi-user.target`, `graphical.target`).
+
+```bash
+systemctl get-default
+systemctl list-units --failed
+journalctl -b -p err
+```
+
+`systemd-analyze blame` показывает, какие юниты тормозят загрузку,
+`systemd-analyze critical-chain` — критический путь.
+
+## Режимы восстановления
+
+- `rescue.target` — однопользовательский режим с базовыми сервисами;
+- `emergency.target` — минимальный shell, root в ro;
+- `init=/bin/bash` — обход systemd (осторожно с монтированием).
+
+## Диагностика по стадиям
+
+| Симптом | Где смотреть |
+| --- | --- |
+| нет вывода вообще | питание, firmware, консоль |
+| меню GRUB, ядро не грузится | параметры, initramfs |
+| остановка на mounting root | драйверы, fstab, LVM |
+| загрузилось, сервисы падают | journal, systemctl status |
+| долгая загрузка | systemd-analyze |
+
+## Как проверить себя
+
+1. Какие этапы проходит загрузка?
+2. Зачем initramfs?
+3. Что делает `systemd.unit=rescue.target`?
+4. Где смотреть ошибки ядра?
+5. Чем rescue отличается от emergency?
+
+!!! tip "Практика"
+    Задача «Разбор загрузки» в практикуме: найти этап сбоя по логам.

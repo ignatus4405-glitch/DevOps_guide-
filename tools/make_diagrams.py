@@ -689,6 +689,56 @@ def terraform_state() -> Svg:
 
 
 
+def consistency_spectrum() -> Svg:
+    svg = Svg(900, 470, "Спектр консистентности")
+    svg.label(450, 34, "От строгой согласованности к eventual", size=17, color="#e6edf7", bold=True)
+    svg.box(40, 90, 240, 120, "Линейизуемость", ["один порядок для всех", "чтение видит запись", "цена: задержка и кворум"], "blue")
+    svg.box(330, 90, 240, 120, "Read-your-writes", ["клиент видит свои записи", "компромисс для UX", "часто достаточно"], "green")
+    svg.box(620, 90, 240, 120, "Eventual", ["реплики сойдутся", "низкая задержка", "риск старых данных"], "orange")
+    svg.arrow(284, 150, 326, 150)
+    svg.arrow(574, 150, 616, 150)
+    svg.box(40, 250, 390, 170, "Кворум", [
+        "N реплик, W подтверждений записи, R чтений",
+        "W + R > N — чтение пересекается с записью",
+        "N=3, W=2, R=2 переживает отказ одного узла",
+        "конфликты разрешаются версией, а не часами",
+    ], "purple")
+    svg.box(470, 250, 390, 170, "Когда что выбирать", [
+        "деньги и инвентарь — строгая модель",
+        "ленты и счётчики — eventual",
+        "профиль пользователя — read-your-writes",
+        "решение фиксируется в ADR",
+    ], "green")
+    return svg
+
+
+def resilience_patterns() -> Svg:
+    svg = Svg(900, 470, "Паттерны устойчивости")
+    svg.label(450, 34, "Четыре базовых защиты от каскадного отказа", size=17, color="#e6edf7", bold=True)
+    svg.box(50, 90, 380, 130, "Таймауты", [
+        "бюджет запроса меньше, чем у клиента",
+        "таймауты уменьшаются вглубь",
+        "без таймаута поток занят вечно",
+    ], "blue")
+    svg.box(470, 90, 380, 130, "Ретраи с jitter", [
+        "только идемпотентные операции",
+        "2-3 попытки и общий бюджет",
+        "задержка с случайным разбросом",
+    ], "green")
+    svg.box(50, 260, 380, 130, "Circuit breaker", [
+        "Closed → Open → Half-open",
+        "порог ошибок и минимум запросов",
+        "не тратит ресурсы на мёртвый сервис",
+    ], "orange")
+    svg.box(470, 260, 380, 130, "Bulkhead и лимиты", [
+        "отдельные пулы на зависимость",
+        "token bucket и 429 с Retry-After",
+        "деградация вместо каскада",
+    ], "purple")
+    svg.label(450, 430, "Проверяйте паттерны учениями: отказ реплики, задержка, блокировка DNS", size=13)
+    return svg
+
+
 DIAGRAMS = {
     "devops-lifecycle.svg": devops_lifecycle,
     "linux-filesystem.svg": linux_filesystem,
@@ -708,6 +758,8 @@ DIAGRAMS = {
     "kubernetes-networking.svg": kubernetes_networking,
     "incident-response.svg": incident_response,
     "terraform-state.svg": terraform_state,
+    "consistency-spectrum.svg": consistency_spectrum,
+    "resilience-patterns.svg": resilience_patterns,
 }
 
 

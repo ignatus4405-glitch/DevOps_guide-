@@ -275,6 +275,33 @@
         "feedback": "Алерт реагирует на скорость расхода бюджета."
       },
       "validation_hint": "Правило использует отношение ошибок к бюджету и окно наблюдения."
+    },
+    {
+      "id": "otel-config",
+      "title": "Собрать OTel collector",
+      "level": "medium",
+      "goal": "Пропустить телеметрию через единый конвейер.",
+      "instructions": [
+        "Опишите receivers otlp.",
+        "Добавьте memory_limiter и batch.",
+        "Настройте exporter в Tempo.",
+        "Проверьте конфиг."
+      ],
+      "hints": [
+        "Пайплайн traces собирается из receivers/processors/exporters.",
+        "memory_limiter защищает от OOM."
+      ],
+      "solution": "cat > otel.yaml <<'EOF'\nreceivers:\n  otlp:\n    protocols: {grpc: {}, http: {}}\nprocessors:\n  memory_limiter: {check_interval: 1s, limit_mib: 400}\n  batch: {}\nexporters:\n  otlphttp: {endpoint: http://tempo:4318}\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      processors: [memory_limiter, batch]\n      exporters: [otlphttp]\nEOF\ngit add otel.yaml && git commit -m 'feat: OTel collector'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "otlp",
+          "memory_limiter",
+          "git\\s+commit"
+        ],
+        "feedback": "Телеметрия идёт через контролируемый конвейер."
+      },
+      "validation_hint": "Конфиг содержит приём, обработку и экспорт трейсов."
     }
   ]
 }

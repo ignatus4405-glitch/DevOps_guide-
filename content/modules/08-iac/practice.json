@@ -276,6 +276,33 @@
         "feedback": "Роль можно запускать повторно без побочных эффектов."
       },
       "validation_hint": "Второй прогон даёт changed=0, исправление описано."
+    },
+    {
+      "id": "policy-tags",
+      "title": "Ввести политику обязательных тегов",
+      "level": "medium",
+      "goal": "Не дать создать ресурсы без владельца.",
+      "instructions": [
+        "Напишите политику Conftest/OPA.",
+        "Проверьте план Terraform.",
+        "Запустите в режиме audit, затем enforce.",
+        "Опишите исключения."
+      ],
+      "hints": [
+        "conftest test plan.json -p policy/.",
+        "Сообщение должно объяснять, что делать."
+      ],
+      "solution": "cat > policy/tags.rego <<'EOF'\npackage main\n\ndeny[msg] {\n  resource := input.resource_changes[_]\n  not resource.change.after.tags.owner\n  msg := sprintf(\"ресурс %s без owner\", [resource.address])\n}\nEOF\nterraform show -json plan.out > plan.json\nconftest test plan.json -p policy/\ngit add policy && git commit -m 'feat: политика тегов'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "deny",
+          "conftest",
+          "git\\s+commit"
+        ],
+        "feedback": "Ресурсы без owner не проходят проверку."
+      },
+      "validation_hint": "Политика проверяет plan и содержит понятное сообщение."
     }
   ]
 }

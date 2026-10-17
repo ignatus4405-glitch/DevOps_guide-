@@ -1,0 +1,167 @@
+{
+  "title": "Практика модуля 14: архитектура и надёжность",
+  "tasks": [
+    {
+      "id": "capacity-math",
+      "title": "Посчитать мощность сервиса",
+      "level": "medium",
+      "goal": "Понять, сколько параллельных запросов нужно сервису.",
+      "instructions": [
+        "Возьмите 400 rps и среднее время 150 мс.",
+        "Посчитайте L по закону Литтла.",
+        "Сравните с числом рабочих потоков (16).",
+        "Запишите вывод в CAPACITY.md."
+      ],
+      "hints": [
+        "L = λ × W, время переведите в секунды.",
+        "Если L больше потоков — запросы стоят в очереди."
+      ],
+      "solution": "cat > CAPACITY.md <<'EOF'\n# Расчёт мощности\n\nλ = 400 rps, W = 0,15 s\nL = 400 × 0,15 = 60 запросов\nПотоков: 16 → очередь неизбежна\nВывод: нужно ≥ 64 потока или меньше W\nEOF\ngit add CAPACITY.md && git commit -m 'docs: расчёт мощности'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "L\\s*=\\s*400",
+          "0,15|0\\.15",
+          "git\\s+commit"
+        ],
+        "feedback": "Расчёт показывает нехватку параллелизма до инцидента."
+      },
+      "validation_hint": "Файл содержит формулу, подстановку и вывод о числе потоков."
+    },
+    {
+      "id": "slo-budget-calc",
+      "title": "Посчитать бюджет ошибок",
+      "level": "easy",
+      "goal": "Перевести SLO в минуты и burn rate.",
+      "instructions": [
+        "SLO 99,95 % на 30 дней.",
+        "Посчитайте бюджет в минутах.",
+        "Посчитайте burn rate при 1 % ошибок.",
+        "Сохраните расчёт."
+      ],
+      "hints": [
+        "Бюджет = 30×24×60×(1−SLO).",
+        "burn = error_rate/(1−SLO)."
+      ],
+      "solution": "cat > SLO.md <<'EOF'\n# SLO 99,95%\n\nБюджет: 30*24*60*0,0005 = 21,6 мин\nПри 1% ошибок burn = 0,01/0,0005 = 20\nВывод: бюджет кончится за ~1,5 дня\nEOF\ngit add SLO.md && git commit -m 'docs: бюджет ошибок'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "99,95|99\\.95",
+          "burn|20",
+          "git\\s+commit"
+        ],
+        "feedback": "Бюджет и скорость его расхода посчитаны."
+      },
+      "validation_hint": "Есть бюджет в минутах и burn rate при 1 % ошибок."
+    },
+    {
+      "id": "cache-keys",
+      "title": "Спроектировать ключи кэша",
+      "level": "medium",
+      "goal": "Исключить утечку данных между пользователями и снизить лавины.",
+      "instructions": [
+        "Опишите ключ для профиля пользователя.",
+        "Добавьте версию схемы ответа.",
+        "Добавьте jitter в TTL.",
+        "Опишите инвалидацию при изменении профиля."
+      ],
+      "hints": [
+        "Ключ включает user_id, локаль и версию.",
+        "TTL 60 с + случайные 0–30 с."
+      ],
+      "solution": "cat > CACHE.md <<'EOF'\n# Ключи кэша\n\nprofile:{user_id}:{locale}:v2\nTTL: 60s + rand(0..30)\nИнвалидация: событие profile.updated → DEL\nПромах: читаем БД, кладём с TTL\nEOF\ngit add CACHE.md && git commit -m 'docs: ключи кэша'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "user_id",
+          "TTL",
+          "git\\s+commit"
+        ],
+        "feedback": "Ключ учитывает контекст, лавина смягчена jitter'ом."
+      },
+      "validation_hint": "Ключ включает пользователя и версию, есть TTL с jitter и инвалидация."
+    },
+    {
+      "id": "idempotent-consumer",
+      "title": "Сделать потребителя идемпотентным",
+      "level": "hard",
+      "goal": "Защитить обработку платежных событий от дублей.",
+      "instructions": [
+        "Заведите таблицу обработанных message_id.",
+        "Пишите её в одной транзакции с бизнес-изменением.",
+        "Опишите поведение при повторе.",
+        "Проверьте сценарий двойной доставки."
+      ],
+      "hints": [
+        "`INSERT ... ON CONFLICT DO NOTHING` по message_id.",
+        "Транзакция должна покрывать и бизнес-запись."
+      ],
+      "solution": "BEGIN;\nINSERT INTO processed(message_id) VALUES ('evt-1') ON CONFLICT DO NOTHING;\nINSERT INTO payments(id, amount) VALUES ('p-1', 100);\nCOMMIT;\n# повтор evt-1 не создаст второй платёж\ngit add consumer.sql && git commit -m 'feat: идемпотентный потребитель'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "processed",
+          "ON CONFLICT",
+          "git\\s+commit"
+        ],
+        "feedback": "Повторная доставка не создаёт дубль."
+      },
+      "validation_hint": "Есть таблица обработанных id и транзакционная запись."
+    },
+    {
+      "id": "circuit-config",
+      "title": "Настроить предохранитель",
+      "level": "medium",
+      "goal": "Ограничить каскадный отказ зависимости.",
+      "instructions": [
+        "Задайте порог ошибок и минимальное число запросов.",
+        "Настройте таймаут и число ретраев.",
+        "Опишите состояния Closed/Open/Half-open.",
+        "Добавьте метрику состояния."
+      ],
+      "hints": [
+        "Порог 50 % за 10 с при минимуме 20 запросов.",
+        "Ретраи 2 с jitter, таймаут 600 мс."
+      ],
+      "solution": "cat > RESILIENCE.md <<'EOF'\n# Circuit breaker: payments\n\nwindow: 10s, min_requests: 20\nthreshold: 50% errors\ntimeout: 600ms, retries: 2, jitter: on\nstates: closed → open → half-open\nmetric: breaker_state{service=\"payments\"}\nEOF\ngit add RESILIENCE.md && git commit -m 'docs: настройка предохранителя'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "threshold|порог",
+          "timeout|таймаут",
+          "git\\s+commit"
+        ],
+        "feedback": "Предохранитель ограничивает каскадный отказ."
+      },
+      "validation_hint": "Указаны пороги, таймаут, ретраи и состояния."
+    },
+    {
+      "id": "adr-record",
+      "title": "Записать архитектурное решение",
+      "level": "easy",
+      "goal": "Зафиксировать выбор и его цену.",
+      "instructions": [
+        "Выберите решение: очередь или синхронный вызов.",
+        "Опишите контекст и альтернативы.",
+        "Перечислите плюсы и минусы.",
+        "Добавьте условие пересмотра."
+      ],
+      "hints": [
+        "ADR — короткий документ, а не эссе.",
+        "Обязательно раздел «последствия»."
+      ],
+      "solution": "cat > docs/adr/007-async-orders.md <<'EOF'\n# ADR-007: асинхронная обработка заказов\n\n## Контекст\nПики 500 rps, оплата до 2 с.\n\n## Решение\nОчередь + идемпотентный потребитель.\n\n## Последствия\n+ пики сглаживаются\n- задержка и дубли\n\n## Пересмотр\nЕсли p95 подтверждения > 3 с.\nEOF\ngit add docs/adr && git commit -m 'docs: ADR по заказам'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ADR",
+          "Последствия|Последствия",
+          "git\\s+commit"
+        ],
+        "feedback": "Решение записано вместе с ценой и условием пересмотра."
+      },
+      "validation_hint": "ADR содержит контекст, решение, последствия и условие пересмотра."
+    }
+  ]
+}

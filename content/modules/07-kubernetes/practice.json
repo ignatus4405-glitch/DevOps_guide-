@@ -280,6 +280,33 @@
         "feedback": "Причина найдена в событиях, а не угадана."
       },
       "validation_hint": "Разбор содержит describe, логи предыдущего контейнера и фикс."
+    },
+    {
+      "id": "hpa-queue",
+      "title": "Масштабировать по очереди",
+      "level": "hard",
+      "goal": "Реагировать на рост очереди раньше, чем на CPU.",
+      "instructions": [
+        "Опишите KEDA ScaledObject для очереди.",
+        "Задайте lagThreshold и границы.",
+        "Проверьте поведение при всплеске.",
+        "Опишите minReplicas."
+      ],
+      "hints": [
+        "KEDA использует scaler Kafka/RabbitMQ.",
+        "minReplicas защищает от холодного старта."
+      ],
+      "solution": "cat > keda.yaml <<'EOF'\napiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata: {name: worker}\nspec:\n  minReplicaCount: 2\n  maxReplicaCount: 30\n  triggers:\n    - type: kafka\n      metadata: {topic: orders, lagThreshold: \"100\"}\nEOF\nkubectl apply -f keda.yaml\ngit add keda.yaml && git commit -m 'feat: KEDA по очереди'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ScaledObject",
+          "lagThreshold",
+          "git\\s+commit"
+        ],
+        "feedback": "Масштабирование следует за очередью, а не за CPU."
+      },
+      "validation_hint": "ScaledObject задаёт границы и порог lag."
     }
   ]
 }

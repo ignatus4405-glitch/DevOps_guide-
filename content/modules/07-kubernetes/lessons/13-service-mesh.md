@@ -1,0 +1,93 @@
+---
+id: service-mesh
+title: Service mesh: mTLS, трафик и наблюдаемость
+minutes: 30
+---
+
+# Service mesh: mTLS, трафик и наблюдаемость
+
+Микросервисы общаются по сети, и каждая команда заново реализует retries,
+таймауты, mTLS и метрики. Service mesh выносит это в инфраструктурный слой.
+
+## Модель
+
+- **data plane** — прокси рядом с подом (Envoy) или eBPF;
+- **control plane** — конфигурация и сертификаты (Istio, Linkerd).
+
+Приложение не знает о mesh: трафик перехватывается прозрачно.
+
+## Sidecar vs ambient
+
+Классика — sidecar-контейнер на каждый под: изоляция, но overhead по памяти и
+latency. Ambient (Istio) использует node-level proxy и waypoint — меньше
+накладных.
+
+## Что даёт mesh
+
+- mTLS между сервисами;
+- авторизация по identity (SPIFFE);
+- retries, timeouts, circuit breaking;
+- canary и traffic splitting;
+- метрики latency/ошибок без изменений кода;
+- трейсинг.
+
+## Чего не даёт
+
+- не исправляет плохой дизайн;
+- не заменяет observability приложения;
+- не убирает необходимость в идемпотентности;
+- добавляет сложность отладки.
+
+## Риски
+
+- latency и потребление памяти;
+- сложность конфигурации (CRD);
+- сертификаты и их ротация;
+- «mesh сломался» — трафик встал.
+
+Начинайте с mTLS и базовых метрик, а не с 50 CRD.
+
+## Когда нужен
+
+- много сервисов и команд;
+- требования к mTLS/аудиту;
+- нужен единый traffic management;
+- есть экспертиза для эксплуатации.
+
+Для 5 сервисов mesh чаще вреден: хватит ingress и приложения.
+
+## Пример: canary через mesh
+
+Допустим, 5 % трафика должно идти на новую версию. Без mesh это отдельный
+Deployment и ручная правка Ingress. С mesh — декларативное правило:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata: {name: api}
+spec:
+  hosts: [api]
+  http:
+    - route:
+        - destination: {host: api, subset: v1}
+          weight: 95
+        - destination: {host: api, subset: v2}
+          weight: 5
+```
+
+Метрики по `destination_version` позволяют сравнить ошибки и latency. Если
+хуже — вес возвращается к 100/0 без пересборки и деплоя.
+
+Важно: правило должно быть в Git и проходить ревью, иначе mesh становится
+ещё одним местом ручных изменений.
+
+## Как проверить себя
+
+1. Чем data plane отличается от control plane?
+2. Что даёт mTLS?
+3. Чем sidecar отличается от ambient?
+4. Чего mesh не решает?
+5. Когда mesh не нужен?
+
+!!! tip "Практика"
+    Задача «Трафик-сплит» в практикуме: описать canary через mesh.

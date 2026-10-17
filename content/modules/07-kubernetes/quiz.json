@@ -535,6 +535,42 @@
       "tags": [
         "config-secrets"
       ]
+    },
+    {
+      "id": "q31",
+      "type": "single",
+      "question": "Что делает контроллер при расхождении desired и actual?",
+      "options": [
+        "Перезапускает API-сервер",
+        "Приводит фактическое состояние к желаемому",
+        "Удаляет etcd",
+        "Меняет DNS"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Kubernetes — набор циклов согласования, а не императивных команд.",
+      "tags": [
+        "controllers"
+      ]
+    },
+    {
+      "id": "q32",
+      "type": "single",
+      "question": "Почему limits не влияют на решение планировщика?",
+      "options": [
+        "Планировщик их игнорирует",
+        "Он учитывает requests, а limits — потолок потребления",
+        "Limits задаются в другом API",
+        "Они применяются только к podам"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Размещение считается по requests; limits важны для OOM и throttling.",
+      "tags": [
+        "scheduling"
+      ]
     }
   ]
 }
