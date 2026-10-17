@@ -88,7 +88,7 @@
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 ruff check .                  # линтер
-pytest -q                     # 106 тестов: контент, прогресс, рендер, GUI, обновления, релиз
+pytest -q                     # 127 тестов: контент, прогресс, рендер, GUI, обновления, релиз
 python tools/validate_content.py     # структура курса
 python tools/smoke_test.py           # дымовой тест GUI в offscreen
 python run.py --self-test            # проверка контента и зависимостей

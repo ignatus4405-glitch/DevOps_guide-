@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="470" viewBox="0 0 920 470" role="img" aria-label="CI/CD конвейер">
 <rect width="920" height="470" rx="14" fill="#0f172a"/>
 <title>CI/CD конвейер</title>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker></defs>
 <text x="460" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Конвейер поставки: от коммита до продакшена</text>
 <rect x="30" y="90" width="112" height="84" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
 <text x="86.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">commit</text>

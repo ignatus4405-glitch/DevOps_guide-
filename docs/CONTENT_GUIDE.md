@@ -153,7 +153,33 @@ python tools/make_diagrams.py            # перегенерировать вс
 ```
 
 Добавляя новую схему, используйте хелперы класса `Svg` (`box`, `label`, `arrow`, `path`),
-затем проверьте результат: `xmllint` или тест `tests/test_content.py`.
+затем проверьте результат: `pytest tests/test_diagrams.py` (валидность XML, размеры,
+использование в уроках) и **обязательно посмотрите на картинку глазами** — тест
+не увидит «линии проходят сквозь текст». Быстрый способ отрисовать SVG в PNG тем же
+движком, что в приложении:
+
+```python
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QImage, QPainter
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtWidgets import QApplication
+
+app = QApplication([])
+renderer = QSvgRenderer("content/assets/img/devops-lifecycle.svg")
+image = QImage(renderer.defaultSize(), QImage.Format_ARGB32)
+image.fill(Qt.black)
+painter = QPainter(image)
+renderer.render(painter)
+painter.end()
+image.save("/tmp/preview.png")
+```
+
+Правила компоновки схем (проверены на практике):
+
+- блоки не должны пересекаться, а стрелки — проходить через текст и панели;
+- подпись должна помещаться в свою панель с запасом (шрифт в Qt шире, чем в браузере);
+- цикл рисуйте кольцевой трассой: наконечники по касательной читаются лучше,
+  чем дуги «через центр» (именно так ломалась схема жизненного цикла).
 
 ## Чек-лист добавления контента
 
