@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="430" viewBox="0 0 900 430" role="img" aria-label="Реагирование на инцидент">
+<rect width="900" height="430" rx="14" fill="#0f172a"/>
+<title>Реагирование на инцидент</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Пять шагов инцидента и метрики времени</text>
+<rect x="25" y="100" width="150" height="96" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="100.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Обнаружение</text>
+<text x="100.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">алерт или жалоба</text>
+<text x="100.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">фиксируем время</text>
+<rect x="205" y="100" width="150" height="96" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="280.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Триаж</text>
+<text x="280.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">оценка влияния</text>
+<text x="280.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">роли и канал</text>
+<rect x="385" y="100" width="150" height="96" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="460.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Локализация</text>
+<text x="460.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">откат, флаг</text>
+<text x="460.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">остановка ущерба</text>
+<rect x="565" y="100" width="150" height="96" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="640.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Починка</text>
+<text x="640.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">сервис работает</text>
+<text x="640.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">проверка метрик</text>
+<rect x="745" y="100" width="150" height="96" rx="12" fill="#222c3d" stroke="#8fa3bf" stroke-width="1.5"/>
+<text x="820.0" y="126" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Разбор</text>
+<text x="820.0" y="146" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">причины и действия</text>
+<text x="820.0" y="163" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">без поиска виновных</text>
+<line x1="179" y1="148" x2="201" y2="148" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="359" y1="148" x2="381" y2="148" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="539" y1="148" x2="561" y2="148" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="719" y1="148" x2="741" y2="148" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="100" y="235" text-anchor="middle" font-family="'Cascadia Mono','Consolas',monospace" font-size="12" font-weight="400" fill="#9fb0cc">MTTD</text>
+<text x="280" y="235" text-anchor="middle" font-family="'Cascadia Mono','Consolas',monospace" font-size="12" font-weight="400" fill="#9fb0cc">MTTA</text>
+<text x="460" y="235" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">время до локализации</text>
+<text x="640" y="235" text-anchor="middle" font-family="'Cascadia Mono','Consolas',monospace" font-size="12" font-weight="400" fill="#9fb0cc">MTTR</text>
+<text x="820" y="235" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">действия</text>
+<rect x="40" y="270" width="820" height="120" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="450.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Что делает разбор полезным</text>
+<text x="450.0" y="316" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">таймлайн с фактами и временем, а не пересказ по памяти</text>
+<text x="450.0" y="333" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">причина в системе: почему ошибка стала возможной</text>
+<text x="450.0" y="350" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">2-3 действия с владельцем и сроком, проверка на учении</text>
+<text x="450.0" y="367" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">blameless: люди рассказывают правду, процесс меняется</text>
+</svg>

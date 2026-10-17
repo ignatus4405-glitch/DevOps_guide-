@@ -127,6 +127,67 @@ git clean -nd                     # что будет удалено (-n — п�
     объясняющий откат. А `git reflog` спасает почти всегда — коммиты в Git не
     исчезают мгновенно после отмены.
 
+## Анатомия ветки и коммита
+
+Ветка в Git — это просто указатель на коммит (40-символьный SHA). HEAD — указатель
+на текущую ветку. Отсюда всё поведение:
+
+```bash
+cat .git/HEAD                 # ref: refs/heads/main
+git rev-parse main            # SHA коммита
+git cat-file -p HEAD          # содержимое: tree, parent, author, message
+```
+
+Коммит состоит из снимка дерева (tree), ссылки на родителя (или двух при merge),
+автора и сообщения. Изменения вычисляются как разница деревьев — Git не хранит
+«дельты по файлам» в том смысле, в котором их обычно представляют.
+
+## Fast-forward, three-way и squash
+
+| Тип merge | Что происходит | Когда |
+| --- | --- | --- |
+| fast-forward | указатель просто сдвигается | ветка не расходилась с main |
+| three-way | создаётся merge-коммит с двумя родителями | обе ветки имели коммиты |
+| squash | все коммиты ветки становятся одним | feature-PR в main |
+| rebase | коммиты переносятся на новую базу | локальная уборка истории |
+
+```bash
+git merge --ff-only feature      # откажется, если нужен merge-коммит
+git merge --no-ff feature        # всегда создавать merge-коммит
+git merge --squash feature       # подготовить один коммит
+```
+
+`--ff-only` полезен в CI: он проверяет, что ветка актуальна и не потребует
+неожиданного merge.
+
+## Что делать с «грязной» историей
+
+Перед PR полезно привести коммиты в порядок:
+
+```bash
+git rebase -i HEAD~5
+# pick   a1b2c3d feat: add endpoint
+# squash 9f8e7d6 fix typo
+# reword 7c6b5a4 feat: add tests
+```
+
+В интерактивном rebase доступны `pick`, `reword`, `edit`, `squash`, `fixup`,
+`drop`. Правило: переписывать историю можно только в своей ветке, которую никто
+не забирал.
+
+## Полезные настройки
+
+```bash
+git config --global pull.rebase true          # pull через rebase, а не merge
+git config --global fetch.prune true          # удалять исчезнувшие remote-ветки
+git config --global rerere.enabled true       # запоминать разрешения конфликтов
+git config --global core.autocrlf input       # нормальные переводы строк
+git config --global init.defaultBranch main
+```
+
+`pull.rebase true` убирает «поезда» merge-коммитов при обновлении ветки, но требует
+понимания конфликтов. В командах с общими ветками чаще используют merge.
+
 ## Короткое резюме
 
 - Ветка — указатель на коммит; короткие ветки уменьшают конфликты.

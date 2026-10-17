@@ -50,7 +50,7 @@ def _points_inside_panel(d: str, panel: tuple[int, int, int, int]) -> list[tuple
 
 def test_all_diagrams_exist():
     files = _svg_files()
-    assert len(files) == 15, f"ожидалось 15 иллюстраций, найдено {len(files)}"
+    assert len(files) == 18, f"ожидалось 18 иллюстраций, найдено {len(files)}"
 
 
 ALL_SVGS = sorted(IMAGES.glob("*.svg")) if IMAGES.exists() else []

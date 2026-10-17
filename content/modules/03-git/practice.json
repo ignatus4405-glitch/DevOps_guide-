@@ -18,7 +18,12 @@
       "solution": "git switch main && git pull --ff-only\ngit switch -c feature/health-check\necho 'GET /health' >> docs/api.md\ngit add docs/api.md\ngit commit -m 'docs(api): описать health endpoint'\ngit push -u origin feature/health-check\ngh pr create --fill --base main",
       "check": {
         "type": "regex_all",
-        "patterns": ["git\\s+switch\\s+-c", "git\\s+commit", "git\\s+push", "(gh\\s+pr\\s+create|pull request)"],
+        "patterns": [
+          "git\\s+switch\\s+-c",
+          "git\\s+commit",
+          "git\\s+push",
+          "(gh\\s+pr\\s+create|pull request)"
+        ],
         "feedback": "Это основной рабочий цикл DevOps-инженера: короткая ветка, понятный коммит, PR на ревью."
       },
       "validation_hint": "На GitHub виден открытый PR с зелёными проверками (если CI уже подключён)."
@@ -40,7 +45,12 @@
       "solution": "printf 'timeout=30\\n' > app.conf\ngit add app.conf && git commit -m 'feat: timeout 30'\ngit switch -c expire\necho 'timeout=60' > app.conf && git add app.conf && git commit -m 'feat: timeout 60'\ngit switch -  # назад в ветку с 30\ngit merge expire   # конфликт\n# правим файл: timeout=45, убираем маркеры\ngit add app.conf && git commit -m 'fix: итоговое значение timeout'\ngit log --oneline --graph -5",
       "check": {
         "type": "regex_all",
-        "patterns": ["git\\s+merge", "git\\s+add", "git\\s+commit", "git\\s+log.*graph"],
+        "patterns": [
+          "git\\s+merge",
+          "git\\s+add",
+          "git\\s+commit",
+          "git\\s+log.*graph"
+        ],
         "feedback": "Важно: решение конфликта — это смысловое решение (какое значение верное), а не просто удаление маркеров."
       },
       "validation_hint": "git log --graph показывает merge-коммит и обе ветки истории."
@@ -62,7 +72,11 @@
       "solution": "echo 'важно' > important.txt && git add . && git commit -m 'feat: важный файл'\ngit reset --hard HEAD~1        # файл «потерян»\ngit reflog | head -5           # находим хеш\ngit switch -c rescue <hash>    # восстановление\ncat important.txt",
       "check": {
         "type": "regex_all",
-        "patterns": ["git\\s+reset\\s+--hard", "git\\s+reflog", "git\\s+switch\\s+-c"],
+        "patterns": [
+          "git\\s+reset\\s+--hard",
+          "git\\s+reflog",
+          "git\\s+switch\\s+-c"
+        ],
         "feedback": "Именно поэтому Git почти невозможно «сломать» окончательно: всё остаётся в reflog."
       },
       "validation_hint": "После восстановления git log показывает коммит, а файл существует."
@@ -84,10 +98,181 @@
       "solution": "mkdir -p .github/workflows\ncat > .github/workflows/ci.yml <<'EOF'\nname: CI\non: [pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: echo 'тесты пройдены'\nEOF\ngit add .github/workflows/ci.yml && git commit -m 'ci: обязательный тест для PR'\ngit push\n# Settings → Branches → Add rule: main, Require status checks → CI / test",
       "check": {
         "type": "regex_all",
-        "patterns": ["\\.github/workflows", "pull_request", "actions/checkout", "ci"],
+        "patterns": [
+          "\\.github/workflows",
+          "pull_request",
+          "actions/checkout",
+          "ci"
+        ],
         "feedback": "Теперь main защищена: любое изменение проходит через PR и проверки — это стандарт безопасной работы."
       },
       "validation_hint": "Попытка прямого push в main отклоняется, PR показывает требуемый check."
+    },
+    {
+      "id": "bisect-hunt",
+      "title": "Найти регрессию через bisect",
+      "level": "hard",
+      "goal": "Освоить бинарный поиск сломанного коммита.",
+      "instructions": [
+        "Создайте репозиторий с 20 коммитами и тестом, который проходит до определённого момента.",
+        "Запустите git bisect с хорошей и плохой точками.",
+        "Автоматизируйте проверку через git bisect run.",
+        "Запишите найденный SHA в BISECT.md."
+      ],
+      "hints": [
+        "git bisect start HEAD <good-sha> запускает поиск сразу.",
+        "git bisect run <команда> использует код возврата команды.",
+        "После поиска обязательно git bisect reset."
+      ],
+      "solution": "git init repo && cd repo\ngit commit --allow-empty -m 'init'\nfor i in $(seq 1 20); do git commit --allow-empty -m \"change $i\"; done\ngit bisect start HEAD HEAD~20\ngit bisect run bash -c 'test -f marker.txt'\ngit bisect reset\n> /tmp/bisect-result.txt 2>&1\necho 'найденный коммит записан' > BISECT.md",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "git\\s+bisect\\s+start",
+          "git\\s+bisect\\s+run",
+          "git\\s+bisect\\s+reset"
+        ],
+        "feedback": "Bisect найден: вместо 20 проверок хватило ~5. Это навык, который экономит часы при регрессии."
+      },
+      "validation_hint": "BISECT.md содержит SHA найденного коммита; bisect завершён через reset."
+    },
+    {
+      "id": "recover-commit",
+      "title": "Восстановить потерянный коммит",
+      "level": "medium",
+      "goal": "Научиться пользоваться reflog вместо паники.",
+      "instructions": [
+        "Создайте коммит с уникальным сообщением.",
+        "Сделайте git reset --hard HEAD~1.",
+        "Найдите коммит в reflog и восстановите его.",
+        "Убедитесь, что файл вернулся."
+      ],
+      "hints": [
+        "git reflog показывает HEAD@{n}.",
+        "Восстановление: git reset --hard HEAD@{1}.",
+        "Проверка: git log --oneline -1."
+      ],
+      "solution": "echo 'important' > important.txt\ngit add important.txt && git commit -m 'feat: важный файл'\ngit reset --hard HEAD~1\ngit reflog | head\ngit reset --hard HEAD@{1}\ngit log --oneline -1\nls important.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "git\\s+reflog",
+          "git\\s+reset\\s+--hard\\s+HEAD@\\{1\\}"
+        ],
+        "feedback": "Коммит восстановлен. Reflog — ваша страховка на 30–90 дней."
+      },
+      "validation_hint": "Файл important.txt на месте, git log показывает восстановленный коммит."
+    },
+    {
+      "id": "hook-guard",
+      "title": "Защитить репозиторий хуком",
+      "level": "medium",
+      "goal": "Поставить локальную проверку, которая ловит ошибки до коммита.",
+      "instructions": [
+        "Создайте .githooks/pre-commit с запуском ruff и проверкой секретов.",
+        "Подключите каталог через git config core.hooksPath .githooks.",
+        "Попробуйте закоммитить файл с ошибкой стиля — хук должен заблокировать.",
+        "Исправьте и закоммитьте успешно."
+      ],
+      "hints": [
+        "Скрипт должен быть исполняемым: chmod +x.",
+        "Проверка секретов: grep -E 'AKIA|BEGIN.*PRIVATE KEY'.",
+        "Обход для эксперимента: git commit --no-verify."
+      ],
+      "solution": "mkdir -p .githooks\ncat > .githooks/pre-commit <<'EOF'\n#!/usr/bin/env bash\nset -euo pipefail\nfiles=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.py$' || true)\n[ -z \"$files\" ] && exit 0\necho \"$files\" | xargs ruff check\ngit diff --cached | grep -Eq 'AKIA|BEGIN .*PRIVATE KEY' && { echo 'похоже на секрет'; exit 1; }\nexit 0\nEOF\nchmod +x .githooks/pre-commit\ngit config core.hooksPath .githooks\ngit commit -m 'chore: локальные проверки'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "\\.githooks/pre-commit",
+          "core\\.hooksPath",
+          "chmod\\s+\\+x"
+        ],
+        "feedback": "Хук работает: ошибки ловятся до push, а не в CI."
+      },
+      "validation_hint": "Хук блокирует коммит с ошибкой и пропускает исправленный."
+    },
+    {
+      "id": "hotfix-flow",
+      "title": "Провести hotfix по всем веткам",
+      "level": "hard",
+      "goal": "Отработать полный цикл исправления с переносом в main.",
+      "instructions": [
+        "Создайте release-ветку от main и тег.",
+        "В отдельной ветке исправьте «баг» (измените строку в файле).",
+        "Смержите фикс в release и поставьте тег patch-версии.",
+        "Перенесите тот же фикс в main через cherry-pick."
+      ],
+      "hints": [
+        "Тег: git tag -a v1.4.1 -m 'hotfix'.",
+        "Cherry-pick: git cherry-pick <sha>.",
+        "Проверьте, что изменение есть в обеих ветках: git log --all --oneline."
+      ],
+      "solution": "git switch -c release/1.4\ngit tag -a v1.4.0 -m 'release 1.4.0'\ngit switch -c hotfix/login-bug\necho 'fixed' >> app.txt\ngit commit -am 'fix: логин при пустом пароле'\ngit switch release/1.4 && git merge --no-ff hotfix/login-bug\ngit tag -a v1.4.1 -m 'hotfix 1.4.1'\nFIX=$(git rev-parse HEAD~1)\ngit switch main && git cherry-pick \"$FIX\"\ngit log --all --oneline -6",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "release/1\\.4",
+          "hotfix",
+          "cherry-pick",
+          "git\\s+tag"
+        ],
+        "feedback": "Фикс в обеих ветках: релиз и main больше не расходятся."
+      },
+      "validation_hint": "В release/1.4 и main есть одинаковое изменение; тег v1.4.1 существует."
+    },
+    {
+      "id": "squash-cleanup",
+      "title": "Привести PR к чистым коммитам",
+      "level": "easy",
+      "goal": "Сделать историю понятной для ревью.",
+      "instructions": [
+        "Соберите WIP-коммиты в один осмысленный.",
+        "Перепишите сообщение по Conventional Commits.",
+        "Проверьте diff перед push.",
+        "Запушьте с `--force-with-lease`."
+      ],
+      "hints": [
+        "`git rebase -i HEAD~3`.",
+        "`--force-with-lease` безопаснее `--force`."
+      ],
+      "solution": "git rebase -i HEAD~3\n# pick + squash\ngit commit --amend -m 'feat: кэш зависимостей в CI'\ngit push --force-with-lease\ngit log --oneline -3",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "rebase\\s+-i",
+          "force-with-lease",
+          "git\\s+log"
+        ],
+        "feedback": "История читается как рассказ, а не как дневник."
+      },
+      "validation_hint": "PR содержит один осмысленный коммит и проверенный diff."
+    },
+    {
+      "id": "tag-release",
+      "title": "Поставить аннотированный тег",
+      "level": "easy",
+      "goal": "Зафиксировать релиз воспроизводимо.",
+      "instructions": [
+        "Создайте аннотированный тег semver.",
+        "Проверьте, что тег указывает на нужный коммит.",
+        "Запушьте тег отдельно.",
+        "Покажите тег в списке."
+      ],
+      "hints": [
+        "`git tag -a v1.4.0 -m \"...\"`.",
+        "`git show v1.4.0` показывает объект тега."
+      ],
+      "solution": "git tag -a v1.4.0 -m 'release 1.4.0'\ngit show --stat v1.4.0\ngit push origin v1.4.0\ngit tag -n",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "tag\\s+-a",
+          "git\\s+push\\s+origin",
+          "git\\s+(show|tag)"
+        ],
+        "feedback": "Релиз привязан к коммиту и воспроизводим."
+      },
+      "validation_hint": "Создан аннотированный тег v1.4.0 и отправлен в origin."
     }
   ]
 }

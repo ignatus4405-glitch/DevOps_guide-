@@ -173,6 +173,45 @@ ansible-playbook site.yml --start-at-task 'Положить конфиг nginx'
 `local_file` или dynamic inventory), затем Ansible настраивает. Всё — из Git, через
 пайплайн с ревью.
 
+## Ansible vs Terraform: граница
+
+| | Terraform | Ansible |
+| --- | --- | --- |
+| Что создаёт | инфраструктуру (ВМ, сети, БД) | конфигурацию внутри сервера |
+| Модель | декларативная, state | процедурная, задачи |
+| Идемпотентность | через state | через модули |
+| Когда | создание/удаление ресурсов | установка и настройка ПО |
+
+Типичная связка: Terraform создаёт ВМ и security group, Ansible ставит на них
+приложение и конфиги. Альтернатива — cloud-init/образы, где Ansible не нужен.
+
+## Ad-hoc команды
+
+```bash
+ansible all -m ping
+ansible web -m shell -a 'uptime'
+ansible db -m service -a 'name=postgresql state=restarted' --become
+```
+
+Ad-hoc удобны для проверки, но не для настройки: они не версионируются и не
+идемпотентны. Всё повторяемое — в playbook.
+
+## Безопасность Ansible
+
+- `become: true` только там, где нужно;
+- SSH-ключи, не пароли;
+- `no_log: true` для задач с секретами;
+- inventory не хранит ключи в открытом виде;
+- ограничение `hosts` и `--limit` для опасных операций.
+
+Проверка «что будет»:
+
+```bash
+ansible-playbook site.yml --check --diff
+```
+
+Без `--check` первый запуск на проде — лотерея.
+
 ## Короткое резюме
 
 - Ansible работает по SSH без агентов, плейбуки идемпотентны.

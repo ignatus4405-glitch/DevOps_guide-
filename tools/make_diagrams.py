@@ -615,6 +615,80 @@ def career_roadmap() -> Svg:
     return svg
 
 
+def kubernetes_networking() -> Svg:
+    svg = Svg(900, 470, "Сеть в Kubernetes")
+    svg.label(450, 34, "Путь запроса: клиент → Ingress → Service → Pod", size=17, color="#e6edf7", bold=True)
+    svg.box(40, 90, 180, 90, "Клиент", ["HTTPS", "внешний трафик"], "grey")
+    svg.box(260, 90, 180, 90, "Ingress", ["TLS, маршруты", "правила по host/path"], "green")
+    svg.box(480, 90, 180, 90, "Service", ["ClusterIP", "выбор подов по labels"], "blue")
+    svg.box(700, 90, 160, 90, "Поды", ["readiness gate", "порт контейнера"], "purple")
+    svg.arrow(225, 135, 255, 135)
+    svg.arrow(445, 135, 475, 135)
+    svg.arrow(665, 135, 695, 135)
+    svg.box(40, 240, 250, 130, "CoreDNS", ["service.namespace.svc", "резолвит имена сервисов", "проверка: nslookup api"], "green")
+    svg.box(320, 240, 250, 130, "kube-proxy", ["iptables/IPVS правила", "балансировка на поды", "endpoints обновляются"], "blue")
+    svg.box(600, 240, 260, 130, "NetworkPolicy", ["default deny в namespace", "явные allow-правила", "проверка: kubectl describe netpol"], "orange")
+    svg.label(450, 405, "DNS-имя сервиса стабильно, IP подов меняется при каждом пересоздании", size=13)
+    svg.label(450, 430, "Отладка: kubectl get endpoints, kubectl exec -- nslookup, kubectl describe netpol", size=13)
+    return svg
+
+
+def incident_response() -> Svg:
+    svg = Svg(900, 430, "Реагирование на инцидент")
+    svg.label(450, 34, "Пять шагов инцидента и метрики времени", size=17, color="#e6edf7", bold=True)
+    steps = [
+        ("Обнаружение", ["алерт или жалоба", "фиксируем время"], "blue"),
+        ("Триаж", ["оценка влияния", "роли и канал"], "green"),
+        ("Локализация", ["откат, флаг", "остановка ущерба"], "orange"),
+        ("Починка", ["сервис работает", "проверка метрик"], "purple"),
+        ("Разбор", ["причины и действия", "без поиска виновных"], "grey"),
+    ]
+    xs = [25, 205, 385, 565, 745]
+    for x, (title, lines, color) in zip(xs, steps, strict=False):
+        svg.box(x, 100, 150, 96, title, lines, color)
+    for x in xs[:-1]:
+        svg.arrow(x + 154, 148, x + 176, 148)
+    svg.label(100, 235, "MTTD", size=12, mono=True)
+    svg.label(280, 235, "MTTA", size=12, mono=True)
+    svg.label(460, 235, "время до локализации", size=12)
+    svg.label(640, 235, "MTTR", size=12, mono=True)
+    svg.label(820, 235, "действия", size=12)
+    svg.box(40, 270, 820, 120, "Что делает разбор полезным", [
+        "таймлайн с фактами и временем, а не пересказ по памяти",
+        "причина в системе: почему ошибка стала возможной",
+        "2-3 действия с владельцем и сроком, проверка на учении",
+        "blameless: люди рассказывают правду, процесс меняется",
+    ], "blue")
+    return svg
+
+
+def terraform_state() -> Svg:
+    svg = Svg(900, 440, "Состояние Terraform")
+    svg.label(450, 34, "Код, state и реальная инфраструктура", size=17, color="#e6edf7", bold=True)
+    svg.box(50, 80, 220, 110, "Конфигурация", ["main.tf, модули", "желаемое состояние"], "blue")
+    svg.box(340, 80, 220, 110, "State", ["карта ресурс → ID", "секреты и атрибуты"], "green")
+    svg.box(630, 80, 220, 110, "Облако", ["реальные ресурсы", "фактическое состояние"], "orange")
+    svg.arrow(275, 110, 335, 110)
+    svg.arrow(565, 110, 625, 110)
+    svg.arrow(275, 160, 335, 160, dashed=True)
+    svg.arrow(565, 160, 625, 160, dashed=True)
+    svg.label(450, 220, "plan сравнивает три источника и показывает разницу", size=13)
+    svg.box(50, 250, 380, 150, "Remote backend", [
+        "S3 + DynamoDB / Terraform Cloud",
+        "блокировка от параллельных apply",
+        "версионирование и шифрование",
+        "state не хранится в Git",
+    ], "green")
+    svg.box(470, 250, 380, 150, "Гигиена состояния", [
+        "terraform state list — что управляется",
+        "state mv — перенос без пересоздания",
+        "state rm — перестать управлять",
+        "перед изменениями — резервная копия",
+    ], "blue")
+    return svg
+
+
+
 DIAGRAMS = {
     "devops-lifecycle.svg": devops_lifecycle,
     "linux-filesystem.svg": linux_filesystem,
@@ -631,6 +705,9 @@ DIAGRAMS = {
     "deployment-strategies.svg": deployment_strategies,
     "sre-practices.svg": sre_practices,
     "career-roadmap.svg": career_roadmap,
+    "kubernetes-networking.svg": kubernetes_networking,
+    "incident-response.svg": incident_response,
+    "terraform-state.svg": terraform_state,
 }
 
 

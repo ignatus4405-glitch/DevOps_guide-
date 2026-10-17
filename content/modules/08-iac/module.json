@@ -4,12 +4,16 @@
   "title": "IaC: Terraform и Ansible",
   "level": "intermediate",
   "summary": "Инфраструктура как код: состояния, модули, plan/apply, идемпотентная конфигурация серверов и секреты.",
-  "estimated_minutes": 240,
+  "estimated_minutes": 290,
   "objectives": [
     "Описать инфраструктуру в Terraform и безопасно применять изменения",
     "Понимать state, remote backend и блокировки",
     "Настраивать серверы Ansible-плейбуками с ролями и vault",
     "Организовать IaC в репозитории с ревью и пайплайном"
   ],
-  "tags": ["iac", "terraform", "ansible"]
+  "tags": [
+    "iac",
+    "terraform",
+    "ansible"
+  ]
 }

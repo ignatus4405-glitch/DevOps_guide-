@@ -18,7 +18,12 @@
       "solution": "services:\n  prometheus:\n    image: prom/prometheus:v2.54.1\n    volumes: [\"./prometheus.yml:/etc/prometheus/prometheus.yml:ro\", \"./alerts.yml:/etc/prometheus/alerts.yml:ro\"]\n    ports: [\"9090:9090\"]\n  grafana:\n    image: grafana/grafana:11.1.4\n    ports: [\"3000:3000\"]\n    environment: { GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?пароль} }\n  node-exporter:\n    image: prom/node-exporter:v1.8.2\n    ports: [\"9100:9100\"]\n    pid: host\n\n# prometheus.yml\nscrape_configs:\n  - job_name: node\n    static_configs: [{ targets: [\"node-exporter:9100\"] }]",
       "check": {
         "type": "regex_all",
-        "patterns": ["prom/prometheus", "grafana/grafana", "scrape_configs", "9090|3000"],
+        "patterns": [
+          "prom/prometheus",
+          "grafana/grafana",
+          "scrape_configs",
+          "9090|3000"
+        ],
         "feedback": "Стек поднят. Дальше добавьте метрики самого приложения и алерт по ошибкам."
       },
       "validation_hint": "На /targets все цели в состоянии UP; в Grafana доступен источник данных Prometheus."
@@ -40,7 +45,12 @@
       "solution": "Панели (PromQL):\n1) sum(rate(http_requests_total[5m]))\n2) sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))\n3) histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))\n4) 100 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))*100\n\nSLI: доля успешных запросов. SLO: 99.9% за 30 дней → бюджет ≈ 43 минуты.",
       "check": {
         "type": "regex_all",
-        "patterns": ["rate\\(", "histogram_quantile", "5\\.\\.", "SLO|slo"],
+        "patterns": [
+          "rate\\(",
+          "histogram_quantile",
+          "5\\.\\.",
+          "SLO|slo"
+        ],
         "feedback": "Дашборд по золотым сигналам + формализованный SLO — это язык, на котором говорят инженеры и продукт."
       },
       "validation_hint": "На дашборде 4 панели; в описании есть SLI, цель и бюджет в минутах."
@@ -62,7 +72,12 @@
       "solution": "groups:\n- name: api-slo\n  rules:\n  - alert: HighErrorRate\n    expr: sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.02\n    for: 10m\n    labels: { severity: critical }\n    annotations:\n      summary: \"5xx > 2% десять минут\"\n      runbook_url: \"https://wiki/runbooks/api-5xx\"\n\n# Ранбук: 1) проверить свежие деплои 2) откатить при подтверждении 3) при 15 мин без восстановления — эскалация",
       "check": {
         "type": "regex_all",
-        "patterns": ["alert:", "expr:", "for:", "runbook"],
+        "patterns": [
+          "alert:",
+          "expr:",
+          "for:",
+          "runbook"
+        ],
         "feedback": "Алерт проверен и снабжён ранбуком — дежурный действует по шагам, а не импровизирует под давлением."
       },
       "validation_hint": "Алерт появляется в Prometheus → Alerts после внесения ошибок в сервис."
@@ -85,10 +100,181 @@
       "solution": "# Постмортем (шаблон)\n## Влияние: доля ошибок, число затронутых пользователей, бюджет\n## Таймлайн (UTC): деплой → алерт → митигация → восстановление\n## Корневая причина: системная, а не «человек ошибся»\n## Action items: | действие | владелец | срок |\n- добавить автотест на миграцию индексов — @dba — 3 дня\n- алерт на p95 при деплое — @sre — 5 дней\n- правило expand/contract в шаблоне миграций — @backend — неделя",
       "check": {
         "type": "regex_all",
-        "patterns": ["таймлайн|Таимлайн|timeline", "корневая причина|root cause", "Action items|action items"],
+        "patterns": [
+          "таймлайн|Таимлайн|timeline",
+          "корневая причина|root cause",
+          "Action items|action items"
+        ],
         "feedback": "Полный цикл пройден: инцидент превратился в конкретные улучшения — так работает зрелая команда."
       },
       "validation_hint": "В постмортеме есть таймлайн, корневая причина, три action items с владельцами и сроками."
+    },
+    {
+      "id": "promql-queries",
+      "title": "Написать три запроса PromQL",
+      "level": "hard",
+      "goal": "Научиться отвечать на вопросы метриками.",
+      "instructions": [
+        "Поднимите Prometheus и приложение с /metrics.",
+        "Напишите запрос RPS, доли ошибок и p95 latency.",
+        "Проверьте результаты в Prometheus UI.",
+        "Сохраните запросы в queries.md."
+      ],
+      "hints": [
+        "RPS: sum(rate(http_requests_total[5m])).",
+        "Ошибки: сумма 5xx / сумма всех.",
+        "p95: histogram_quantile по бакетам."
+      ],
+      "solution": "cat > queries.md <<'EOF'\n# PromQL\n\n## RPS\nsum(rate(http_requests_total[5m]))\n\n## Error ratio\nsum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))\n\n## p95\nhistogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))\nEOF\ndocker run -d -p 9090:9090 -v \"$PWD/prometheus.yml\":/etc/prometheus/prometheus.yml prom/prometheus",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "rate\\(http_requests_total",
+          "histogram_quantile",
+          "queries\\.md"
+        ],
+        "feedback": "Три запроса покрывают золотые сигналы: трафик, ошибки и задержку."
+      },
+      "validation_hint": "Запросы возвращают данные в Prometheus UI; queries.md содержит все три."
+    },
+    {
+      "id": "json-logs",
+      "title": "Перевести логи в JSON",
+      "level": "medium",
+      "goal": "Сделать логи пригодными для поиска.",
+      "instructions": [
+        "Настройте логирование в JSON с полями ts, level, msg, service.",
+        "Добавьте trace_id из заголовка.",
+        "Запустите приложение и сделайте запрос.",
+        "Проверьте, что лог парсится как JSON."
+      ],
+      "hints": [
+        "В Python: json.dumps в logging.Formatter.",
+        "trace_id берите из заголовка traceparent.",
+        "Проверка: jq . app.log."
+      ],
+      "solution": "python3 - <<'EOF'\nimport json, logging, os, sys\nclass JsonFormatter(logging.Formatter):\n    def format(self, record):\n        return json.dumps({\"trace_id\": os.environ.get(\"TRACE_ID\", \"-\"), \"ts\": self.formatTime(record), \"level\": record.levelname, \"msg\": record.getMessage(), \"service\": \"api\"})\nh = logging.StreamHandler(sys.stdout); h.setFormatter(JsonFormatter())\nlog = logging.getLogger(); log.addHandler(h); log.setLevel(\"INFO\")\nlog.info(\"request handled\")\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "json\\.dumps",
+          "trace_id|traceparent",
+          "JsonFormatter|logging"
+        ],
+        "feedback": "Логи структурированы: можно фильтровать по полям и связывать с трейсами."
+      },
+      "validation_hint": "Вывод приложения — валидный JSON; в логах есть service и trace_id."
+    },
+    {
+      "id": "slo-budget",
+      "title": "Рассчитать SLO и error budget",
+      "level": "medium",
+      "goal": "Понять, сколько недоступности допустимо.",
+      "instructions": [
+        "Выберите сервис и SLO (например, 99,9 % за 30 дней).",
+        "Посчитайте допустимые минуты недоступности.",
+        "Определите burn rate для 1 часа и 6 часов.",
+        "Запишите расчёт в SLO.md."
+      ],
+      "hints": [
+        "30 дней = 43 200 минут.",
+        "99,9 % → 43,2 минуты бюджета.",
+        "Burn rate = доля бюджета, потраченная за окно."
+      ],
+      "solution": "cat > SLO.md <<'EOF'\n# SLO\n\n- SLO: 99,9 % за 30 дней\n- Бюджет: 43,2 минуты\n- Burn rate 1: равномерно\n- Алерт: 14× за 1 час, 6× за 6 часов\nEOF\npython3 -c 'print(30*24*60*0.001)'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "SLO\\.md",
+          "43",
+          "burn"
+        ],
+        "feedback": "Расчёт готов: видно, сколько простоя допустимо и когда бить тревогу."
+      },
+      "validation_hint": "SLO.md содержит бюджет в минутах и пороги burn rate."
+    },
+    {
+      "id": "alert-deep",
+      "title": "Сделать алерт с runbook",
+      "level": "medium",
+      "goal": "Убрать шум и дать дежурному инструкцию.",
+      "instructions": [
+        "Выберите симптомный алерт (error rate > 5 %).",
+        "Настройте for: 5m и severity.",
+        "Напишите runbook с диагностикой и действиями.",
+        "Свяжите алерт с runbook через аннотацию."
+      ],
+      "hints": [
+        "Алерт на симптом, не на CPU.",
+        "runbook_url в annotations.",
+        "В runbook — первые три команды."
+      ],
+      "solution": "cat > alerts.yaml <<'EOF'\ngroups:\n  - name: api\n    rules:\n      - alert: HighErrorRate\n        expr: job:error_ratio:rate5m > 0.05\n        for: 5m\n        labels:\n          severity: page\n        annotations:\n          summary: \"Ошибки > 5%\"\n          runbook_url: \"https://wiki/runbooks/high-error-rate\"\nEOF\nmkdir -p runbooks\ncat > runbooks/high-error-rate.md <<'EOF'\n# HighErrorRate\n\n1. kubectl logs deploy/api --since=15m | grep -i error\n2. kubectl rollout history deploy/api\n3. kubectl rollout undo deploy/api при регрессии\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "HighErrorRate",
+          "for:\\s*5m",
+          "runbook_url",
+          "runbooks/high-error-rate\\.md"
+        ],
+        "feedback": "Алерт привязан к инструкции: дежурный действует, а не ищет контекст."
+      },
+      "validation_hint": "alerts.yaml содержит порог и for; runbook существует по указанному пути."
+    },
+    {
+      "id": "cardinality-check",
+      "title": "Найти метрику с высокой кардинальностью",
+      "level": "medium",
+      "goal": "Остановить рост числа временных рядов.",
+      "instructions": [
+        "Посмотрите topk по `count by (__name__)`.",
+        "Найдите метки с большим числом значений.",
+        "Уберите метку или замените на агрегат.",
+        "Замерьте число серий до и после."
+      ],
+      "hints": [
+        "`count by (__name__)({__name__=~\".+\"})`.",
+        "`label_values` в Grafana."
+      ],
+      "solution": "curl -s 'http://localhost:9090/api/v1/label/__name__/values' | jq '.data | length'\n# найти job с user_id в метках\n# удалить метку из instrumentation\ngit add metrics.md && git commit -m 'perf: снижена кардинальность'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "__name__|cardinality|кардинальн",
+          "Prometheus|prometheus|curl",
+          "git\\s+commit"
+        ],
+        "feedback": "Число серий под контролем."
+      },
+      "validation_hint": "Найдена проблемная метка, число серий замерено до и после."
+    },
+    {
+      "id": "burn-rate",
+      "title": "Построить burn-rate алерт",
+      "level": "hard",
+      "goal": "Алертить по скорости сжигания бюджета, а не по сырому проценту.",
+      "instructions": [
+        "Определите SLO 99,9 % на 30 дней.",
+        "Посчитайте burn rate за 1 ч и 6 ч.",
+        "Настройте два порога: быстрый и медленный.",
+        "Проверьте на исторических данных."
+      ],
+      "hints": [
+        "burn rate = error_rate / error_budget.",
+        "Многооконный подход снижает шум."
+      ],
+      "solution": "groups:\n- name: slo\n  rules:\n  - alert: HighBurnRate\n    expr: job:slo_errors:ratio1h > 14.4\n    for: 2m\ngit add alerts.yml && git commit -m 'feat: burn-rate алерт'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "burn",
+          "expr",
+          "git\\s+commit"
+        ],
+        "feedback": "Алерт реагирует на скорость расхода бюджета."
+      },
+      "validation_hint": "Правило использует отношение ошибок к бюджету и окно наблюдения."
     }
   ]
 }

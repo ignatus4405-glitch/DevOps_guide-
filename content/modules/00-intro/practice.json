@@ -18,7 +18,11 @@
       "solution": "git init devops-journey\ncd devops-journey\nprintf '# План обучения DevOps\\n\\n| Неделя | Модуль |\\n| --- | --- |\\n| 1 | Linux |\\n' > PLAN.md\ngit add PLAN.md\ngit commit -m \"docs: план обучения на 12 недель\"",
       "check": {
         "type": "regex_all",
-        "patterns": ["git\\s+init", "git\\s+add\\s+(\\.|PLAN\\.md)", "git\\s+commit"],
+        "patterns": [
+          "git\\s+init",
+          "git\\s+add\\s+(\\.|PLAN\\.md)",
+          "git\\s+commit"
+        ],
         "feedback": "План закоммичен — это первый шаг портфолио. В модуле про Git мы добавим ветки и pull request."
       },
       "validation_hint": "git log --oneline показывает первый коммит, git status — чистый worktree."
@@ -40,7 +44,11 @@
       "solution": "wsl --install -d Ubuntu\n# затем внутри Ubuntu:\nlsb_release -a\nuname -r\nsudo apt update",
       "check": {
         "type": "regex_all",
-        "patterns": ["wsl\\s+--install", "uname\\s+-r", "apt\\s+update"],
+        "patterns": [
+          "wsl\\s+--install",
+          "uname\\s+-r",
+          "apt\\s+update"
+        ],
         "feedback": "Стенд готов. Дальше 90 % практики курса выполняется внутри него."
       },
       "validation_hint": "wsl -l -v в PowerShell показывает версию 2 и состояние Running; apt update завершается без ошибок."
@@ -83,10 +91,174 @@
       "solution": "git remote add origin git@github.com:<логин>/devops-journey.git\ngit branch -M main\ngit push -u origin main",
       "check": {
         "type": "regex_all",
-        "patterns": ["git\\s+remote\\s+add\\s+origin", "git\\s+push"],
+        "patterns": [
+          "git\\s+remote\\s+add\\s+origin",
+          "git\\s+push"
+        ],
         "feedback": "Репозиторий на GitHub готов — в модуле про CI мы подключим к нему автосборку."
       },
       "validation_hint": "Страница репозитория открывается, в ней виден README.md и коммит."
+    },
+    {
+      "id": "audit",
+      "title": "Аудит процесса: найти три ручных шага",
+      "level": "medium",
+      "goal": "Найти в своём (учебном) проекте ручные операции, которые тормозят поставку, и предложить измеримое улучшение.",
+      "instructions": [
+        "Выпишите путь изменения от коммита до запуска: какие шаги делаются руками.",
+        "Для каждого шага оцените время и долю ожидания.",
+        "Выберите шаг с максимальным ожиданием и опишите, как автоматизировать или сократить его.",
+        "Зафиксируйте план в файле PROCESS.md и закоммитьте."
+      ],
+      "hints": [
+        "Ручные шаги часто маскируются: «проверить вручную», «попросить доступ», «подождать релиза».",
+        "Оценка может быть приблизительной — важна не точность, а сравнение шагов."
+      ],
+      "solution": "cat > PROCESS.md <<'EOF'\n# Аудит процесса\n\n| Шаг | Время | Ожидание |\n| --- | --- | --- |\n| Ревью PR | 1 день | 20 ч |\n| Сборка | 10 мин | 2 мин |\n| Ожидание релиза | 5 дней | 5 дней |\n\nПриоритет: убрать окно релиза — деплой по готовности пайплайна.\nEOF\ngit add PROCESS.md && git commit -m \"docs: аудит процесса поставки\"",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "PROCESS\\.md",
+          "git\\s+commit"
+        ],
+        "feedback": "План зафиксирован в репозитории. Следующий шаг — измерить выбранный шаг до и после изменения."
+      },
+      "validation_hint": "PROCESS.md содержит таблицу шагов с оценкой ожидания и одним приоритетным улучшением."
+    },
+    {
+      "id": "flow-map",
+      "title": "Построить карту потока для одного изменения",
+      "level": "medium",
+      "goal": "Восстановить по датам путь одного реального изменения и посчитать flow efficiency.",
+      "instructions": [
+        "Возьмите последний смерженный pull request (или коммит) в своём репозитории.",
+        "Выпишите даты: первый коммит, открытие PR, первое ревью, merge, деплой.",
+        "Посчитайте общее время и время ожидания.",
+        "Сохраните расчёт в файле FLOW.md."
+      ],
+      "hints": [
+        "Даты видны в GitHub: commits, PR timeline, Actions.",
+        "Flow efficiency = время работы / общее время; выразите в процентах."
+      ],
+      "solution": "git log --format='%h %ad %s' --date=iso -5 > /tmp/commits.txt\ngh pr list --state merged --limit 1\ncat > FLOW.md <<'EOF'\n# Карта потока\n\n| Шаг | Длительность |\n| --- | --- |\n| Код | 4 ч |\n| Ревью | 20 ч |\n| CI | 15 мин |\n| Деплой | 1 ч |\n\nFlow efficiency = 4 / 25 ≈ 16 %.\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "gh\\s+pr|git\\s+log",
+          "FLOW\\.md",
+          "efficiency"
+        ],
+        "feedback": "Карта готова: видно, что ожидание ревью даёт основной вклад."
+      },
+      "validation_hint": "FLOW.md содержит длительности шагов и рассчитанную эффективность потока."
+    },
+    {
+      "id": "dora-baseline",
+      "title": "Снять базовые метрики DORA",
+      "level": "easy",
+      "goal": "Зафиксировать исходные значения метрик, чтобы через месяц было с чем сравнивать.",
+      "instructions": [
+        "Возьмите последние 20 релизов/деплоев проекта.",
+        "Посчитайте частоту деплоя и медианный lead time.",
+        "Оцените долю релизов, после которых были сбои, и среднее время восстановления.",
+        "Запишите значения в DORA.md с датой."
+      ],
+      "hints": [
+        "Если деплоев нет, используйте merge в main как прокси.",
+        "Медиана устойчивее среднего: один долгий релиз не исказит картину."
+      ],
+      "solution": "cat > DORA.md <<'EOF'\n# DORA baseline 2026-10\n\n- Deployment frequency: 2 в неделю\n- Lead time (median): 3 дня\n- Change failure rate: 25 %\n- MTTR: 4 часа\nEOF\ngit add DORA.md && git commit -m \"docs: базовые метрики DORA\"",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "DORA\\.md",
+          "deployment\\s+frequency",
+          "mttr"
+        ],
+        "feedback": "Базовая линия есть. Через месяц повторите замер — без этого улучшения недоказуемы."
+      },
+      "validation_hint": "DORA.md содержит все четыре метрики и дату замера."
+    },
+    {
+      "id": "runbook",
+      "title": "Написать runbook для одного алерта",
+      "level": "medium",
+      "goal": "Превратить алерт в понятную инструкцию, чтобы дежурный действовал без поиска контекста.",
+      "instructions": [
+        "Выберите типовой алерт (высокая загрузка CPU, 5xx, заполнение диска).",
+        "Опишите симптомы и первые три команды диагностики.",
+        "Добавьте шаги обратимого действия (откат, масштабирование, очистка).",
+        "Положите runbook в репозиторий рядом с конфигурацией алертов."
+      ],
+      "hints": [
+        "Runbook — не эссе: короткие шаги с командами.",
+        "В конце добавьте раздел «когда эскалировать»."
+      ],
+      "solution": "mkdir -p runbooks\ncat > runbooks/high-cpu.md <<'EOF'\n# Алерт: HighCPU\n\n## Симптомы\n- p99 latency растёт, CPU > 85 % на всех подах\n\n## Диагностика\n1. kubectl top pods -n prod\n2. kubectl describe pod <pod>\n3. Проверить последний деплой\n\n## Действия\n- kubectl rollout undo deployment/<name>\n- kubectl scale deployment/<name> --replicas=6\n\n## Эскалация\n- Если не помогло за 15 минут — владелец сервиса и SRE.\nEOF\ngit add runbooks && git commit -m \"docs: runbook для алерта HighCPU\"",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "runbooks?/",
+          "kubectl\\s+(top|describe|rollout)",
+          "git\\s+commit"
+        ],
+        "feedback": "Runbook готов: дежурный получает команды, а не загадку."
+      },
+      "validation_hint": "Файл в runbooks/ содержит симптомы, диагностику, действия и условия эскалации."
+    },
+    {
+      "id": "metrics-baseline",
+      "title": "Снять baseline DORA-метрик",
+      "level": "medium",
+      "goal": "Понять, где поток тормозит, до начала улучшений.",
+      "instructions": [
+        "Выберите сервис и окно в 4 недели.",
+        "Посчитайте lead time, частоту релизов, MTTR.",
+        "Оформите результат таблицей в METRICS.md.",
+        "Зафиксируйте, какие данные отсутствуют."
+      ],
+      "hints": [
+        "Lead time — от первого коммита до прода.",
+        "MTTR считайте по инцидентам, а не по среднему простою."
+      ],
+      "solution": "cat > METRICS.md <<'EOF'\n# Baseline DORA (4 недели)\n\n| Метрика | Значение |\n| --- | --- |\n| Lead time | 3,2 дня |\n| Releases / week | 4 |\n| MTTR | 48 мин |\n| Change fail rate | 12 % |\n\n## Пробелы\n- нет данных о времени ревью\nEOF\ngit add METRICS.md && git commit -m 'docs: baseline DORA-метрик'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "METRICS\\.md",
+          "lead\\s*time",
+          "git\\s+commit"
+        ],
+        "feedback": "Baseline зафиксирован: улучшения можно измерять."
+      },
+      "validation_hint": "METRICS.md содержит четыре метрики и список пробелов в данных."
+    },
+    {
+      "id": "waste-map",
+      "title": "Найти потери в потоке",
+      "level": "medium",
+      "goal": "Увидеть, где изменение ждёт, а не делается.",
+      "instructions": [
+        "Опишите шаги от тикета до прода.",
+        "Для каждого шага укажите время работы и ожидания.",
+        "Найдите три крупнейших ожидания.",
+        "Предложите по одному действию на каждое."
+      ],
+      "hints": [
+        "Ожидание в ревью часто больше, чем сама разработка.",
+        "Потери — не только простой, но и переделки."
+      ],
+      "solution": "cat > VALUE-STREAM.md <<'EOF'\n# Карта потока\n\n| Шаг | Работа | Ожидание |\n| --- | --- | --- |\n| разработка | 2 д | 0 |\n| ревью | 1 ч | 1,5 д |\n| CI | 10 мин | 0 |\n| deploy | 5 мин | 0 |\n\n## Узкие места\n1. ожидание ревью\n2. ручное согласование\n3. очередь CI\n\n## Действия\n- ревью-ротация\n- автоаппрув для docs\n- больше раннеров\nEOF\ngit add VALUE-STREAM.md && git commit -m 'docs: карта потока и потери'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "VALUE-STREAM\\.md",
+          "Ожидан",
+          "git\\s+commit"
+        ],
+        "feedback": "Карта показывает, что оптимизировать в первую очередь."
+      },
+      "validation_hint": "Таблица содержит время работы и ожидания, а также действия по узким местам."
     }
   ]
 }

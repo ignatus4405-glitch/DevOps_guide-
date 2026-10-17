@@ -109,6 +109,173 @@
         "feedback": "Теперь изменения инфраструктуры проходят ревью, линтеры и утверждение — это стандарт для прод-окружений."
       },
       "validation_hint": "PR с плохим форматированием падает на шаге fmt -check; apply требует подтверждения."
+    },
+    {
+      "id": "import-existing",
+      "title": "Импортировать существующий ресурс",
+      "level": "hard",
+      "goal": "Научиться брать под управление ресурс, созданный вручную.",
+      "instructions": [
+        "Создайте ресурс вручную (или возьмите существующий).",
+        "Опишите его в конфигурации Terraform.",
+        "Выполните terraform import.",
+        "Проверьте plan: изменений должно быть 0."
+      ],
+      "hints": [
+        "Import принимает адрес ресурса и реальный id.",
+        "После импорта plan покажет отличия — приведите код к реальности.",
+        "Terraform 1.5+ поддерживает блок import."
+      ],
+      "solution": "terraform init\nterraform import aws_s3_bucket.demo my-existing-bucket\nterraform state list\nterraform plan\n# при отличиях поправить конфиг и повторить plan",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "terraform\\s+import",
+          "terraform\\s+state\\s+list",
+          "terraform\\s+plan"
+        ],
+        "feedback": "Ресурс под управлением: plan не предлагает пересоздание."
+      },
+      "validation_hint": "terraform state list содержит ресурс; plan показывает no changes."
+    },
+    {
+      "id": "policy-gate",
+      "title": "Запретить открытый SSH политикой",
+      "level": "hard",
+      "goal": "Добавить автоматическую проверку безопасности плана.",
+      "instructions": [
+        "Отрендерите план в JSON.",
+        "Напишите политику conftest/OPA, запрещающую 0.0.0.0/0 на порт 22.",
+        "Прогоните политику на плане.",
+        "Добавьте шаг в CI."
+      ],
+      "hints": [
+        "terraform show -json tfplan > plan.json.",
+        "conftest test plan.json.",
+        "Правило смотрит в resource_changes[].change.after."
+      ],
+      "solution": "terraform plan -out=tfplan\nterraform show -json tfplan > plan.json\ncat > policy/ssh.rego <<'EOF'\npackage main\n\ndeny[msg] {\n  r := input.resource_changes[_]\n  r.type == \"aws_security_group_rule\"\n  r.change.after.cidr_blocks[_] == \"0.0.0.0/0\"\n  r.change.after.from_port == 22\n  msg := \"SSH открыт в интернет\"\n}\nEOF\nconftest test plan.json --policy policy",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "terraform\\s+show\\s+-json",
+          "conftest\\s+test",
+          "deny\\[msg\\]"
+        ],
+        "feedback": "Политика блокирует опасное изменение до apply."
+      },
+      "validation_hint": "conftest возвращает ошибку на плане с открытым SSH и успех без него."
+    },
+    {
+      "id": "vault-secret",
+      "title": "Зашифровать секрет Ansible Vault",
+      "level": "medium",
+      "goal": "Научиться хранить секреты в git безопасно.",
+      "instructions": [
+        "Создайте vault-файл с паролем БД.",
+        "Зашифруйте его ansible-vault.",
+        "Используйте переменную в playbook.",
+        "Проверьте, что в git лежит шифртекст."
+      ],
+      "hints": [
+        "ansible-vault create secrets.yml.",
+        "Пароль vault — в отдельном файле вне репозитория.",
+        "Проверка: head secrets.yml покажет $ANSIBLE_VAULT."
+      ],
+      "solution": "ansible-vault create secrets.yml\n# в редакторе: db_password: s3cr3t\nansible-vault encrypt secrets.yml\nansible-vault view secrets.yml\nhead -1 secrets.yml\n# $ANSIBLE_VAULT;1.1;AES256\nansible-playbook site.yml --vault-password-file ~/.vault_pass --check",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ansible-vault\\s+(create|encrypt)",
+          "vault-password-file",
+          "\\$ANSIBLE_VAULT"
+        ],
+        "feedback": "Секрет зашифрован: в репозитории только шифртекст."
+      },
+      "validation_hint": "Файл начинается с $ANSIBLE_VAULT; playbook читает переменную."
+    },
+    {
+      "id": "module-version",
+      "title": "Собрать модуль с валидацией",
+      "level": "medium",
+      "goal": "Написать переиспользуемый модуль с проверкой входов.",
+      "instructions": [
+        "Создайте modules/service с переменными name, environment, replicas.",
+        "Добавьте validation для environment.",
+        "Добавьте outputs.",
+        "Вызовите модуль из envs/staging и envs/prod."
+      ],
+      "hints": [
+        "validation { condition = contains([...], var.environment) }.",
+        "Outputs нужны для передачи id наружу.",
+        "terraform init в каждом env."
+      ],
+      "solution": "mkdir -p modules/service envs/staging\ncat > modules/service/variables.tf <<'EOF'\nvariable \"name\" { type = string }\nvariable \"environment\" {\n  type = string\n  validation {\n    condition     = contains([\"staging\", \"prod\"], var.environment)\n    error_message = \"environment должен быть staging или prod\"\n  }\n}\nEOF\nterraform fmt -recursive\nterraform validate",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "modules/service",
+          "validation",
+          "contains",
+          "terraform\\s+fmt"
+        ],
+        "feedback": "Модуль отклоняет неверное окружение и переиспользуется в двух средах."
+      },
+      "validation_hint": "terraform validate проходит; неверный environment даёт понятную ошибку."
+    },
+    {
+      "id": "state-lock",
+      "title": "Проверить блокировку state",
+      "level": "medium",
+      "goal": "Убедиться, что параллельные запуски не портят инфраструктуру.",
+      "instructions": [
+        "Настройте backend с блокировкой (S3 + DynamoDB или аналог).",
+        "Запустите план в двух терминалах.",
+        "Убедитесь, что второй получил lock error.",
+        "Опишите поведение при упавшем процессе."
+      ],
+      "hints": [
+        "Для S3 backend нужен `dynamodb_table`.",
+        "Lock освобождается после завершения или по force-unlock."
+      ],
+      "solution": "terraform init -migrate-state\nterraform plan &\nterraform plan\n# второй процесс: Error acquiring the state lock\nterraform force-unlock <id>\ngit add backend.tf && git commit -m 'chore: state lock'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "backend",
+          "lock",
+          "git\\s+commit"
+        ],
+        "feedback": "Параллельные запуски защищены."
+      },
+      "validation_hint": "Backend настроен, поведение блокировки проверено и описано."
+    },
+    {
+      "id": "ansible-idempotent",
+      "title": "Доказать идемпотентность роли",
+      "level": "medium",
+      "goal": "Роль не должна менять систему при повторном прогоне.",
+      "instructions": [
+        "Примените роль к чистому хосту.",
+        "Прогоните второй раз.",
+        "Проверьте `changed=0`.",
+        "Найдите и исправьте неидемпотентный шаг."
+      ],
+      "hints": [
+        "`command` без `creates`/`changed_when` всегда changed.",
+        "Второй прогон — главный тест роли."
+      ],
+      "solution": "ansible-playbook site.yml\nansible-playbook site.yml | grep changed\n# исправить шаг с command на copy/template\ngit add roles && git commit -m 'fix: идемпотентность роли'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ansible-playbook",
+          "changed",
+          "git\\s+commit"
+        ],
+        "feedback": "Роль можно запускать повторно без побочных эффектов."
+      },
+      "validation_hint": "Второй прогон даёт changed=0, исправление описано."
     }
   ]
 }

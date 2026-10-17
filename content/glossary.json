@@ -1,88 +1,815 @@
 {
   "title": "Глоссарий DevOps Academy",
   "terms": [
-    {"term": "Admission controller", "definition": "Компонент Kubernetes, который проверяет или изменяет объекты при создании. Используется для политик безопасности (Kyverno, Gatekeeper).", "see_also": ["Kyverno", "Pod Security"], "where": "Модуль Kubernetes, DevSecOps"},
-    {"term": "Alert", "definition": "Правило, по которому система мониторинга уведомляет о проблеме. Хороший алерт — про симптом для пользователя, с порогом, for: и ссылкой на runbook.", "see_also": ["SLO", "Runbook"], "where": "Модуль Наблюдаемость"},
-    {"term": "Ansible", "definition": "Инструмент конфигурации серверов без агентов: подключается по SSH и приводит их к описанному в плейбуках состоянию.", "see_also": ["Настройка.", "Vault"], "where": "Модуль IaC"},
-    {"term": "Ansible Vault", "definition": "Шифрование секретов внутри репозитория Ansible. Пароль хранится вне Git — в секретах CI или у инженеров.", "see_also": ["Секреты", "SOPS"], "where": "Модули IaC, DevSecOps"},
-    {"term": "Artifact", "definition": "Результат сборки (архив, пакет, образ). Правило: артефакт собирается один раз и доставляется во все окружения без пересборки.", "see_also": ["CI/CD", "Digest"], "where": "Модуль CI/CD"},
-    {"term": "Blue/Green", "definition": "Стратегия деплоя с двумя окружениями: трафик переключается на новую версию целиком, откат мгновенный.", "see_also": ["Canary", "Rolling update"], "where": "Модуль CI/CD"},
-    {"term": "Burn rate", "definition": "Скорость расходования error budget. Высокий burn rate означает, что бюджет будет исчерпан быстро — по нему и алертят.", "see_also": ["Error budget", "SLO"], "where": "Модуль Наблюдаемость"},
-    {"term": "Canary", "definition": "Деплой, при котором новая версия получает небольшую долю трафика (1–5 %), метрики сравниваются, затем трафик растёт.", "see_also": ["Blue/Green", "SLO"], "where": "Модуль CI/CD"},
-    {"term": "CI (Continuous Integration)", "definition": "Практика, при которой каждое изменение автоматически собирается, проверяется тестами и линтерами.", "see_also": ["CD", "Пайплайн"], "where": "Модуль CI/CD"},
-    {"term": "CD (Continuous Delivery)", "definition": "Автоматическая доставка проверенного изменения в окружения (staging, prod). Отличается от CI наличием деплоя.", "see_also": ["CI", "GitOps"], "where": "Модуль CI/CD"},
-    {"term": "Cgroups", "definition": "Механизм ядра Linux, ограничивающий ресурсы (CPU, память, I/O) для групп процессов. Основа лимитов контейнеров и pod'ов.", "see_also": ["Namespaces", "Docker"], "where": "Модуль Linux, Docker"},
-    {"term": "Compose", "definition": "Инструмент Docker для описания и запуска нескольких сервисов одной командой с зависимостями, healthcheck и лимитами.", "see_also": ["Docker"], "where": "Модуль Docker"},
-    {"term": "ConfigMap", "definition": "Объект Kubernetes для несекретной конфигурации приложения: переменные окружения, файлы конфигурации.", "see_also": ["Secret"], "where": "Модуль Kubernetes"},
-    {"term": "Conventional Commits", "definition": "Соглашение о формате сообщений коммитов: type(scope): описание. Позволяет генерировать changelog и версии автоматически.", "see_also": ["Semver"], "where": "Модуль Git"},
-    {"term": "Counter", "definition": "Тип метрики Prometheus, который может только увеличиваться (например, число запросов). Скорость роста считается через rate().", "see_also": ["Gauge", "PromQL"], "where": "Модуль Наблюдаемость"},
-    {"term": "CrashLoopBackOff", "definition": "Состояние pod'а, когда контейнер запускается и падает циклически. Смотреть logs --previous и describe pod.", "see_also": ["OOMKilled", "kubectl"], "where": "Модуль Kubernetes"},
-    {"term": "DaemonSet", "definition": "Объект Kubernetes, гарантирующий по одной копии pod'а на каждом узле (агенты мониторинга, сборщики логов).", "see_also": ["Deployment"], "where": "Модуль Kubernetes"},
-    {"term": "Deployment", "definition": "Основной объект Kubernetes для stateless-приложений: описывает шаблон pod'а, количество реплик и стратегию обновления.", "see_also": ["StatefulSet", "ReplicaSet"], "where": "Модуль Kubernetes"},
-    {"term": "Digest", "definition": "Криптографический хеш образа (sha256:...). Неизменяем, в отличие от тега, поэтому используется в манифестах деплоя.", "see_also": ["Registry", "Artifact"], "where": "Модули Docker, CI/CD"},
-    {"term": "DORA-метрики", "definition": "Четыре метрики поставки: частота деплоя, lead time, доля неуспешных изменений, MTTR.", "see_also": ["MTTR", "CI/CD"], "where": "Модуль Введение"},
-    {"term": "Docker", "definition": "Платформа для сборки образов и запуска контейнеров: изолированных процессов на общем ядре Linux.", "see_also": ["Образ", "Namespaces"], "where": "Модуль Docker"},
-    {"term": "Dockerfile", "definition": "Текстовый файл с инструкциями сборки образа. Каждая инструкция создаёт слой, который кэшируется.", "see_also": ["Multi-stage build"], "where": "Модуль Docker"},
-    {"term": "Error budget", "definition": "Допустимый объём ошибок по SLO (например, 43 минуты в месяц при 99,9 %). Исчерпан — приоритет на надёжность.", "see_also": ["SLO", "Burn rate"], "where": "Модуль Наблюдаемость"},
-    {"term": "etcd", "definition": "Распределённое хранилище состояния Kubernetes. Требует резервных копий: потеря etcd = потеря кластера.", "see_also": ["Control plane"], "where": "Модуль Kubernetes"},
-    {"term": "FinOps", "definition": "Практика управления облачными расходами: теги, бюджеты, rightsizing, автостоп сред, spot-инстансы.", "see_also": ["Облако"], "where": "Модуль Облако"},
-    {"term": "for:", "definition": "Параметр правила алерта, требующий непрерывного выполнения условия заданное время. Убирает «мигающие» алерты.", "see_also": ["Alert"], "where": "Модуль Наблюдаемость"},
-    {"term": "Gauge", "definition": "Тип метрики, значение которой может расти и падать: память, число соединений, размер очереди.", "see_also": ["Counter", "Histogram"], "where": "Модуль Наблюдаемость"},
-    {"term": "GitOps", "definition": "Подход, при котором желаемое состояние кластера описано в Git, а агент (Argo CD, Flux) синхронизирует реальность.", "see_also": ["CD"], "where": "Модуль CI/CD"},
-    {"term": "GitHub Actions", "definition": "CI/CD-система, встроенная в GitHub: workflows, jobs, steps, runners, secrets и environments.", "see_also": ["Workflow"], "where": "Модуль CI/CD"},
-    {"term": "Grafana", "definition": "Платформа дашбордов и визуализации, чаще всего поверх Prometheus, Loki и других источников данных.", "see_also": ["Prometheus"], "where": "Модуль Наблюдаемость"},
-    {"term": "Healthcheck", "definition": "Проверка работоспособности сервиса (HTTP-эндпоинт или команда inside контейнера). У Docker — HEALTHCHECK, у k8s — probes.", "see_also": ["Readiness", "Liveness"], "where": "Модули Docker, Kubernetes"},
-    {"term": "Histogram", "definition": "Тип метрики для распределений (время ответа). Квантили считаются функцией histogram_quantile в PromQL.", "see_also": ["PromQL"], "where": "Модуль Наблюдаемость"},
-    {"term": "HPA", "definition": "HorizontalPodAutoscaler — автомасштабирование количества реплик по метрикам (CPU, RPS, кастомные).", "see_also": ["ReplicaSet", "PDB"], "where": "Модуль Kubernetes"},
-    {"term": "IAM", "definition": "Система управления доступом в облаке: пользователи, роли, политики. Основной принцип — наименьшие привилегии.", "see_also": ["Least privilege", "OIDC"], "where": "Модуль Облако"},
-    {"term": "Idempotency (идемпотентность)", "definition": "Свойство операции давать тот же результат при повторном выполнении. Основа безопасных пайплайнов, Terraform и Ansible.", "see_also": ["Terraform", "Ansible"], "where": "Модуль IaC"},
-    {"term": "Ingress", "definition": "Объект Kubernetes, описывающий HTTP-маршрутизацию по домену и пути; реализуется ingress-контроллером (nginx, Traefik).", "see_also": ["Service", "cert-manager"], "where": "Модуль Kubernetes"},
-    {"term": "Kubernetes", "definition": "Оркестратор контейнеров: приводит кластер к состоянию, описанному в манифестах (replicas, probes, ресурсы).", "see_also": ["Pod", "Deployment"], "where": "Модуль Kubernetes"},
-    {"term": "Least privilege", "definition": "Принцип «минимально необходимых прав»: пользователь или сервис получает только те разрешения, которые нужны для работы.", "see_also": ["RBAC", "IAM"], "where": "Модули Облако, DevSecOps"},
-    {"term": "Liveness", "definition": "Проверка живости контейнера. При провале kubelet перезапускает контейнер. Не должна зависеть от внешних сервисов.", "see_also": ["Readiness", "Probes"], "where": "Модуль Kubernetes"},
-    {"term": "Load average", "definition": "Средняя длина очереди процессов (CPU + ожидание I/O). Сравнивать нужно с количеством ядер (nproc).", "see_also": ["Linux"], "where": "Модуль Linux"},
-    {"term": "Logrotate", "definition": "Утилита ротации логов. Обязательно настраивать postrotate с reload сервиса, иначе процесс продолжит писать в удалённый файл.", "see_also": ["journald"], "where": "Модули Linux, Bash"},
-    {"term": "Manifest (манифест)", "definition": "YAML-описание объекта Kubernetes (Deployment, Service, Ingress и др.), которое применяется командой kubectl apply.", "see_also": ["Deployment"], "where": "Модуль Kubernetes"},
-    {"term": "MTTD", "definition": "Mean Time To Detect — среднее время до обнаружения проблемы. Улучшается алертами по симптомам и тестами мониторинга.", "see_also": ["MTTR"], "where": "Модуль Наблюдаемость"},
-    {"term": "MTTR", "definition": "Mean Time To Recovery — среднее время восстановления после инцидента. Ключевая метрика эксплуатации.", "see_also": ["MTTD", "Постмортем"], "where": "Модули Наблюдаемость, Введение"},
-    {"term": "Multi-stage build", "definition": "Сборка образа в несколько этапов: тяжёлые инструменты остаются в промежуточном этапе, в финальный копируется только результат.", "see_also": ["Dockerfile"], "where": "Модуль Docker"},
-    {"term": "Namespaces (Linux)", "definition": "Механизм изоляции процессов (PID, сеть, mount, users). Вместе с cgroups составляет основу контейнеров.", "see_also": ["Cgroups", "Docker"], "where": "Модули Linux, Docker"},
-    {"term": "Namespace (Kubernetes)", "definition": "Логическая граница внутри кластера: изоляция ресурсов, RBAC, квоты. Типовые: dev, staging, prod, monitoring.", "see_also": ["RBAC", "ResourceQuota"], "where": "Модуль Kubernetes"},
-    {"term": "OIDC", "definition": "OpenID Connect — протокол федерации, позволяющий CI получать короткоживущие креды вместо долгоживущих ключей.", "see_also": ["IAM", "Секреты"], "where": "Модули CI/CD, DevSecOps"},
-    {"term": "OOMKilled", "definition": "Состояние, когда контейнер убит из-за превышения лимита памяти (код выхода 137). Нужно поднять лимит или исправить утечку.", "see_also": ["limits", "CrashLoopBackOff"], "where": "Модуль Kubernetes"},
-    {"term": "PDB", "definition": "PodDisruptionBudget — гарантия, что при плановых работах сохранится минимальное число доступных реплик.", "see_also": ["HPA", "Deployment"], "where": "Модуль Kubernetes"},
-    {"term": "Пайплайн", "definition": "Автоматическая последовательность шагов: линтеры, тесты, сборка, сканирование, публикация, деплой, проверка.", "see_also": ["CI", "CD"], "where": "Модуль CI/CD"},
-    {"term": "Pod", "definition": "Минимальная единица запуска в Kubernetes: один или несколько контейнеров с общей сетью и томами.", "see_also": ["Deployment", "Service"], "where": "Модуль Kubernetes"},
-    {"term": "Prometheus", "definition": "Система сбора и хранения метрик со своим языком запросов PromQL. Стандарт для метрик в Kubernetes.", "see_also": ["PromQL", "Grafana"], "where": "Модуль Наблюдаемость"},
-    {"term": "PromQL", "definition": "Язык запросов Prometheus: rate(), histogram_quantile(), агрегации по меткам.", "see_also": ["Prometheus"], "where": "Модуль Наблюдаемость"},
-    {"term": "Probes", "definition": "Проверки контейнера в Kubernetes: startupProbe, readinessProbe, livenessProbe — старт, готовность к трафику, живость.", "see_also": ["Liveness", "Readiness"], "where": "Модуль Kubernetes"},
-    {"term": "Readiness", "definition": "Проверка готовности принимать трафик. При провале pod убирается из endpoints сервиса, но не перезапускается.", "see_also": ["Liveness", "Endpoints"], "where": "Модуль Kubernetes"},
-    {"term": "RBAC", "definition": "Role-Based Access Control — модель прав по ролям. В Kubernetes задаёт, кто и что может в рамках namespace или кластера.", "see_also": ["Least privilege"], "where": "Модули Kubernetes, DevSecOps"},
-    {"term": "Registry (реестр)", "definition": "Хранилище образов: Docker Hub, GHCR, ECR. Поддерживает теги и неизменяемые digest-хеши.", "see_also": ["Digest"], "where": "Модуль Docker"},
-    {"term": "Requests/limits", "definition": "Гарантированный и максимальный объём ресурсов для контейнера. Requests влияют на размещение, limits — на отказ.", "see_also": ["OOMKilled", "HPA"], "where": "Модуль Kubernetes"},
-    {"term": "Rolling update", "definition": "Стратегия обновления в Kubernetes: pod'ы заменяются постепенно, простой при корректных probes равен нулю.", "see_also": ["Canary", "Blue/Green"], "where": "Модули Kubernetes, CI/CD"},
-    {"term": "Runbook", "definition": "Инструкция для дежурного: первые проверки, действия, условия эскалации. Ссылка на runbook обязана быть в алерте.", "see_also": ["Alert", "Инцидент"], "where": "Модуль Наблюдаемость"},
-    {"term": "SBOM", "definition": "Software Bill of Materials — перечень компонентов внутри артефакта. Позволяет быстро найти все сборки с уязвимой библиотекой.", "see_also": ["Supply chain", "trivy"], "where": "Модуль DevSecOps"},
-    {"term": "Secret (Kubernetes)", "definition": "Объект для секретных данных. base64 не является шифрованием: используйте sealed-secrets, SOPS или External Secrets.", "see_also": ["ConfigMap", "Секреты"], "where": "Модули Kubernetes, DevSecOps"},
-    {"term": "Секреты", "definition": "Пароли, токены, ключи. Хранятся в менеджере секретов (Vault, Secrets Manager), никогда — в Git; при утечке сначала отзываются.", "see_also": ["Vault", "gitleaks"], "where": "Модуль DevSecOps"},
-    {"term": "Semver", "definition": "Семантическое версионирование MAJOR.MINOR.PATCH: несовместимые изменения, новая функциональность, исправления.", "see_also": ["Conventional Commits", "Релиз"], "where": "Модуль Git"},
-    {"term": "Service (Kubernetes)", "definition": "Стабильный сетевой адрес для группы pod'ов, выбираемых по меткам. Типы: ClusterIP, NodePort, LoadBalancer, Headless.", "see_also": ["Endpoints", "Ingress"], "where": "Модуль Kubernetes"},
-    {"term": "SLO", "definition": "Service Level Objective — цель по надёжности, заданная через SLI (например, 99,9 % успешных запросов за 30 дней).", "see_also": ["SLI", "Error budget"], "where": "Модуль Наблюдаемость"},
-    {"term": "SOPS", "definition": "Инструмент шифрования файлов (например, секретов) прямо в репозитории с помощью age/GPG/KMS-ключей.", "see_also": ["Ansible Vault", "Секреты"], "where": "Модуль DevSecOps"},
-    {"term": "Spot-инстансы", "definition": "Дешёвые прерываемые инстансы в облаке: экономия 70–90 % для пакетных задач, но ресурс может быть отозван.", "see_also": ["FinOps"], "where": "Модуль Облако"},
-    {"term": "SSH", "definition": "Протокол защищённого доступа к серверам. Вход по ключам, конфиг ~/.ssh/config, отключение парольного root-входа.", "see_also": ["Linux"], "where": "Модуль Linux"},
-    {"term": "State (Terraform)", "definition": "Файл соответствия «код ↔ реальные ресурсы». Хранится в удалённом backend с блокировкой и шифрованием.", "see_also": ["Terraform"], "where": "Модуль IaC"},
-    {"term": "StatefulSet", "definition": "Объект Kubernetes для приложений с состоянием: стабильные имена pod'ов и постоянные диски (БД, брокеры).", "see_also": ["Deployment"], "where": "Модуль Kubernetes"},
-    {"term": "systemd", "definition": "Система инициализации Linux: запускает сервисы, хранит логи в journald, управляет таймерами.", "see_also": ["journald", "Linux"], "where": "Модули Linux, Bash"},
-    {"term": "Terraform", "definition": "Инструмент IaC: описывает инфраструктуру декларативно, планирует изменения (plan) и применяет их (apply).", "see_also": ["State", "Provider"], "where": "Модуль IaC"},
-    {"term": "Trace (трассировка)", "definition": "Сквозной путь запроса через сервисы с длительностями этапов. Позволяет найти узкое место (OpenTelemetry, Jaeger).", "see_also": ["Observability"], "where": "Модуль Наблюдаемость"},
-    {"term": "Trivy", "definition": "Сканер уязвимостей контейнерных образов, IaC и секретов. Основной инструмент проверки образов в пайплайне.", "see_also": ["SBOM", "Supply chain"], "where": "Модуль DevSecOps"},
-    {"term": "TTL (DNS)", "definition": "Время кэширования DNS-записи. Уменьшается заранее перед миграцией, чтобы переключение произошло быстро.", "see_also": ["DNS"], "where": "Модуль Сети"},
-    {"term": "VPC", "definition": "Виртуальная частная сеть в облаке: подсети, таблицы маршрутизации, шлюзы (IGW, NAT), группы безопасности.", "see_also": ["Security group", "Облако"], "where": "Модуль Облако"},
-    {"term": "Workflow (GitHub Actions)", "definition": "YAML-файл в .github/workflows, описывающий триггеры, jobs и steps пайплайна.", "see_also": ["GitHub Actions", "Пайплайн"], "where": "Модуль CI/CD"},
-    {"term": "Постмортем", "definition": "Разбор инцидента без обвинений: влияние, таймлайн, корневая причина, action items с владельцами и сроками.", "see_also": ["Инцидент", "MTTR"], "where": "Модуль Наблюдаемость"},
-    {"term": "Endpoints", "definition": "Список pod'ов, готовых принимать трафик для сервиса. Пустые endpoints — самая частая причина «сервис недоступен».", "see_also": ["Readiness", "Service"], "where": "Модуль Kubernetes"},
-    {"term": "Обратный прокси (reverse proxy)", "definition": "Сервер, принимающий трафик и распределяющий его к бэкендам: nginx, HAProxy, Envoy, облачные LB.", "see_also": ["nginx", "Балансировка"], "where": "Модуль Сети"},
-    {"term": "journald", "definition": "Подсистема логирования systemd. Читается через journalctl с фильтрами по unit, времени и приоритету.", "see_also": ["systemd"], "where": "Модуль Linux"}
+    {
+      "term": "Admission controller",
+      "definition": "Компонент Kubernetes, который проверяет или изменяет объекты при создании. Используется для политик безопасности (Kyverno, Gatekeeper).",
+      "see_also": [
+        "Kyverno",
+        "Pod Security"
+      ],
+      "where": "Модуль Kubernetes, DevSecOps"
+    },
+    {
+      "term": "Alert",
+      "definition": "Правило, по которому система мониторинга уведомляет о проблеме. Хороший алерт — про симптом для пользователя, с порогом, for: и ссылкой на runbook.",
+      "see_also": [
+        "SLO",
+        "Runbook"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Ansible",
+      "definition": "Инструмент конфигурации серверов без агентов: подключается по SSH и приводит их к описанному в плейбуках состоянию.",
+      "see_also": [
+        "Настройка.",
+        "Vault"
+      ],
+      "where": "Модуль IaC"
+    },
+    {
+      "term": "Ansible Vault",
+      "definition": "Шифрование секретов внутри репозитория Ansible. Пароль хранится вне Git — в секретах CI или у инженеров.",
+      "see_also": [
+        "Секреты",
+        "SOPS"
+      ],
+      "where": "Модули IaC, DevSecOps"
+    },
+    {
+      "term": "Artifact",
+      "definition": "Результат сборки (архив, пакет, образ). Правило: артефакт собирается один раз и доставляется во все окружения без пересборки.",
+      "see_also": [
+        "CI/CD",
+        "Digest"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Blue/Green",
+      "definition": "Стратегия деплоя с двумя окружениями: трафик переключается на новую версию целиком, откат мгновенный.",
+      "see_also": [
+        "Canary",
+        "Rolling update"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Burn rate",
+      "definition": "Скорость расходования error budget. Высокий burn rate означает, что бюджет будет исчерпан быстро — по нему и алертят.",
+      "see_also": [
+        "Error budget",
+        "SLO"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Canary",
+      "definition": "Деплой, при котором новая версия получает небольшую долю трафика (1–5 %), метрики сравниваются, затем трафик растёт.",
+      "see_also": [
+        "Blue/Green",
+        "SLO"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "CD (Continuous Delivery)",
+      "definition": "Автоматическая доставка проверенного изменения в окружения (staging, prod). Отличается от CI наличием деплоя.",
+      "see_also": [
+        "CI",
+        "GitOps"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Cgroups",
+      "definition": "Механизм ядра Linux, ограничивающий ресурсы (CPU, память, I/O) для групп процессов. Основа лимитов контейнеров и pod'ов.",
+      "see_also": [
+        "Namespaces",
+        "Docker"
+      ],
+      "where": "Модуль Linux, Docker"
+    },
+    {
+      "term": "Chaos engineering",
+      "definition": "Управляемое внесение сбоев (отключение узла, задержка сети), чтобы проверить устойчивость системы до реальной аварии.",
+      "see_also": [
+        "SLO",
+        "Постмортем"
+      ],
+      "where": "Модули Наблюдаемость, Облако"
+    },
+    {
+      "term": "CI (Continuous Integration)",
+      "definition": "Практика, при которой каждое изменение автоматически собирается, проверяется тестами и линтерами.",
+      "see_also": [
+        "CD",
+        "Пайплайн"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Compose",
+      "definition": "Инструмент Docker для описания и запуска нескольких сервисов одной командой с зависимостями, healthcheck и лимитами.",
+      "see_also": [
+        "Docker"
+      ],
+      "where": "Модуль Docker"
+    },
+    {
+      "term": "ConfigMap",
+      "definition": "Объект Kubernetes для несекретной конфигурации приложения: переменные окружения, файлы конфигурации.",
+      "see_also": [
+        "Secret"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Conventional Commits",
+      "definition": "Соглашение о формате сообщений коммитов: type(scope): описание. Позволяет генерировать changelog и версии автоматически.",
+      "see_also": [
+        "Semver"
+      ],
+      "where": "Модуль Git"
+    },
+    {
+      "term": "CoreDNS",
+      "definition": "DNS-сервер Kubernetes: резолвит имена сервисов вида service.namespace.svc и внешние домены для подов.",
+      "see_also": [
+        "Service (Kubernetes)",
+        "Ingress"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Counter",
+      "definition": "Тип метрики Prometheus, который может только увеличиваться (например, число запросов). Скорость роста считается через rate().",
+      "see_also": [
+        "Gauge",
+        "PromQL"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "CrashLoopBackOff",
+      "definition": "Состояние pod'а, когда контейнер запускается и падает циклически. Смотреть logs --previous и describe pod.",
+      "see_also": [
+        "OOMKilled",
+        "kubectl"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "DaemonSet",
+      "definition": "Объект Kubernetes, гарантирующий по одной копии pod'а на каждом узле (агенты мониторинга, сборщики логов).",
+      "see_also": [
+        "Deployment"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Deployment",
+      "definition": "Основной объект Kubernetes для stateless-приложений: описывает шаблон pod'а, количество реплик и стратегию обновления.",
+      "see_also": [
+        "StatefulSet",
+        "ReplicaSet"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Digest",
+      "definition": "Криптографический хеш образа (sha256:...). Неизменяем, в отличие от тега, поэтому используется в манифестах деплоя.",
+      "see_also": [
+        "Registry",
+        "Artifact"
+      ],
+      "where": "Модули Docker, CI/CD"
+    },
+    {
+      "term": "Docker",
+      "definition": "Платформа для сборки образов и запуска контейнеров: изолированных процессов на общем ядре Linux.",
+      "see_also": [
+        "Образ",
+        "Namespaces"
+      ],
+      "where": "Модуль Docker"
+    },
+    {
+      "term": "Dockerfile",
+      "definition": "Текстовый файл с инструкциями сборки образа. Каждая инструкция создаёт слой, который кэшируется.",
+      "see_also": [
+        "Multi-stage build"
+      ],
+      "where": "Модуль Docker"
+    },
+    {
+      "term": "DORA-метрики",
+      "definition": "Четыре метрики поставки: частота деплоя, lead time, доля неуспешных изменений, MTTR.",
+      "see_also": [
+        "MTTR",
+        "CI/CD"
+      ],
+      "where": "Модуль Введение"
+    },
+    {
+      "term": "Drift (дрейф)",
+      "definition": "Расхождение между описанной в коде инфраструктурой и реальным состоянием. Ловится регулярным terraform plan.",
+      "see_also": [
+        "State (Terraform)",
+        "Terraform"
+      ],
+      "where": "Модуль IaC"
+    },
+    {
+      "term": "Endpoints",
+      "definition": "Список pod'ов, готовых принимать трафик для сервиса. Пустые endpoints — самая частая причина «сервис недоступен».",
+      "see_also": [
+        "Readiness",
+        "Service"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Error budget",
+      "definition": "Допустимый объём ошибок по SLO (например, 43 минуты в месяц при 99,9 %). Исчерпан — приоритет на надёжность.",
+      "see_also": [
+        "SLO",
+        "Burn rate"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "etcd",
+      "definition": "Распределённое хранилище состояния Kubernetes. Требует резервных копий: потеря etcd = потеря кластера.",
+      "see_also": [
+        "Control plane"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Feature flag",
+      "definition": "Переключатель функциональности без деплоя. Позволяет выкатывать код отдельно от включения поведения и быстро откатывать.",
+      "see_also": [
+        "Canary",
+        "Blue/Green"
+      ],
+      "where": "Модули CI/CD, Kubernetes"
+    },
+    {
+      "term": "FinOps",
+      "definition": "Практика управления облачными расходами: теги, бюджеты, rightsizing, автостоп сред, spot-инстансы.",
+      "see_also": [
+        "Облако"
+      ],
+      "where": "Модуль Облако"
+    },
+    {
+      "term": "for:",
+      "definition": "Параметр правила алерта, требующий непрерывного выполнения условия заданное время. Убирает «мигающие» алерты.",
+      "see_also": [
+        "Alert"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Gauge",
+      "definition": "Тип метрики, значение которой может расти и падать: память, число соединений, размер очереди.",
+      "see_also": [
+        "Counter",
+        "Histogram"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "GitHub Actions",
+      "definition": "CI/CD-система, встроенная в GitHub: workflows, jobs, steps, runners, secrets и environments.",
+      "see_also": [
+        "Workflow"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "GitOps",
+      "definition": "Подход, при котором желаемое состояние кластера описано в Git, а агент (Argo CD, Flux) синхронизирует реальность.",
+      "see_also": [
+        "CD"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Golden signals",
+      "definition": "Четыре сигнала для мониторинга сервиса: latency, traffic, errors, saturation. Основа операционного дашборда.",
+      "see_also": [
+        "Alert",
+        "SLO"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Grafana",
+      "definition": "Платформа дашбордов и визуализации, чаще всего поверх Prometheus, Loki и других источников данных.",
+      "see_also": [
+        "Prometheus"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Healthcheck",
+      "definition": "Проверка работоспособности сервиса (HTTP-эндпоинт или команда inside контейнера). У Docker — HEALTHCHECK, у k8s — probes.",
+      "see_also": [
+        "Readiness",
+        "Liveness"
+      ],
+      "where": "Модули Docker, Kubernetes"
+    },
+    {
+      "term": "Histogram",
+      "definition": "Тип метрики для распределений (время ответа). Квантили считаются функцией histogram_quantile в PromQL.",
+      "see_also": [
+        "PromQL"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "HPA",
+      "definition": "HorizontalPodAutoscaler — автомасштабирование количества реплик по метрикам (CPU, RPS, кастомные).",
+      "see_also": [
+        "ReplicaSet",
+        "PDB"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "IAM",
+      "definition": "Система управления доступом в облаке: пользователи, роли, политики. Основной принцип — наименьшие привилегии.",
+      "see_also": [
+        "Least privilege",
+        "OIDC"
+      ],
+      "where": "Модуль Облако"
+    },
+    {
+      "term": "Idempotency (идемпотентность)",
+      "definition": "Свойство операции давать тот же результат при повторном выполнении. Основа безопасных пайплайнов, Terraform и Ansible.",
+      "see_also": [
+        "Terraform",
+        "Ansible"
+      ],
+      "where": "Модуль IaC"
+    },
+    {
+      "term": "Ingress",
+      "definition": "Объект Kubernetes, описывающий HTTP-маршрутизацию по домену и пути; реализуется ingress-контроллером (nginx, Traefik).",
+      "see_also": [
+        "Service",
+        "cert-manager"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "journald",
+      "definition": "Подсистема логирования systemd. Читается через journalctl с фильтрами по unit, времени и приоритету.",
+      "see_also": [
+        "systemd"
+      ],
+      "where": "Модуль Linux"
+    },
+    {
+      "term": "Kubernetes",
+      "definition": "Оркестратор контейнеров: приводит кластер к состоянию, описанному в манифестах (replicas, probes, ресурсы).",
+      "see_also": [
+        "Pod",
+        "Deployment"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Least privilege",
+      "definition": "Принцип «минимально необходимых прав»: пользователь или сервис получает только те разрешения, которые нужны для работы.",
+      "see_also": [
+        "RBAC",
+        "IAM"
+      ],
+      "where": "Модули Облако, DevSecOps"
+    },
+    {
+      "term": "Liveness",
+      "definition": "Проверка живости контейнера. При провале kubelet перезапускает контейнер. Не должна зависеть от внешних сервисов.",
+      "see_also": [
+        "Readiness",
+        "Probes"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Load average",
+      "definition": "Средняя длина очереди процессов (CPU + ожидание I/O). Сравнивать нужно с количеством ядер (nproc).",
+      "see_also": [
+        "Linux"
+      ],
+      "where": "Модуль Linux"
+    },
+    {
+      "term": "Logrotate",
+      "definition": "Утилита ротации логов. Обязательно настраивать postrotate с reload сервиса, иначе процесс продолжит писать в удалённый файл.",
+      "see_also": [
+        "journald"
+      ],
+      "where": "Модули Linux, Bash"
+    },
+    {
+      "term": "Manifest (манифест)",
+      "definition": "YAML-описание объекта Kubernetes (Deployment, Service, Ingress и др.), которое применяется командой kubectl apply.",
+      "see_also": [
+        "Deployment"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "MTTD",
+      "definition": "Mean Time To Detect — среднее время до обнаружения проблемы. Улучшается алертами по симптомам и тестами мониторинга.",
+      "see_also": [
+        "MTTR"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "MTTR",
+      "definition": "Mean Time To Recovery — среднее время восстановления после инцидента. Ключевая метрика эксплуатации.",
+      "see_also": [
+        "MTTD",
+        "Постмортем"
+      ],
+      "where": "Модули Наблюдаемость, Введение"
+    },
+    {
+      "term": "Multi-stage build",
+      "definition": "Сборка образа в несколько этапов: тяжёлые инструменты остаются в промежуточном этапе, в финальный копируется только результат.",
+      "see_also": [
+        "Dockerfile"
+      ],
+      "where": "Модуль Docker"
+    },
+    {
+      "term": "Namespace (Kubernetes)",
+      "definition": "Логическая граница внутри кластера: изоляция ресурсов, RBAC, квоты. Типовые: dev, staging, prod, monitoring.",
+      "see_also": [
+        "RBAC",
+        "ResourceQuota"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Namespaces (Linux)",
+      "definition": "Механизм изоляции процессов (PID, сеть, mount, users). Вместе с cgroups составляет основу контейнеров.",
+      "see_also": [
+        "Cgroups",
+        "Docker"
+      ],
+      "where": "Модули Linux, Docker"
+    },
+    {
+      "term": "NetworkPolicy",
+      "definition": "Правила сетевого доступа между подами. Пока ни одна политика не выбрана, трафик разрешён по умолчанию.",
+      "see_also": [
+        "Namespace (Kubernetes)",
+        "Least privilege"
+      ],
+      "where": "Модули Kubernetes, DevSecOps"
+    },
+    {
+      "term": "OIDC",
+      "definition": "OpenID Connect — протокол федерации, позволяющий CI получать короткоживущие креды вместо долгоживущих ключей.",
+      "see_also": [
+        "IAM",
+        "Секреты"
+      ],
+      "where": "Модули CI/CD, DevSecOps"
+    },
+    {
+      "term": "OOMKilled",
+      "definition": "Состояние, когда контейнер убит из-за превышения лимита памяти (код выхода 137). Нужно поднять лимит или исправить утечку.",
+      "see_also": [
+        "limits",
+        "CrashLoopBackOff"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "PDB",
+      "definition": "PodDisruptionBudget — гарантия, что при плановых работах сохранится минимальное число доступных реплик.",
+      "see_also": [
+        "HPA",
+        "Deployment"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Pod",
+      "definition": "Минимальная единица запуска в Kubernetes: один или несколько контейнеров с общей сетью и томами.",
+      "see_also": [
+        "Deployment",
+        "Service"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Probes",
+      "definition": "Проверки контейнера в Kubernetes: startupProbe, readinessProbe, livenessProbe — старт, готовность к трафику, живость.",
+      "see_also": [
+        "Liveness",
+        "Readiness"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Prometheus",
+      "definition": "Система сбора и хранения метрик со своим языком запросов PromQL. Стандарт для метрик в Kubernetes.",
+      "see_also": [
+        "PromQL",
+        "Grafana"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "PromQL",
+      "definition": "Язык запросов Prometheus: rate(), histogram_quantile(), агрегации по меткам.",
+      "see_also": [
+        "Prometheus"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "RBAC",
+      "definition": "Role-Based Access Control — модель прав по ролям. В Kubernetes задаёт, кто и что может в рамках namespace или кластера.",
+      "see_also": [
+        "Least privilege"
+      ],
+      "where": "Модули Kubernetes, DevSecOps"
+    },
+    {
+      "term": "Readiness",
+      "definition": "Проверка готовности принимать трафик. При провале pod убирается из endpoints сервиса, но не перезапускается.",
+      "see_also": [
+        "Liveness",
+        "Endpoints"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Registry (реестр)",
+      "definition": "Хранилище образов: Docker Hub, GHCR, ECR. Поддерживает теги и неизменяемые digest-хеши.",
+      "see_also": [
+        "Digest"
+      ],
+      "where": "Модуль Docker"
+    },
+    {
+      "term": "Requests/limits",
+      "definition": "Гарантированный и максимальный объём ресурсов для контейнера. Requests влияют на размещение, limits — на отказ.",
+      "see_also": [
+        "OOMKilled",
+        "HPA"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "Rollback (откат)",
+      "definition": "Возврат к предыдущей рабочей версии. Должен быть проверен заранее и занимать минуты, а не часы.",
+      "see_also": [
+        "Canary",
+        "Blue/Green"
+      ],
+      "where": "Модули CI/CD, Kubernetes"
+    },
+    {
+      "term": "Rolling update",
+      "definition": "Стратегия обновления в Kubernetes: pod'ы заменяются постепенно, простой при корректных probes равен нулю.",
+      "see_also": [
+        "Canary",
+        "Blue/Green"
+      ],
+      "where": "Модули Kubernetes, CI/CD"
+    },
+    {
+      "term": "Runbook",
+      "definition": "Инструкция для дежурного: первые проверки, действия, условия эскалации. Ссылка на runbook обязана быть в алерте.",
+      "see_also": [
+        "Alert",
+        "Инцидент"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "SBOM",
+      "definition": "Software Bill of Materials — перечень компонентов внутри артефакта. Позволяет быстро найти все сборки с уязвимой библиотекой.",
+      "see_also": [
+        "Supply chain",
+        "trivy"
+      ],
+      "where": "Модуль DevSecOps"
+    },
+    {
+      "term": "Secret (Kubernetes)",
+      "definition": "Объект для секретных данных. base64 не является шифрованием: используйте sealed-secrets, SOPS или External Secrets.",
+      "see_also": [
+        "ConfigMap",
+        "Секреты"
+      ],
+      "where": "Модули Kubernetes, DevSecOps"
+    },
+    {
+      "term": "Semver",
+      "definition": "Семантическое версионирование MAJOR.MINOR.PATCH: несовместимые изменения, новая функциональность, исправления.",
+      "see_also": [
+        "Conventional Commits",
+        "Релиз"
+      ],
+      "where": "Модуль Git"
+    },
+    {
+      "term": "Service (Kubernetes)",
+      "definition": "Стабильный сетевой адрес для группы pod'ов, выбираемых по меткам. Типы: ClusterIP, NodePort, LoadBalancer, Headless.",
+      "see_also": [
+        "Endpoints",
+        "Ingress"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "SLI",
+      "definition": "Измеримый показатель уровня сервиса: доля успешных запросов, latency, доступность. SLO задаёт цель для SLI.",
+      "see_also": [
+        "SLO",
+        "Error budget"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "SLO",
+      "definition": "Service Level Objective — цель по надёжности, заданная через SLI (например, 99,9 % успешных запросов за 30 дней).",
+      "see_also": [
+        "SLI",
+        "Error budget"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "SOPS",
+      "definition": "Инструмент шифрования файлов (например, секретов) прямо в репозитории с помощью age/GPG/KMS-ключей.",
+      "see_also": [
+        "Ansible Vault",
+        "Секреты"
+      ],
+      "where": "Модуль DevSecOps"
+    },
+    {
+      "term": "Spot-инстансы",
+      "definition": "Дешёвые прерываемые инстансы в облаке: экономия 70–90 % для пакетных задач, но ресурс может быть отозван.",
+      "see_also": [
+        "FinOps"
+      ],
+      "where": "Модуль Облако"
+    },
+    {
+      "term": "SSH",
+      "definition": "Протокол защищённого доступа к серверам. Вход по ключам, конфиг ~/.ssh/config, отключение парольного root-входа.",
+      "see_also": [
+        "Linux"
+      ],
+      "where": "Модуль Linux"
+    },
+    {
+      "term": "State (Terraform)",
+      "definition": "Файл соответствия «код ↔ реальные ресурсы». Хранится в удалённом backend с блокировкой и шифрованием.",
+      "see_also": [
+        "Terraform"
+      ],
+      "where": "Модуль IaC"
+    },
+    {
+      "term": "StatefulSet",
+      "definition": "Объект Kubernetes для приложений с состоянием: стабильные имена pod'ов и постоянные диски (БД, брокеры).",
+      "see_also": [
+        "Deployment"
+      ],
+      "where": "Модуль Kubernetes"
+    },
+    {
+      "term": "systemd",
+      "definition": "Система инициализации Linux: запускает сервисы, хранит логи в journald, управляет таймерами.",
+      "see_also": [
+        "journald",
+        "Linux"
+      ],
+      "where": "Модули Linux, Bash"
+    },
+    {
+      "term": "Terraform",
+      "definition": "Инструмент IaC: описывает инфраструктуру декларативно, планирует изменения (plan) и применяет их (apply).",
+      "see_also": [
+        "State",
+        "Provider"
+      ],
+      "where": "Модуль IaC"
+    },
+    {
+      "term": "Trace (трассировка)",
+      "definition": "Сквозной путь запроса через сервисы с длительностями этапов. Позволяет найти узкое место (OpenTelemetry, Jaeger).",
+      "see_also": [
+        "Observability"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Trivy",
+      "definition": "Сканер уязвимостей контейнерных образов, IaC и секретов. Основной инструмент проверки образов в пайплайне.",
+      "see_also": [
+        "SBOM",
+        "Supply chain"
+      ],
+      "where": "Модуль DevSecOps"
+    },
+    {
+      "term": "Trunk-based development",
+      "definition": "Стиль работы с короткоживущими ветками и частым слиянием в main. Снижает конфликты и ускоряет релизы.",
+      "see_also": [
+        "GitHub Actions",
+        "Пайплайн"
+      ],
+      "where": "Модуль Git"
+    },
+    {
+      "term": "TTL (DNS)",
+      "definition": "Время кэширования DNS-записи. Уменьшается заранее перед миграцией, чтобы переключение произошло быстро.",
+      "see_also": [
+        "DNS"
+      ],
+      "where": "Модуль Сети"
+    },
+    {
+      "term": "Value stream",
+      "definition": "Поток от идеи до ценности у пользователя: все шаги, ожидания и проверки. Оптимизировать нужно поток, а не загрузку отдельных людей.",
+      "see_also": [
+        "DORA-метрики",
+        "Пайплайн"
+      ],
+      "where": "Модуль Введение"
+    },
+    {
+      "term": "VPC",
+      "definition": "Виртуальная частная сеть в облаке: подсети, таблицы маршрутизации, шлюзы (IGW, NAT), группы безопасности.",
+      "see_also": [
+        "Security group",
+        "Облако"
+      ],
+      "where": "Модуль Облако"
+    },
+    {
+      "term": "Workflow (GitHub Actions)",
+      "definition": "YAML-файл в .github/workflows, описывающий триггеры, jobs и steps пайплайна.",
+      "see_also": [
+        "GitHub Actions",
+        "Пайплайн"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Обратный прокси (reverse proxy)",
+      "definition": "Сервер, принимающий трафик и распределяющий его к бэкендам: nginx, HAProxy, Envoy, облачные LB.",
+      "see_also": [
+        "nginx",
+        "Балансировка"
+      ],
+      "where": "Модуль Сети"
+    },
+    {
+      "term": "Пайплайн",
+      "definition": "Автоматическая последовательность шагов: линтеры, тесты, сборка, сканирование, публикация, деплой, проверка.",
+      "see_also": [
+        "CI",
+        "CD"
+      ],
+      "where": "Модуль CI/CD"
+    },
+    {
+      "term": "Постмортем",
+      "definition": "Разбор инцидента без обвинений: влияние, таймлайн, корневая причина, action items с владельцами и сроками.",
+      "see_also": [
+        "Инцидент",
+        "MTTR"
+      ],
+      "where": "Модуль Наблюдаемость"
+    },
+    {
+      "term": "Секреты",
+      "definition": "Пароли, токены, ключи. Хранятся в менеджере секретов (Vault, Secrets Manager), никогда — в Git; при утечке сначала отзываются.",
+      "see_also": [
+        "Vault",
+        "gitleaks"
+      ],
+      "where": "Модуль DevSecOps"
+    }
   ]
 }

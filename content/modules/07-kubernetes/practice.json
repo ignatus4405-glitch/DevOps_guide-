@@ -18,7 +18,12 @@
       "solution": "minikube start --cpus=2 --memory=4g\nkubectl create ns prod\nkubectl -n prod apply -f deployment.yaml\nkubectl -n prod get pods -w\nkubectl -n prod rollout status deploy/api",
       "check": {
         "type": "regex_all",
-        "patterns": ["minikube\\s+start|kind\\s+create\\s+cluster", "kubectl\\s+create\\s+ns", "kubectl.*apply\\s+-f", "rollout\\s+status"],
+        "patterns": [
+          "minikube\\s+start|kind\\s+create\\s+cluster",
+          "kubectl\\s+create\\s+ns",
+          "kubectl.*apply\\s+-f",
+          "rollout\\s+status"
+        ],
         "feedback": "Кластер и деплой готовы. Дальше — сервис, ingress и проверки, чтобы приложение было доступно и отказоустойчиво."
       },
       "validation_hint": "kubectl -n prod get pods показывает RUNNING и 3 реплики."
@@ -40,7 +45,13 @@
       "solution": "kubectl -n prod apply -f - <<'EOF'\napiVersion: v1\nkind: Service\nmetadata: { name: api, namespace: prod }\nspec:\n  selector: { app: api }\n  ports: [{ name: http, port: 80, targetPort: 8000 }]\n---\napiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: api\n  namespace: prod\n  annotations: { cert-manager.io/cluster-issuer: letsencrypt-prod }\nspec:\n  ingressClassName: nginx\n  tls: [{ hosts: [api.example.com], secretName: api-tls }]\n  rules:\n    - host: api.example.com\n      http:\n        paths:\n          - path: /\n            pathType: Prefix\n            backend: { service: { name: api, port: { name: http } } }\nEOF\nkubectl -n prod get endpoints api\nkubectl -n prod get ingress",
       "check": {
         "type": "regex_all",
-        "patterns": ["kind:\\s+Service", "selector:", "kind:\\s+Ingress", "cert-manager", "get endpoints"],
+        "patterns": [
+          "kind:\\s+Service",
+          "selector:",
+          "kind:\\s+Ingress",
+          "cert-manager",
+          "get endpoints"
+        ],
         "feedback": "Приложение опубликовано, endpoints не пусты, TLS автоматизирован через cert-manager."
       },
       "validation_hint": "curl -H 'Host: api.example.com' http://<ingress-ip>/health возвращает 200."
@@ -62,7 +73,13 @@
       "solution": "kubectl -n prod patch deploy api --type=strategic -p '{\n \"spec\":{\"template\":{\"spec\":{\"containers\":[{\n   \"name\":\"api\",\n   \"resources\":{\"requests\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"},\"limits\":{\"cpu\":\"500m\",\"memory\":\"512Mi\"}},\n   \"startupProbe\":{\"httpGet\":{\"path\":\"/health\",\"port\":8000},\"failureThreshold\":30,\"periodSeconds\":5},\n   \"readinessProbe\":{\"httpGet\":{\"path\":\"/ready\",\"port\":8000},\"periodSeconds\":10},\n   \"livenessProbe\":{\"httpGet\":{\"path\":\"/health\",\"port\":8000},\"periodSeconds\":20}\n }]}}}}'\nkubectl -n prod autoscale deploy api --min=3 --max=10 --cpu-percent=70\nkubectl -n prod get hpa -w",
       "check": {
         "type": "regex_all",
-        "patterns": ["startupProbe", "readinessProbe", "livenessProbe", "limits", "autoscale|HorizontalPodAutoscaler"],
+        "patterns": [
+          "startupProbe",
+          "readinessProbe",
+          "livenessProbe",
+          "limits",
+          "autoscale|HorizontalPodAutoscaler"
+        ],
         "feedback": "Три проверки + лимиты + HPA — это минимальный набор, при котором сервис в кластере ведёт себя предсказуемо."
       },
       "validation_hint": "kubectl get hpa показывает текущие и целевые метрики, реплики меняются под нагрузкой."
@@ -84,10 +101,185 @@
       "solution": "kubectl -n prod get pods\nkubectl -n prod describe pod api-broken | sed -n '/Events/,$p'\nkubectl -n prod logs api-broken --previous\n# исправляем образ/порт в манифесте и применяем снова\nkubectl -n prod apply -f deployment.yaml\nkubectl -n prod rollout status deploy/api",
       "check": {
         "type": "regex_all",
-        "patterns": ["describe\\s+pod", "(logs\\s+.*(--previous|-p)|--previous)", "get\\s+events|describe", "apply\\s+-f"],
+        "patterns": [
+          "describe\\s+pod",
+          "(logs\\s+.*(--previous|-p)|--previous)",
+          "get\\s+events|describe",
+          "apply\\s+-f"
+        ],
         "feedback": "Порядок «статус → describe → logs → исправление → rollout status» — это рабочий алгоритм дежурного."
       },
       "validation_hint": "После исправления pod'ы в статусе Running и READY 1/1."
+    },
+    {
+      "id": "endpoints-hunt",
+      "title": "Найти разрыв Service → Pod",
+      "level": "hard",
+      "goal": "Научиться диагностировать «сервис не отвечает» по цепочке.",
+      "instructions": [
+        "Создайте Deployment с меткой app=demo и 2 репликами.",
+        "Создайте Service с selector app=demo.",
+        "Проверьте endpoints и доступность.",
+        "Сломайте selector и найдите причину по events."
+      ],
+      "hints": [
+        "kubectl get endpoints <svc> — пусто или адреса.",
+        "kubectl get pods --show-labels.",
+        "kubectl describe svc покажет selector."
+      ],
+      "solution": "kubectl create deployment demo --image=nginx --replicas=2\nkubectl expose deployment demo --port=80 --target-port=80\nkubectl get endpoints demo\nkubectl get pods --show-labels\nkubectl run tmp --rm -it --image=curlimages/curl --restart=Never -- curl -sS http://demo\nkubectl patch svc demo -p '{\"spec\":{\"selector\":{\"app\":\"wrong\"}}}'\nkubectl get endpoints demo\nkubectl describe svc demo | tail -10",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "kubectl\\s+get\\s+endpoints",
+          "show-labels",
+          "curl",
+          "kubectl\\s+patch"
+        ],
+        "feedback": "Разрыв найден: endpoints пусты, потому что selector не совпадает с метками."
+      },
+      "validation_hint": "До поломки curl возвращает страницу nginx, после — endpoints пусты."
+    },
+    {
+      "id": "resources-tune",
+      "title": "Подобрать requests и limits",
+      "level": "medium",
+      "goal": "Настроить ресурсы так, чтобы под не падал по OOM и не простаивал.",
+      "instructions": [
+        "Запустите нагрузочный тест простого сервиса.",
+        "Снимите kubectl top pod под нагрузкой.",
+        "Выставьте requests по p95 и limits с запасом.",
+        "Проверьте, что при превышении под не убивается."
+      ],
+      "hints": [
+        "kubectl top pod показывает текущее потребление.",
+        "requests влияют на планирование, limits — на троттлинг/OOM.",
+        "Для JVM задайте -XX:MaxRAMPercentage=75."
+      ],
+      "solution": "kubectl top pods -n default\nkubectl set resources deployment/demo --requests=cpu=100m,memory=128Mi --limits=cpu=500m,memory=384Mi\nkubectl rollout status deployment/demo\nkubectl describe pod -l app=demo | grep -A3 -E 'Limits|Requests'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "kubectl\\s+top",
+          "set\\s+resources",
+          "--limits",
+          "rollout\\s+status"
+        ],
+        "feedback": "Ресурсы выставлены: requests отражают реальную нагрузку, limits дают запас."
+      },
+      "validation_hint": "kubectl describe pod показывает requests и limits; приложение работает под нагрузкой."
+    },
+    {
+      "id": "rbac-minimal",
+      "title": "Выдать минимальные права деплоя",
+      "level": "hard",
+      "goal": "Ограничить CI конкретным namespace и ресурсом.",
+      "instructions": [
+        "Создайте ServiceAccount deployer в namespace app.",
+        "Создайте Role на get/list/patch deployments.",
+        "Привяжите Role к ServiceAccount.",
+        "Проверьте права через kubectl auth can-i --as."
+      ],
+      "hints": [
+        "Имя SA: system:serviceaccount:app:deployer.",
+        "can-i create pods должен быть no.",
+        "Проверьте и patch deployments — yes."
+      ],
+      "solution": "kubectl create namespace app\nkubectl -n app create serviceaccount deployer\nkubectl -n app create role deployer --verb=get,list,patch --resource=deployments\nkubectl -n app create rolebinding deployer --role=deployer --serviceaccount=app:deployer\nkubectl auth can-i patch deployments --as=system:serviceaccount:app:deployer -n app\nkubectl auth can-i create pods --as=system:serviceaccount:app:deployer -n app",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "serviceaccount\\s+deployer",
+          "create\\s+role",
+          "rolebinding",
+          "auth\\s+can-i"
+        ],
+        "feedback": "Права минимальны: деплой можно, создавать поды и читать секреты — нельзя."
+      },
+      "validation_hint": "can-i patch deployments = yes, can-i create pods = no."
+    },
+    {
+      "id": "helm-render",
+      "title": "Отрендерить Helm-чарт для двух окружений",
+      "level": "medium",
+      "goal": "Научиться проверять манифесты до деплоя.",
+      "instructions": [
+        "Создайте чарт с deployment и values.yaml.",
+        "Сделайте values-staging.yaml и values-prod.yaml с разными replicas.",
+        "Отрендерите оба варианта через helm template.",
+        "Сохраните diff в helm-report.md."
+      ],
+      "hints": [
+        "helm create mychart — заготовка.",
+        "helm template mychart -f values-prod.yaml > prod.yaml.",
+        "Сравните replicas и image.tag."
+      ],
+      "solution": "helm create mychart\ncat > mychart/values-prod.yaml <<'EOF'\nreplicaCount: 5\nimage:\n  tag: 1.4.2\nEOF\nhelm template mychart -f mychart/values-prod.yaml > prod.yaml\nhelm template mychart > staging.yaml\ndiff <(grep -E 'replicas|image:' staging.yaml) <(grep -E 'replicas|image:' prod.yaml) > helm-report.md || true\nhelm lint mychart",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "helm\\s+template",
+          "values-prod\\.yaml",
+          "helm\\s+lint",
+          "helm-report\\.md"
+        ],
+        "feedback": "Оба окружения рендерятся из одного чарта, различия видны в diff."
+      },
+      "validation_hint": "helm-report.md содержит различия replicas/image, helm lint проходит."
+    },
+    {
+      "id": "pdb",
+      "title": "Настроить PodDisruptionBudget",
+      "level": "medium",
+      "goal": "Не потерять доступность при обновлении узлов.",
+      "instructions": [
+        "Создайте PDB с minAvailable.",
+        "Проверьте `kubectl get pdb`.",
+        "Попробуйте drain узла.",
+        "Убедитесь, что поды не уходят все сразу."
+      ],
+      "hints": [
+        "PDB работает с voluntary disruptions.",
+        "minAvailable не должен равняться replicas."
+      ],
+      "solution": "cat > pdb.yaml <<'EOF'\napiVersion: policy/v1\nkind: PodDisruptionBudget\nmetadata:\n  name: api-pdb\nspec:\n  minAvailable: 2\n  selector:\n    matchLabels:\n      app: api\nEOF\nkubectl apply -f pdb.yaml\nkubectl get pdb\ngit add pdb.yaml && git commit -m 'feat: PDB для API'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "PodDisruptionBudget",
+          "minAvailable",
+          "kubectl\\s+apply"
+        ],
+        "feedback": "Обновление узлов не уронит сервис полностью."
+      },
+      "validation_hint": "PDB применяется и ограничивает одновременное вытеснение подов."
+    },
+    {
+      "id": "debug-crashloop",
+      "title": "Разобрать CrashLoopBackOff",
+      "level": "medium",
+      "goal": "Найти причину падения контейнера по логам и событиям.",
+      "instructions": [
+        "Посмотрите `kubectl describe pod`.",
+        "Изучите логи текущего и предыдущего запуска.",
+        "Проверьте env и секреты.",
+        "Опишите первопричину и фикс."
+      ],
+      "hints": [
+        "`kubectl logs --previous`.",
+        "`Last State: Terminated, Reason:` в describe."
+      ],
+      "solution": "kubectl get pods\nkubectl describe pod <pod>\nkubectl logs <pod> --previous\nkubectl get secret app-secret -o jsonpath='{.data}'\ngit add incident.md && git commit -m 'docs: разбор CrashLoopBackOff'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "kubectl\\s+describe",
+          "--previous",
+          "git\\s+commit"
+        ],
+        "feedback": "Причина найдена в событиях, а не угадана."
+      },
+      "validation_hint": "Разбор содержит describe, логи предыдущего контейнера и фикс."
     }
   ]
 }

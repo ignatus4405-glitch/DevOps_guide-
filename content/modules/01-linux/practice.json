@@ -18,7 +18,11 @@
       "solution": "sudo mkdir -p /opt/app\nsudo touch /opt/app/secrets.env\nsudo chown deploy:devs /opt/app/secrets.env\nsudo chmod 640 /opt/app/secrets.env\nls -l /opt/app/secrets.env",
       "check": {
         "type": "regex_all",
-        "patterns": ["mkdir\\s+-p\\s+/opt/app", "chown\\s+deploy:devs", "chmod\\s+640"],
+        "patterns": [
+          "mkdir\\s+-p\\s+/opt/app",
+          "chown\\s+deploy:devs",
+          "chmod\\s+640"
+        ],
         "feedback": "Права 640 для секретов — верно: пишет владелец, читает только группа, остальные не видят файл."
       },
       "validation_hint": "ls -l показывает -rw-r----- deploy devs."
@@ -41,7 +45,12 @@
       "solution": "sudo tee /etc/systemd/system/myapp.service >/dev/null <<'EOF'\n[Unit]\nDescription=MyApp\nAfter=network-online.target\n\n[Service]\nUser=appsvc\nExecStart=/opt/app/run.sh\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\nEOF\nsudo systemctl daemon-reload\nsudo systemctl enable --now myapp\nsystemctl status myapp\njournalctl -u myapp -n 30 --no-pager",
       "check": {
         "type": "regex_all",
-        "patterns": ["/etc/systemd/system/myapp\\.service", "daemon-reload", "systemctl\\s+enable", "journalctl\\s+-u\\s+myapp"],
+        "patterns": [
+          "/etc/systemd/system/myapp\\.service",
+          "daemon-reload",
+          "systemctl\\s+enable",
+          "journalctl\\s+-u\\s+myapp"
+        ],
         "feedback": "Юнит создан и запущен. Так выглядит стандартная установка любого сервиса на сервер."
       },
       "validation_hint": "systemctl status myapp показывает active (running) и процессы."
@@ -63,7 +72,11 @@
       "solution": "sudo du -sh /var/* 2>/dev/null | sort -h | tail -5\nsudo find /var/log -type f -mtime +7 -name '*.log*' -print\nsudo find /var/log -type f -mtime +7 -name '*.log*' -delete\nsudo df -h /var",
       "check": {
         "type": "regex_all",
-        "patterns": ["du\\s+-sh\\s+/var", "find\\s+/var/log.*-mtime", "df\\s+-h"],
+        "patterns": [
+          "du\\s+-sh\\s+/var",
+          "find\\s+/var/log.*-mtime",
+          "df\\s+-h"
+        ],
         "feedback": "Порядок верный: сначала измеряем, потом ищем, и только затем удаляем. Никогда не удаляйте каталоги, которые не проверили."
       },
       "validation_hint": "df -h до и после показывает изменение занятого места."
@@ -86,7 +99,12 @@
       "solution": "ss -tulpn | grep 8080\nnc -vz 127.0.0.1 8080\ncurl -sS -o /dev/null -w '%{http_code} %{time_total}s\\n' http://127.0.0.1:8080/health\njournalctl --since '20 min ago' -p warning --no-pager | tail -30",
       "check": {
         "type": "regex_all",
-        "patterns": ["ss\\s+-tulpn", "nc\\s+-vz", "curl\\s+.*(http_code|-w)", "journalctl"],
+        "patterns": [
+          "ss\\s+-tulpn",
+          "nc\\s+-vz",
+          "curl\\s+.*(http_code|-w)",
+          "journalctl"
+        ],
         "feedback": "Это и есть рабочий чек-лист инцидента: локально ли слушает, доступно ли снаружи, как отвечает приложение, что в логах."
       },
       "validation_hint": "Запишите вывод: код ответа, время и найденные ошибки в логе."
@@ -108,10 +126,183 @@
       "solution": "ssh-keygen -t ed25519 -f ~/.ssh/id_lab -C 'lab key'\nssh-copy-id -i ~/.ssh/id_lab.pub user@10.0.0.10\nprintf 'Host lab\\n    HostName 10.0.0.10\\n    User user\\n    IdentityFile ~/.ssh/id_lab\\n' >> ~/.ssh/config\nssh lab 'hostname && uptime'",
       "check": {
         "type": "regex_all",
-        "patterns": ["ssh-keygen", "ssh-copy-id", "\\.ssh/config", "ssh\\s+lab"],
+        "patterns": [
+          "ssh-keygen",
+          "ssh-copy-id",
+          "\\.ssh/config",
+          "ssh\\s+lab"
+        ],
         "feedback": "Вход по ключу с алиасом — стандарт работы. Пароли по SSH отключаются на сервере в sshd_config."
       },
       "validation_hint": "ssh lab hostname возвращает имя хоста без запроса пароля."
+    },
+    {
+      "id": "disk-hunter",
+      "title": "Найти пожирателя диска",
+      "level": "medium",
+      "goal": "Найти, что занимает место, не удаляя лишнего.",
+      "instructions": [
+        "Посмотрите заполнение файловых систем и inodes.",
+        "Найдите три самых больших каталога и файлы больше 500 МБ.",
+        "Проверьте удалённые, но открытые файлы.",
+        "Запишите вывод в отчёт disk-report.txt."
+      ],
+      "hints": [
+        "df -h и df -i показывают разные виды исчерпания.",
+        "du -xhd1 не переходит на другие ФС.",
+        "lsof +L1 находит файлы с нулевым числом ссылок."
+      ],
+      "solution": "df -hT > disk-report.txt\ndf -i >> disk-report.txt\ndu -xhd1 /var 2>/dev/null | sort -h | tail -5 >> disk-report.txt\nlsof +L1 2>/dev/null | head -20 >> disk-report.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "df\\s+-h",
+          "du\\s+-x",
+          "lsof\\s+\\+L1"
+        ],
+        "feedback": "Отчёт содержит все три проверки. Если место занимает удалённый файл — обнулите его через /proc/<pid>/fd."
+      },
+      "validation_hint": "disk-report.txt содержит df, df -i и du; при необходимости — список открытых удалённых файлов."
+    },
+    {
+      "id": "unit-deep",
+      "title": "Юнит с лимитами и автоперезапуском",
+      "level": "medium",
+      "goal": "Сделать сервис управляемым: автозапуск, перезапуск, лимит памяти.",
+      "instructions": [
+        "Создайте юнит /etc/systemd/system/demo-health.service для простого HTTP-сервера.",
+        "Добавьте Restart=on-failure, MemoryMax и отдельного пользователя.",
+        "Выполните daemon-reload, включите и запустите сервис.",
+        "Проверьте статус и журнал."
+      ],
+      "hints": [
+        "HTTP-сервер можно запустить как `python3 -m http.server 8000`.",
+        "Проверка синтаксиса: systemd-analyze verify.",
+        "Логи: journalctl -u demo-health -n 20."
+      ],
+      "solution": "sudo tee /etc/systemd/system/demo-health.service >/dev/null <<'EOF'\n[Unit]\nDescription=Demo HTTP\nAfter=network.target\n\n[Service]\nUser=nobody\nExecStart=/usr/bin/python3 -m http.server 8000\nRestart=on-failure\nMemoryMax=256M\n\n[Install]\nWantedBy=multi-user.target\nEOF\nsudo systemd-analyze verify /etc/systemd/system/demo-health.service\nsudo systemctl daemon-reload\nsudo systemctl enable --now demo-health\nsystemctl status demo-health --no-pager\njournalctl -u demo-health -n 20 --no-pager",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "demo-health\\.service",
+          "daemon-reload",
+          "systemctl\\s+(enable|start)",
+          "journalctl\\s+-u\\s+demo-health"
+        ],
+        "feedback": "Сервис под управлением systemd: переживает падение процесса и ограничен по памяти."
+      },
+      "validation_hint": "systemctl status demo-health показывает active (running), journalctl содержит записи."
+    },
+    {
+      "id": "port-debug",
+      "title": "Диагностика «порт не отвечает»",
+      "level": "hard",
+      "goal": "Пройти полный путь диагностики от сокета до приложения.",
+      "instructions": [
+        "Запустите сервис на локальном порту.",
+        "Проверьте, что он слушает, и каким адресом.",
+        "Проверьте соединение через nc и HTTP через curl.",
+        "Сохраните последовательность команд в net-debug.md."
+      ],
+      "hints": [
+        "ss -lntp показывает адрес и процесс.",
+        "Если слушает 127.0.0.1, снаружи будет refused.",
+        "curl -v показывает этап, на котором происходит сбой."
+      ],
+      "solution": "python3 -m http.server 8080 &\nss -lntp | grep 8080\nnc -zv 127.0.0.1 8080\ncurl -v http://127.0.0.1:8080/ 2>&1 | head -20\ncurl -w '%{http_code} %{time_total}\\n' -o /dev/null -s http://127.0.0.1:8080/\ncat > net-debug.md <<'EOF'\n# Диагностика порта\n\n1. ss -lntp — слушает ли и на каком адресе\n2. nc -zv — доступен ли порт\n3. curl -v — отвечает ли приложение\n4. journalctl — что в логах\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "ss\\s+-lntp",
+          "nc\\s+-zv",
+          "curl\\s+-v",
+          "net-debug\\.md"
+        ],
+        "feedback": "Путь диагностики зафиксирован: сокет → порт → HTTP → логи."
+      },
+      "validation_hint": "net-debug.md содержит четыре шага с командами, проверка выполнена на локальном сервисе."
+    },
+    {
+      "id": "perf-snapshot",
+      "title": "Снять срез производительности",
+      "level": "medium",
+      "goal": "Научиться фиксировать состояние системы командами, а не «на глаз».",
+      "instructions": [
+        "Снимите uptime, vmstat за 5 секунд и iostat -xz.",
+        "Определите, какой ресурс нагружен сильнее всего.",
+        "Найдите топ-5 процессов по CPU и по памяти.",
+        "Сохраните вывод и вывод о узком месте в perf-report.md."
+      ],
+      "hints": [
+        "vmstat 1 5 даёт строки раз в секунду.",
+        "Смотрите на колонки wa, si/so и r/b.",
+        "ps -eo pid,pcpu,pmem,comm --sort=-pcpu | head"
+      ],
+      "solution": "uptime > perf-report.md\necho '--- vmstat ---' >> perf-report.md\nvmstat 1 5 >> perf-report.md\necho '--- iostat ---' >> perf-report.md\niostat -xz 1 3 >> perf-report.md 2>/dev/null\necho '--- top cpu ---' >> perf-report.md\nps -eo pid,pcpu,pmem,comm --sort=-pcpu | head -6 >> perf-report.md\necho '--- top mem ---' >> perf-report.md\nps -eo pid,pcpu,pmem,comm --sort=-pmem | head -6 >> perf-report.md",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "vmstat",
+          "iostat",
+          "ps\\s+-eo[^\\n]*pcpu"
+        ],
+        "feedback": "Срез готов: по цифрам видно, упирается ли система в CPU, память или диск."
+      },
+      "validation_hint": "perf-report.md содержит uptime, vmstat, iostat и топ процессов."
+    },
+    {
+      "id": "inode-hunt",
+      "title": "Найти причину исчерпания inode",
+      "level": "medium",
+      "goal": "Диагностировать «нет места», когда `df -h` показывает свободное место.",
+      "instructions": [
+        "Проверьте `df -i`.",
+        "Найдите каталоги с наибольшим числом файлов.",
+        "Определите, что создаёт мелкие файлы.",
+        "Опишите решение в отчёте."
+      ],
+      "hints": [
+        "`df -i` показывает inode.",
+        "`find /dir -xdev -type f | wc -l` считает файлы."
+      ],
+      "solution": "df -i\nfind /var -xdev -type f | wc -l\ndu -s /var/* | sort -h | tail\n# решение: ротация логов и удаление кэша\nsudo logrotate -f /etc/logrotate.conf\ngit add diagnostic.md && git commit -m 'docs: разбор inode'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "df\\s+-i",
+          "find\\s+/var",
+          "git\\s+commit"
+        ],
+        "feedback": "Причина найдена: много мелких файлов, а не объём данных."
+      },
+      "validation_hint": "Отчёт содержит `df -i`, поиск каталога и решение."
+    },
+    {
+      "id": "unit-hardening",
+      "title": "Ужесточить systemd-юнит",
+      "level": "hard",
+      "goal": "Ограничить права сервиса средствами systemd.",
+      "instructions": [
+        "Добавьте `NoNewPrivileges`, `ProtectSystem`, `PrivateTmp`.",
+        "Ограничьте доступ к домашним каталогам.",
+        "Проверьте `systemd-analyze security`.",
+        "Перезапустите сервис и убедитесь, что он работает."
+      ],
+      "hints": [
+        "Начните с `ProtectSystem=strict` и списка `ReadWritePaths`.",
+        "Проверяйте после каждого изменения."
+      ],
+      "solution": "sudo systemctl edit myapp.service\n# [Service]\n# NoNewPrivileges=yes\n# ProtectSystem=strict\n# PrivateTmp=yes\n# ReadWritePaths=/var/lib/myapp\nsudo systemctl daemon-reload\nsudo systemctl restart myapp\nsystemd-analyze security myapp.service\ngit add hardening.md && git commit -m 'docs: hardening systemd'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "NoNewPrivileges",
+          "ProtectSystem",
+          "systemctl\\s+daemon-reload"
+        ],
+        "feedback": "Юнит ограничен, сервис проверен после изменений."
+      },
+      "validation_hint": "Unit содержит директивы hardening и описан результат проверки."
     }
   ]
 }

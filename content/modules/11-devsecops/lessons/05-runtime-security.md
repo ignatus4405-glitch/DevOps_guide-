@@ -1,0 +1,117 @@
+---
+id: runtime-security
+title: Безопасность Kubernetes и runtime
+minutes: 28
+---
+
+# Безопасность Kubernetes и runtime
+
+Кластер — это API, через который можно создать процесс на любой ноде. Поэтому
+безопасность Kubernetes — это прежде всего ограничение того, что можно создать, и
+того, что может делать созданное.
+
+## Модель угроз
+
+1. Скомпрометированный под с токеном SA получает доступ к API.
+2. Под с `privileged: true` или `hostPath` выходит на ноду.
+3. Уязвимость в ingress/приложении даёт RCE.
+4. Слабый RBAC позволяет эскалацию.
+5. Незащищённый etcd раскрывает все секреты.
+
+## Уровни защиты
+
+| Уровень | Инструмент |
+| --- | --- |
+| API | RBAC, admission, audit |
+| Под | securityContext, Pod Security Admission |
+| Сеть | NetworkPolicy, service mesh |
+| Образ | подпись, скан, distroless |
+| Нода | минимальная ОС, обновления, отключение docker.sock |
+| Runtime | Falco, Tetragon, seccomp |
+
+## Pod Security Admission
+
+```yaml
+metadata:
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+```
+
+`restricted` требует non-root, запрет privilege escalation, seccomp, сброс
+capabilities. Вводите сначала `warn`, потом `enforce` — иначе сломаете существующие
+приложения.
+
+## seccomp
+
+```yaml
+securityContext:
+  seccompProfile:
+    type: RuntimeDefault
+```
+
+Профиль ограничивает системные вызовы. `RuntimeDefault` — безопасный минимум,
+`Unconfined` — фактически без ограничений (плохо).
+
+## NetworkPolicy
+
+```yaml
+policyTypes: [Ingress, Egress]
+ingress:
+  - from:
+      - namespaceSelector:
+          matchLabels: { kubernetes.io/metadata.name: ingress-nginx }
+```
+
+По умолчанию весь трафик разрешён. Начните с default-deny в новом namespace и
+открывайте только нужное.
+
+## Runtime-детект
+
+Falco отслеживает подозрительные события:
+
+- shell внутри контейнера;
+- чтение `/etc/shadow`;
+- запуск пакетного менеджера в проде;
+- исходящее соединение на необычный порт;
+- запись в `/usr/bin`.
+
+```yaml
+- rule: Shell in container
+  desc: Процесс shell в контейнере
+  condition: spawned_process and container and proc.name in (bash, sh)
+  output: "Shell в контейнере %container.name (%proc.cmdline)"
+  priority: WARNING
+```
+
+Детект не блокирует, но даёт сигнал. Для блокировки — Tetragon или admission.
+
+## Секреты и SA
+
+- `automountServiceAccountToken: false` по умолчанию;
+- отдельный SA на приложение;
+- короткоживущие токены (BoundServiceAccountTokenVolume включён по умолчанию);
+- внешние секреты вместо Kubernetes Secret;
+- аудит доступа к секретам.
+
+## Обновления
+
+Кластер без обновлений — набор известных уязвимостей. Практика:
+
+- минорные обновления раз в квартал;
+- проверка deprecated API (`kubectl deprecations`, `pluto`);
+- тестовый кластер для обкатки;
+- автоматическое обновление нод (managed node groups).
+
+## Проверьте себя
+
+1. Почему `privileged: true` — фактически root на ноде?
+2. Что проверяет Pod Security Admission?
+3. Чем Falco отличается от NetworkPolicy?
+4. Зачем отключать automount токена SA?
+
+!!! warning "Важно"
+    Admission-контроллер (Kyverno/OPA Gatekeeper) может запрещать создание
+    небезопасных подов. Но политика без тестов заблокирует и легитимные
+    workload'ы — проверяйте на staging.

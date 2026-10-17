@@ -30,6 +30,36 @@ QT_QPA_PLATFORM=offscreen python tools/smoke_test.py
 python tools/generate_version.py --version "$(cat VERSION)" --build local   # если менялся content/
 ```
 
+## Текущее состояние контента (0.4.0)
+
+| Показатель | Значение |
+| --- | --- |
+| Модулей | 13 |
+| Уроков | 85 |
+| Вопросов | 365 |
+| Задач с автопроверкой | 128 |
+| Иллюстраций | 18 |
+| Терминов глоссария | 93 |
+| Объём | ~55 000 слов, ~63 часа |
+
+Правила, которые проверяются тестами и валидатором:
+
+- у каждого модуля не меньше 3 задач и 8 вопросов; у каждого вопроса обязателен
+  `explanation`, у manual-задач — `validation_hint`;
+- каждый SVG из `content/assets/img` обязан упоминаться хотя бы в одном уроке
+  (`tests/test_diagrams.py::test_lesson_images_exist_and_are_used`), а каждая
+  ссылка в уроке — существовать;
+- эталонное решение каждой задачи проходит её же regex-проверку
+  (`test_solution_matches_own_patterns`) — если меняете `patterns`, обновите
+  `solution`;
+- после правок контента пересоберите индекс:
+  `python tools/generate_version.py`, затем откатите сгенерированный
+  `src/devops_academy/version.py` и `VERSION`, если версия ещё не выпускается.
+
+Схемы, добавленные в 0.4.0: `kubernetes-networking.svg`, `incident-response.svg`,
+`terraform-state.svg`. Они строятся функциями в `tools/make_diagrams.py`; правьте
+код схемы, а не SVG руками.
+
 ## Куда что класть
 
 | Что меняете | Файлы | Что обязательно обновить |
@@ -48,7 +78,7 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest -q                                            # 132 тестов
+pytest -q                                            # 135 тестов
 ```
 
 В headless-средах (сервер, контейнер) Qt требует библиотек; используйте

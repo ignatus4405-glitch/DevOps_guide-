@@ -182,6 +182,84 @@ kubectl -n prod top pods
 kubectl kustomize overlays/prod | kubectl diff -f -   # рендер kustomize
 ```
 
+## Selector и labels: как связываются объекты
+
+Все связи в Kubernetes — через метки:
+
+- Service → Pods по `selector`;
+- Deployment → ReplicaSet → Pods по `matchLabels`;
+- NetworkPolicy — по меткам;
+- PodDisruptionBudget — по меткам.
+
+```yaml
+metadata:
+  labels:
+    app: api
+    version: v2
+    team: payments
+spec:
+  selector:
+    matchLabels:
+      app: api
+```
+
+Ошибка в одной букве метки — сервис без endpoints. Проверка:
+
+```bash
+kubectl get pods --show-labels
+kubectl get svc api -o jsonpath='{.spec.selector}'
+```
+
+## Deployment, ReplicaSet, StatefulSet, DaemonSet
+
+| Объект | Для чего | Особенность |
+| --- | --- | --- |
+| Deployment | stateless-сервисы | rolling update, ReplicaSet |
+| StatefulSet | БД, кластеры | стабильные имена и тома |
+| DaemonSet | агенты на каждой ноде | по одному поду на ноду |
+| Job | одноразовые задачи | до успешного завершения |
+| CronJob | расписание | создаёт Job по cron |
+
+Deployment не подходит для БД: поды взаимозаменяемы, имена случайны, тома общие
+только через PVC.
+
+## Стратегии обновления
+
+```yaml
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+```
+
+`maxUnavailable: 0` — без простоя, но требует свободных ресурсов.
+`Recreate` — сначала убить все поды, потом создать новые (простой, но чисто).
+
+```bash
+kubectl rollout status deploy/api
+kubectl rollout undo deploy/api
+kubectl rollout history deploy/api --revision=2
+```
+
+## Namespaces и квоты
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-quota
+  namespace: payments
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    pods: "30"
+```
+
+Квоты не дают одной команде занять весь кластер. LimitRange задаёт дефолтные
+requests/limits для подов, где они не указаны.
+
 ## Короткое резюме
 
 - Deployment описывает pod'ы и стратегию обновления; Service — стабильный адрес по меткам.
