@@ -165,6 +165,61 @@ docker run --rm -it --entrypoint sh api:local   # зайти в образ, ко
 завершилось (это не сервис), неверный рабочий каталог, отсутствующий конфиг,
 `OOMKilled=true` (не хватило памяти).
 
+## Как устроен контейнер
+
+Контейнер — это процесс, запущенный с изолированными пространствами имён
+(namespaces) и ограничениями cgroups. Ядро у всех общее, поэтому контейнер легче
+ВМ, но и изоляция слабее.
+
+| Namespace | Что изолирует |
+| --- | --- |
+| pid | процессы (в контейнере PID 1 — ваше приложение) |
+| net | сетевые интерфейсы и порты |
+| mnt | точки монтирования |
+| uts | hostname |
+| ipc | разделяемая память |
+| user | uid/gid (rootless) |
+
+Проверить изоляцию:
+
+```bash
+docker run --rm alpine ps aux
+docker run --rm alpine ip addr
+docker run --rm --pid=host alpine ps aux   # видит процессы хоста (опасно)
+```
+
+`--pid=host`, `--privileged`, `--network=host` ломают изоляцию. Их используют
+осознанно и не в продакшене.
+
+## Registry: где живут образы
+
+```bash
+docker login ghcr.io
+docker tag app:local ghcr.io/org/app:1.4.2
+docker push ghcr.io/org/app:1.4.2
+docker pull ghcr.io/org/app:1.4.2
+```
+
+Тег — человекочитаемое имя, digest — неизменяемый идентификатор:
+
+```bash
+docker inspect --format='{{index .RepoDigests 0}}' app:1.4.2
+```
+
+Для продакшена лучше деплоить по digest: тег можно перезаписать, digest — нет.
+
+## Очистка места
+
+Образы и слои занимают гигабайты:
+
+```bash
+docker system df
+docker image prune -f
+docker system prune -af --volumes   # осторожно: удалит неиспользуемые volumes
+```
+
+На CI-раннерах очистка обязательна: диск 50 ГБ забивается за несколько недель.
+
 ## Короткое резюме
 
 - Контейнер — изолированный процесс; образ — неизменяемые слои.

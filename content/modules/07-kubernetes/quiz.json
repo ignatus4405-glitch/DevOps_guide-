@@ -12,9 +12,13 @@
         "Узлы перезагрузятся",
         "Все pod'ы будут удалены"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "kubelet продолжает работать с текущими pod'ами. Недоступен только контроль: нельзя применить манифесты, отмасштабировать или откатить.",
-      "tags": ["architecture"]
+      "tags": [
+        "architecture"
+      ]
     },
     {
       "id": "q2",
@@ -26,9 +30,14 @@
         "Перезапускает контейнер",
         "Отключает liveness на время старта"
       ],
-      "answer": [0, 1],
+      "answer": [
+        0,
+        1
+      ],
       "explanation": "readiness управляет только трафиком (endpoints). Перезапуск — задача livenessProbe, ожидание старта — startupProbe.",
-      "tags": ["probes"]
+      "tags": [
+        "probes"
+      ]
     },
     {
       "id": "q3",
@@ -40,9 +49,13 @@
         "Kubernetes не поддерживает такие проверки",
         "Это требует дополнительных прав"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "При сбое зависимости liveness убьёт все реплики одновременно, хотя приложение исправно. Зависимости проверяйте отдельно, например метрикой.",
-      "tags": ["probes"]
+      "tags": [
+        "probes"
+      ]
     },
     {
       "id": "q4",
@@ -54,9 +67,13 @@
         "Размер кластера",
         "Настройки ingress"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "ImagePullBackOff означает, что kubelet не смог скачать образ: опечатка в имени/теге, приватный реестр без секрета, недоступный реестр.",
-      "tags": ["troubleshooting"]
+      "tags": [
+        "troubleshooting"
+      ]
     },
     {
       "id": "q5",
@@ -68,9 +85,13 @@
         "Нет прав на файл",
         "Ошибка сети"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "137 = 128 + 9 (SIGKILL). В Kubernetes это обычно OOMKilled: проверьте limits.memory и потребление приложения.",
-      "tags": ["troubleshooting"]
+      "tags": [
+        "troubleshooting"
+      ]
     },
     {
       "id": "q6",
@@ -82,9 +103,15 @@
         "Проходит ли readinessProbe",
         "Установлена ли последняя версия kubectl"
       ],
-      "answer": [0, 1, 2],
+      "answer": [
+        0,
+        1,
+        2
+      ],
       "explanation": "Три причины «пустых endpoints»: несовпадение меток, непрошедшая readiness, отсутствующие pod'ы. Версия kubectl на это не влияет.",
-      "tags": ["service"]
+      "tags": [
+        "service"
+      ]
     },
     {
       "id": "q7",
@@ -96,9 +123,13 @@
         "Чтобы шифровать трафик",
         "Чтобы автоматически масштабировать сервис"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "PDB ограничивает добровольные нарушения (drain узла, обновления), сохраняя доступность сервиса.",
-      "tags": ["availability"]
+      "tags": [
+        "availability"
+      ]
     },
     {
       "id": "q8",
@@ -110,17 +141,27 @@
         "Лимит автоматически увеличится",
         "Память будет вытеснена на диск"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "Превышение лимита памяти — жёсткое ограничение: ядро убивает процесс. Нужно либо поднять лимит, либо исправить утечку.",
-      "tags": ["resources"]
+      "tags": [
+        "resources"
+      ]
     },
     {
       "id": "q9",
       "type": "text",
       "question": "Какая команда покажет, что именно изменит применение манифестов, без их применения? Напишите команду целиком.",
-      "answer": ["kubectl diff -f", "kubectl diff", "kubectl diff -f manifests/"],
+      "answer": [
+        "kubectl diff -f",
+        "kubectl diff",
+        "kubectl diff -f manifests/"
+      ],
       "explanation": "kubectl diff показывает разницу между текущим состоянием и содержимым манифестов — безопасная проверка перед apply.",
-      "tags": ["cli"]
+      "tags": [
+        "cli"
+      ]
     },
     {
       "id": "q10",
@@ -132,9 +173,368 @@
         "В ConfigMap, чтобы не путаться",
         "В комментариях к манифесту"
       ],
-      "answer": [1],
+      "answer": [
+        1
+      ],
       "explanation": "base64 не шифрование. Правильно: шифровать в репозитории (SOPS/sealed-secrets) или подтягивать из Vault/облачного менеджера секретов.",
-      "tags": ["security"]
+      "tags": [
+        "security"
+      ]
+    },
+    {
+      "id": "q11",
+      "type": "single",
+      "question": "Почему клиенты не должны обращаться к поду по IP?",
+      "options": [
+        "IP слишком длинный",
+        "IP меняется при пересоздании пода",
+        "IP недоступен снаружи",
+        "Kubernetes запрещает"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Под эфемерен: при пересоздании он получает новый IP. Стабильный адрес даёт Service.",
+      "tags": [
+        "networking"
+      ]
+    },
+    {
+      "id": "q12",
+      "type": "single",
+      "question": "Что означает пустой список endpoints у Service?",
+      "options": [
+        "Сервис удалён",
+        "Selector не совпадает с подами или поды не Ready",
+        "Ingress не настроен",
+        "Порт закрыт фаерволом"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Endpoints формируются из готовых подов, совпадающих по меткам. Пусто — значит, связи нет.",
+      "tags": [
+        "networking"
+      ]
+    },
+    {
+      "id": "q13",
+      "type": "single",
+      "question": "Чем `port` отличается от `targetPort` в Service?",
+      "options": [
+        "Ничем",
+        "port — порт сервиса, targetPort — порт контейнера",
+        "port — внешний, targetPort — внутренний",
+        "targetPort только для UDP"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Service слушает port и перенаправляет на targetPort контейнера. Путаница даёт connection refused.",
+      "tags": [
+        "networking"
+      ]
+    },
+    {
+      "id": "q14",
+      "type": "single",
+      "question": "Зачем нужен ingress-controller, если есть объект Ingress?",
+      "options": [
+        "Для TLS",
+        "Ingress — только декларация; контроллер реализует правила",
+        "Для балансировки L4",
+        "Для DNS"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Без установленного контроллера объект Ingress не делает ничего.",
+      "tags": [
+        "networking"
+      ]
+    },
+    {
+      "id": "q15",
+      "type": "single",
+      "question": "Почему base64 в Secret не является защитой?",
+      "options": [
+        "Base64 легко сломать",
+        "Это кодирование, а не шифрование: любой с доступом читает значение",
+        "Kubernetes не хранит Secret",
+        "Нужен пароль"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Значение декодируется одной командой. Защита — RBAC, encryption at rest и внешнее хранилище.",
+      "tags": [
+        "secrets"
+      ]
+    },
+    {
+      "id": "q16",
+      "type": "single",
+      "question": "Чем envFrom отличается от монтирования ConfigMap в volume?",
+      "options": [
+        "Ничем",
+        "envFrom читает один раз при старте, volume обновляется",
+        "Volume быстрее",
+        "envFrom не работает в Deployment"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Переменные окружения фиксируются при запуске. Файл в volume обновляется, но приложение должно его перечитывать.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "id": "q17",
+      "type": "single",
+      "question": "Что произойдёт с данными при reclaimPolicy: Delete?",
+      "options": [
+        "Они сохранятся",
+        "Том и данные удалятся вместе с PVC",
+        "Они перейдут в другой PVC",
+        "Они станут read-only"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Delete удаляет том после освобождения PVC. Для важных данных — Retain и бэкапы.",
+      "tags": [
+        "storage"
+      ]
+    },
+    {
+      "id": "q18",
+      "type": "single",
+      "question": "Почему Deployment с 3 репликами и RWO-томом не работает?",
+      "options": [
+        "Deployment не поддерживает тома",
+        "RWO разрешает монтирование только на одном узле",
+        "Нужен RWX",
+        "Том не создастся"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "ReadWriteOnce — один узел. Остальные поды не смогут смонтировать том; для общего доступа нужен RWX или внешняя БД.",
+      "tags": [
+        "storage"
+      ]
+    },
+    {
+      "id": "q19",
+      "type": "single",
+      "question": "Зачем `WaitForFirstConsumer` в StorageClass?",
+      "options": [
+        "Ускоряет создание",
+        "Создаёт том в зоне, где будет запущен под",
+        "Откладывает удаление",
+        "Включает сжатие"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Иначе диск может оказаться в другой зоне, и под не сможет его смонтировать.",
+      "tags": [
+        "storage"
+      ]
+    },
+    {
+      "id": "q20",
+      "type": "single",
+      "question": "Почему `create pods` — опасное право в RBAC?",
+      "options": [
+        "Оно замедляет кластер",
+        "Можно запустить привилегированный под и выйти на ноду",
+        "Оно дорогое",
+        "Оно конфликтует с Service"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Создание подов с hostPath/privileged даёт доступ к хосту. Это фактически эскалация до root.",
+      "tags": [
+        "rbac"
+      ]
+    },
+    {
+      "id": "q21",
+      "type": "single",
+      "question": "Что делает `automountServiceAccountToken: false`?",
+      "options": [
+        "Отключает сеть",
+        "Не монтирует токен SA в под",
+        "Удаляет ServiceAccount",
+        "Запрещает логи"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Если приложению не нужен API Kubernetes, токен не нужен — это убирает вектор атаки.",
+      "tags": [
+        "rbac"
+      ]
+    },
+    {
+      "id": "q22",
+      "type": "single",
+      "question": "Где искать причину состояния Pending?",
+      "options": [
+        "В логах контейнера",
+        "В событиях пода (kubectl describe pod)",
+        "В etcd",
+        "В ingress"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Pending — проблема планирования; причина в events: нехватка ресурсов, taints, affinity, PVC.",
+      "tags": [
+        "troubleshooting"
+      ]
+    },
+    {
+      "id": "q23",
+      "type": "single",
+      "question": "Что означает код 137 и Reason: OOMKilled?",
+      "options": [
+        "Ошибка конфигурации",
+        "Контейнер убит SIGKILL из-за превышения memory limit",
+        "Не хватило CPU",
+        "Ошибка образа"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "137 = 128 + 9. Проверьте limits и учитывает ли runtime cgroup-ограничения (JVM, Node).",
+      "tags": [
+        "troubleshooting"
+      ]
+    },
+    {
+      "id": "q24",
+      "type": "single",
+      "question": "Почему liveness-проба не должна проверять БД?",
+      "options": [
+        "Она медленная",
+        "При отказе БД перезапустятся все поды — каскадный отказ",
+        "Она не поддерживает HTTP",
+        "Это запрещено"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Liveness проверяет сам процесс. Зависимости — задача readiness, иначе частичный отказ станет полным.",
+      "tags": [
+        "troubleshooting"
+      ]
+    },
+    {
+      "id": "q25",
+      "type": "single",
+      "question": "Что делает `helm upgrade --atomic`?",
+      "options": [
+        "Ускоряет установку",
+        "Откатывает релиз при неудачном обновлении",
+        "Удаляет старые версии",
+        "Игнорирует ошибки"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Atomic ждёт успеха и при провале возвращает предыдущий релиз, не оставляя частично применённого состояния.",
+      "tags": [
+        "helm"
+      ]
+    },
+    {
+      "id": "q26",
+      "type": "text",
+      "question": "Какой инструмент встроен в kubectl для патчинга манифестов без шаблонов (одно слово)?",
+      "answer": [
+        "kustomize",
+        "kustomization"
+      ],
+      "explanation": "Kustomize использует base + overlays и применяется через kubectl apply -k, без шаблонизатора.",
+      "tags": [
+        "helm"
+      ]
+    },
+    {
+      "id": "q27",
+      "type": "single",
+      "question": "Почему Service не находит поды?",
+      "options": [
+        "Нет Deployment",
+        "Селектор Service не совпадает с labels подов",
+        "Нет PVC",
+        "Не задан namespace"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Service выбирает поды по labels; пустой Endpoints — первый симптом.",
+      "tags": [
+        "networking"
+      ]
+    },
+    {
+      "id": "q28",
+      "type": "single",
+      "question": "Зачем `readinessProbe`, если есть `livenessProbe`?",
+      "options": [
+        "Они одинаковы",
+        "Readiness убирает под из трафика, liveness перезапускает",
+        "Readiness перезапускает",
+        "Liveness масштабирует"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Смешение приводит к перезапускам под нагрузкой вместо временного исключения из балансировки.",
+      "tags": [
+        "manifests"
+      ]
+    },
+    {
+      "id": "q29",
+      "type": "single",
+      "question": "Что произойдёт при отсутствии requests?",
+      "options": [
+        "Под не запустится",
+        "Планировщик не сможет корректно учесть ресурсы",
+        "Автомасштабирование ускорится",
+        "Сеть сломается"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Без requests планировщик не знает реальную потребность; возможен перегруз узла.",
+      "tags": [
+        "resources-tune"
+      ]
+    },
+    {
+      "id": "q30",
+      "type": "single",
+      "question": "Чем Secret отличается от ConfigMap?",
+      "options": [
+        "Ничем",
+        "Хранится в base64 и может иметь отдельные политики доступа",
+        "Шифруется всегда",
+        "Доступен только root"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Base64 — не шифрование. Для защиты нужен encryption at rest и RBAC.",
+      "tags": [
+        "config-secrets"
+      ]
     }
   ]
 }

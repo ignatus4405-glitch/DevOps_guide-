@@ -160,6 +160,35 @@ docker images --format '{{.Repository}}:{{.Tag}} {{.Size}}'
 релиза, `latest` — только для удобства людей, никогда для деплоя. В манифестах
 деплоя используйте digest.
 
+## Docker Compose: типичные ошибки
+
+| Ошибка | Симптом | Решение |
+| --- | --- | --- |
+| `localhost` вместо имени сервиса | connection refused | использовать `db:5432` |
+| нет healthcheck | приложение падает при старте | depends_on + condition |
+| `.env` не в той директории | пустые переменные | `docker compose config` |
+| порт занят | bind: address already in use | сменить `-p` или остановить процесс |
+| volume с правами root | permission denied | `--user` или chown тома |
+
+## Размер образа: что реально помогает
+
+- multistage build;
+- `--no-cache-dir` для pip, `npm ci --omit=dev`;
+- удаление кэшей и документации в том же `RUN`;
+- `.dockerignore`;
+- distroless/slim-база;
+- меньше слоёв (не «squash», а нормальная структура).
+
+Проверка:
+
+```bash
+docker history --human app:latest
+dive app:latest
+```
+
+`dive` показывает содержимое каждого слоя и помогает найти «мусор», добавленный
+и не удалённый в следующем слое.
+
 ## Короткое резюме
 
 - Compose описывает несколько сервисов, их зависимости, health-check и лимиты.

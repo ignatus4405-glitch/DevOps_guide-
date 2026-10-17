@@ -155,6 +155,74 @@ terraform workspace select prod
 | `-auto-approve` в CI без ревью | случайное удаление прода | план → approve → apply |
 | Игнорирование дрейфа | «почему-то всё пересоздаётся» | регулярный `plan` по расписанию и алерт на изменения |
 
+## HCL: основы, которых достаточно
+
+```hcl
+# переменные
+variable "instance_type" {
+  type    = string
+  default = "t3.micro"
+}
+
+# локальные значения
+locals {
+  name = "${var.project}-${var.environment}"
+  tags = { Project = var.project, Environment = var.environment }
+}
+
+# ресурс
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+  tags          = local.tags
+}
+
+# output
+output "ip" { value = aws_instance.web.public_ip }
+```
+
+`data` — чтение существующего, `resource` — управление созданием. Разница важна:
+`data` не создаёт и не удаляет.
+
+## План и применение
+
+```bash
+terraform init          # скачать провайдеры, настроить backend
+terraform fmt -recursive
+terraform validate
+terraform plan -out=tfplan
+terraform apply tfplan
+terraform destroy
+```
+
+`plan` показывает `+` создать, `~` изменить, `-` удалить, `-/+` заменить.
+Замена ресурса — часто неожиданная потеря данных: читайте план, а не только
+«apply прошёл».
+
+## Зависимости
+
+Terraform строит граф по ссылкам. Явная зависимость:
+
+```hcl
+resource "aws_iam_role_policy" "app" {
+  depends_on = [aws_iam_role.app]
+}
+```
+
+`depends_on` нужен редко — обычно ссылки достаточно. Он замедляет plan и скрывает
+реальную связь.
+
+## Почему Terraform, а не ручная консоль
+
+- воспроизводимость: одинаковое окружение из кода;
+- ревью: изменения видны в PR;
+- откат: revert коммита + apply;
+- документация: код — источник правды;
+- аудит: кто и когда менял.
+
+Консоль остаётся для экспериментов и аварийного доступа, но изменения нужно
+возвращать в код, иначе появится drift.
+
 ## Короткое резюме
 
 - Terraform декларативен: `plan` показывает, `apply` приводит к желаемому состоянию.

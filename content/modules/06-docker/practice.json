@@ -109,6 +109,174 @@
         "feedback": "Контейнер запущен в режиме минимальных привилегий, уязвимости зафиксированы — это стандарт для продакшена."
       },
       "validation_hint": "Приложение работает, а попытка записи в / (кроме /tmp) завершается ошибкой permission denied."
+    },
+    {
+      "id": "slim-image",
+      "title": "Сократить образ в 3 раза",
+      "level": "medium",
+      "goal": "Научиться multistage и очистке слоёв.",
+      "instructions": [
+        "Соберите простой образ с приложением на Python.",
+        "Замерьте размер через docker image ls.",
+        "Перепишите Dockerfile с multistage и slim-базой.",
+        "Сравните размеры и запишите в IMAGE-SIZE.md."
+      ],
+      "hints": [
+        "Для Python multistage помогает меньше — используйте slim и --no-cache-dir.",
+        "Удаляйте кэш pip в том же RUN.",
+        "dive покажет лишние слои."
+      ],
+      "solution": "docker build -t app:fat .\ndocker image ls app:fat\ndocker build -t app:slim .\ndocker image ls app:slim\ndocker history --human app:slim | head\ncat > IMAGE-SIZE.md <<'EOF'\n# Размер образа\n\n| Вариант | Размер |\n| --- | --- |\n| fat | 980 MB |\n| slim | 210 MB |\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "docker\\s+build",
+          "docker\\s+image\\s+ls",
+          "IMAGE-SIZE\\.md"
+        ],
+        "feedback": "Образ уменьшился в несколько раз; видно, какие слои дают вклад."
+      },
+      "validation_hint": "IMAGE-SIZE.md содержит размеры до и после, образ запускается."
+    },
+    {
+      "id": "docker-net",
+      "title": "Связать контейнеры по имени",
+      "level": "medium",
+      "goal": "Понять DNS Docker и типичную ошибку с localhost.",
+      "instructions": [
+        "Создайте пользовательскую сеть app-net.",
+        "Запустите postgres и приложение в этой сети.",
+        "Проверьте резолвинг имени db через getent.",
+        "Покажите разницу между localhost и именем сервиса."
+      ],
+      "hints": [
+        "Сеть: docker network create app-net.",
+        "Проверка: docker exec app getent hosts db.",
+        "В default bridge имя не резолвится."
+      ],
+      "solution": "docker network create app-net\ndocker run -d --name db --network app-net -e POSTGRES_PASSWORD=secret postgres:16\ndocker run --rm --network app-net postgres:16 getent hosts db\ndocker run --rm --network app-net postgres:16 psql -h db -U postgres -c 'select 1'\ndocker network inspect app-net | head -30",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "docker\\s+network\\s+create",
+          "--network\\s+app-net",
+          "getent\\s+hosts"
+        ],
+        "feedback": "DNS работает: приложение подключается по имени сервиса, а не по localhost."
+      },
+      "validation_hint": "Контейнеры в одной сети; getent hosts db возвращает IP."
+    },
+    {
+      "id": "volume-backup",
+      "title": "Сделать бэкап тома и восстановить",
+      "level": "hard",
+      "goal": "Отработать жизненный цикл данных контейнера.",
+      "instructions": [
+        "Создайте volume и запишите в него данные через контейнер.",
+        "Сделайте tar-бэкап тома.",
+        "Удалите volume и восстановите данные из архива.",
+        "Проверьте содержимое."
+      ],
+      "hints": [
+        "Бэкап: busybox tar czf /backup/... -C /data .",
+        "Восстановление — обратный tar в новый volume.",
+        "docker volume rm удаляет данные безвозвратно."
+      ],
+      "solution": "docker volume create demo-data\ndocker run --rm -v demo-data:/data busybox sh -c 'echo hello > /data/file.txt'\ndocker run --rm -v demo-data:/data -v \"$PWD\":/backup busybox tar czf /backup/demo.tar.gz -C /data .\ndocker volume rm demo-data\ndocker volume create demo-data\ndocker run --rm -v demo-data:/data -v \"$PWD\":/backup busybox tar xzf /backup/demo.tar.gz -C /data\ndocker run --rm -v demo-data:/data busybox cat /data/file.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "docker\\s+volume\\s+create",
+          "tar\\s+czf",
+          "docker\\s+volume\\s+rm",
+          "tar\\s+xzf"
+        ],
+        "feedback": "Данные пережили удаление тома — бэкап рабочий."
+      },
+      "validation_hint": "После восстановления файл file.txt содержит hello."
+    },
+    {
+      "id": "compose-health",
+      "title": "Compose-стек с ожиданием базы",
+      "level": "hard",
+      "goal": "Настроить healthcheck и depends_on condition.",
+      "instructions": [
+        "Опишите compose.yaml с api и db.",
+        "Добавьте healthcheck для Postgres (pg_isready).",
+        "Настройте depends_on с condition: service_healthy.",
+        "Поднимите стек и проверьте порядок запуска."
+      ],
+      "hints": [
+        "pg_isready -U postgres — готовая команда проверки.",
+        "docker compose config покажет итоговую конфигурацию.",
+        "Логи: docker compose logs -f api."
+      ],
+      "solution": "cat > compose.yaml <<'EOF'\nservices:\n  db:\n    image: postgres:16\n    environment:\n      POSTGRES_PASSWORD: secret\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n      interval: 5s\n      retries: 10\n  api:\n    image: postgres:16\n    depends_on:\n      db:\n        condition: service_healthy\n    command: psql -h db -U postgres -c 'select 1'\nEOF\ndocker compose config\ndocker compose up --abort-on-container-exit",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "compose\\.ya?ml",
+          "healthcheck",
+          "service_healthy",
+          "pg_isready"
+        ],
+        "feedback": "Приложение стартует только после готовности базы — гонки при запуске нет."
+      },
+      "validation_hint": "docker compose config показывает healthcheck и condition; стек стартует без ошибок."
+    },
+    {
+      "id": "healthcheck-compose",
+      "title": "Добавить healthcheck в Compose",
+      "level": "easy",
+      "goal": "Сделать зависимости сервисов осмысленными.",
+      "instructions": [
+        "Добавьте healthcheck для БД.",
+        "Настройте `depends_on` с условием service_healthy.",
+        "Проверьте `docker compose ps`.",
+        "Опишите, что будет при падении healthcheck."
+      ],
+      "hints": [
+        "`condition: service_healthy`.",
+        "Команда проверки должна завершаться с кодом 0."
+      ],
+      "solution": "cat >> docker-compose.yml <<'EOF'\n    healthcheck:\n      test: [\"CMD\", \"pg_isready\", \"-U\", \"app\"]\n      interval: 5s\n      retries: 5\nEOF\ndocker compose up -d && docker compose ps\ngit add docker-compose.yml && git commit -m 'feat: healthcheck БД'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "healthcheck",
+          "service_healthy|pg_isready",
+          "git\\s+commit"
+        ],
+        "feedback": "Сервисы стартуют в правильном порядке."
+      },
+      "validation_hint": "Compose содержит healthcheck и условие service_healthy."
+    },
+    {
+      "id": "hadolint",
+      "title": "Прогнать линтер Dockerfile",
+      "level": "easy",
+      "goal": "Поймать типичные ошибки до сборки.",
+      "instructions": [
+        "Установите hadolint.",
+        "Прогоните на Dockerfile.",
+        "Исправьте минимум две находки.",
+        "Добавьте шаг в CI."
+      ],
+      "hints": [
+        "Hadolint ловит DL3008, DL3013 и другие.",
+        "Зафиксируйте версию линтера."
+      ],
+      "solution": "docker run --rm -i hadolint/hadolint < Dockerfile\n# исправить: pin версии, --no-install-recommends\nhadolint Dockerfile\ngit add Dockerfile .github && git commit -m 'ci: hadolint'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "hadolint",
+          "Dockerfile",
+          "git\\s+commit"
+        ],
+        "feedback": "Dockerfile проходит линтер."
+      },
+      "validation_hint": "Hadolint запущен, исправления внесены и добавлены в CI."
     }
   ]
 }

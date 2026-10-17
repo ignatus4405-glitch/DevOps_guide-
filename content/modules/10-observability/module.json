@@ -4,12 +4,16 @@
   "title": "Наблюдаемость: метрики, логи, алерты",
   "level": "intermediate",
   "summary": "Prometheus, Grafana, логи, трассировка, SLI/SLO, алерты и разбор инцидентов.",
-  "estimated_minutes": 240,
+  "estimated_minutes": 280,
   "objectives": [
     "Объяснить три столпа наблюдаемости и их роли",
     "Настроить сбор метрик, дашборд и осмысленный алерт",
     "Сформулировать SLI/SLO и работать с error budget",
     "Провести разбор инцидента и оформить постмортем"
   ],
-  "tags": ["observability", "sre", "prometheus"]
+  "tags": [
+    "observability",
+    "sre",
+    "prometheus"
+  ]
 }

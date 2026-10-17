@@ -114,6 +114,62 @@ spec:
   syncPolicy: { automated: { prune: true, selfHeal: true } }
 ```
 
+## Blue-green, canary и rolling: сравнение
+
+| Стратегия | Что делает | Плюсы | Минусы |
+| --- | --- | --- | --- |
+| rolling | заменяет поды по одному | просто, экономно | старая и новая версии одновременно |
+| blue-green | два окружения, переключение трафика | мгновенный откат | двойная стоимость |
+| canary | 1–5 % трафика на новую версию | раннее обнаружение | нужна метрика и маршрутизация |
+| feature flag | включает код по условию | без деплоя | сложность конфигурации |
+
+Выбор зависит от риска и инфраструктуры. Для stateless-сервиса в Kubernetes
+rolling — дефолт. Для критичного API с платёжными путями — canary с автоматическим
+откатом по метрикам.
+
+## Деплой без простоя
+
+Условия:
+
+1. Приложение слушает SIGTERM и завершает соединения (`preStop`).
+2. Readiness probe не пускает трафик до готовности.
+3. Есть `PodDisruptionBudget` при добровольных прерываниях.
+4. Миграции совместимы со старой и новой версией.
+
+```yaml
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: app
+          readinessProbe:
+            httpGet: { path: /ready, port: 8080 }
+```
+
+`maxUnavailable: 0` гарантирует, что во время выката не пропадут рабочие поды.
+
+## Откат и проверка
+
+```bash
+kubectl rollout status deployment/app --timeout=120s
+kubectl rollout undo deployment/app
+kubectl rollout history deployment/app
+```
+
+Для canary — автоматический откат по метрике:
+
+```
+error_rate > 1% в течение 5 минут → откат
+p95 > 500ms в течение 10 минут → откат
+```
+
+Ручной откат «по звонку» работает, но медленнее и зависит от того, кто дежурит.
+
 ## Короткое резюме
 
 - CD доставляет тот же артефакт через окружения; prod — под approval.

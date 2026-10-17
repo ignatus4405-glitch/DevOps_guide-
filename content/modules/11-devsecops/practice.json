@@ -18,7 +18,12 @@
       "solution": "# 1. Убрать секрет из кода\nsed -i 's/SECRET_KEY=.*/SECRET_KEY=${SECRET_KEY:?}/' app/config.py\ncat > .env.example <<'EOF'\nSECRET_KEY=получите-у-администратора\nEOF\n\n# 2. Защита\npip install pre-commit\ncat > .pre-commit-config.yaml <<'EOF'\nrepos:\n  - repo: https://github.com/gitleaks/gitleaks\n    rev: v8.18.4\n    hooks: [{ id: gitleaks }]\n  - repo: https://github.com/pre-commit/pre-commit-hooks\n    rev: v4.6.0\n    hooks: [{ id: detect-private-key }]\nEOF\npre-commit install\npre-commit run --all-files",
       "check": {
         "type": "regex_all",
-        "patterns": ["\\.env\\.example|\\.env\\.sample", "gitleaks", "pre-commit", "SECRET_KEY|\\$\\{"],
+        "patterns": [
+          "\\.env\\.example|\\.env\\.sample",
+          "gitleaks",
+          "pre-commit",
+          "SECRET_KEY|\\$\\{"
+        ],
         "feedback": "Секрет вынесен из кода, а pre-commit ловит новые утечки до коммита."
       },
       "validation_hint": "Попытка закоммитить тестовый ключ AWS заканчивается блокировкой хука."
@@ -40,7 +45,13 @@
       "solution": "name: Security\non: [pull_request]\npermissions: { contents: read, security-events: write }\njobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with: { fetch-depth: 0 }\n      - uses: gitleaks/gitleaks-action@v2\n      - uses: google/osv-scanner-action/osv-scanner-action@v1\n        with: { scan-args: \"-r --skip-git ./\" }\n      - run: pip install semgrep checkov && semgrep --config=p/ci --sarif -o semgrep.sarif . || true\n      - run: checkov -d . --output sarif --output-file checkov.sarif || true\n      - if: always()\n        uses: github/codeql-action/upload-sarif@v3\n        with: { sarif_file: . }",
       "check": {
         "type": "regex_all",
-        "patterns": ["gitleaks", "osv", "semgrep", "checkov", "sarif"],
+        "patterns": [
+          "gitleaks",
+          "osv",
+          "semgrep",
+          "checkov",
+          "sarif"
+        ],
         "feedback": "Пайплайн проверяет секреты, зависимости, код и конфигурацию, а находки видны в Security tab."
       },
       "validation_hint": "В Security → Code scanning появились замечания с привязкой к строкам кода."
@@ -62,7 +73,12 @@
       "solution": "docker build -t ghcr.io/org/api:lab .\nsyft ghcr.io/org/api:lab -o spdx-json > sbom.spdx.json\ngrype sbom:sbom.spdx.json --fail-on high\ncosign sign --yes ghcr.io/org/api:lab\ncosign verify ghcr.io/org/api:lab --certificate-identity-regexp 'github.com/org/*' \\\n  --certificate-oidc-issuer https://token.actions.githubusercontent.com",
       "check": {
         "type": "regex_all",
-        "patterns": ["syft|sbom", "grype", "cosign\\s+sign", "cosign\\s+verify"],
+        "patterns": [
+          "syft|sbom",
+          "grype",
+          "cosign\\s+sign",
+          "cosign\\s+verify"
+        ],
         "feedback": "Теперь известно, что внутри образа, и подтверждено, кто его собрал — это основа доверия к цепочке поставки."
       },
       "validation_hint": "sbom.spdx.json содержит список пакетов; cosign verify завершается успешно."
@@ -84,10 +100,178 @@
       "solution": "kubectl auth can-i --list --as=system:serviceaccount:prod:api -n prod\nkubectl get rolebinding,clusterrolebinding -A | grep api\n# В workflow:\npermissions:\n  contents: read\n  id-token: write   # только если нужен OIDC для деплоя\n# Итог: таблица «право — используется? — решение»",
       "check": {
         "type": "regex_all",
-        "patterns": ["can-i", "serviceaccount|rolebinding", "permissions", "read"],
+        "patterns": [
+          "can-i",
+          "serviceaccount|rolebinding",
+          "permissions",
+          "read"
+        ],
         "feedback": "Ревизия доступов — регулярная практика: права, которые не используются, должны быть удалены."
       },
       "validation_hint": "В отчёте есть минимум один пример лишнего права с решением по его удалению."
+    },
+    {
+      "id": "sbom-sign",
+      "title": "Сгенерировать SBOM и подписать образ",
+      "level": "hard",
+      "goal": "Собрать доказательства состава и целостности артефакта.",
+      "instructions": [
+        "Соберите образ приложения.",
+        "Сгенерируйте SBOM через syft.",
+        "Подпишите образ cosign.",
+        "Проверьте подпись и сохраните отчёт."
+      ],
+      "hints": [
+        "syft <image> -o spdx-json > sbom.json.",
+        "cosign sign --key cosign.key <image>@<digest>.",
+        "cosign verify --key cosign.pub <image>@<digest>."
+      ],
+      "solution": "docker build -t app:1.0 .\nsyft app:1.0 -o spdx-json > sbom.json\ngrype sbom:sbom.json --fail-on critical\ncosign generate-key-pair\nDIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' app:1.0)\ncosign sign --key cosign.key \"$DIGEST\"\ncosign verify --key cosign.pub \"$DIGEST\" | tee verify.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "syft",
+          "cosign\\s+sign",
+          "cosign\\s+verify",
+          "sbom\\.json"
+        ],
+        "feedback": "Образ подписан, SBOM сохранён, подпись проверяется."
+      },
+      "validation_hint": "sbom.json содержит компоненты; cosign verify возвращает успех."
+    },
+    {
+      "id": "sast-gate",
+      "title": "Добавить SAST и SCA гейты",
+      "level": "medium",
+      "goal": "Настроить блокирующие проверки в пайплайне.",
+      "instructions": [
+        "Добавьте semgrep с набором правил.",
+        "Добавьте pip-audit.",
+        "Настройте падение при critical.",
+        "Проверьте на тестовой уязвимости."
+      ],
+      "hints": [
+        "semgrep --config auto --error.",
+        "pip-audit --strict.",
+        "Для демо можно добавить заведомо плохой код."
+      ],
+      "solution": "pip install semgrep pip-audit\nsemgrep --config auto --error .\npip-audit\ncat > .github/workflows/security.yml <<'EOF'\nname: security\non: [pull_request]\njobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: pip install semgrep pip-audit\n      - run: semgrep --config auto --error\n      - run: pip-audit\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "semgrep",
+          "pip-audit",
+          "security\\.yml"
+        ],
+        "feedback": "Проверки встроены в CI: уязвимость блокирует merge."
+      },
+      "validation_hint": "Workflow содержит оба шага; тестовая уязвимость приводит к падению."
+    },
+    {
+      "id": "network-policy",
+      "title": "Закрыть трафик NetworkPolicy",
+      "level": "hard",
+      "goal": "Ограничить сеть до необходимого минимума.",
+      "instructions": [
+        "Создайте namespace с меткой.",
+        "Примените default-deny ingress.",
+        "Разрешите трафик только от ingress-controller.",
+        "Проверьте, что прямой доступ блокирован."
+      ],
+      "hints": [
+        "Пустой podSelector выбирает все поды.",
+        "Разрешение — по namespaceSelector.",
+        "Для проверки запустите curl из другого namespace."
+      ],
+      "solution": "kubectl create namespace demo\nkubectl label namespace demo name=demo\nkubectl -n demo apply -f - <<'EOF'\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny\nspec:\n  podSelector: {}\n  policyTypes: [Ingress]\nEOF\nkubectl -n demo get networkpolicy\nkubectl run tmp --rm -it --image=curlimages/curl --restart=Never -- curl --max-time 3 http://demo-svc.demo",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "NetworkPolicy",
+          "podSelector",
+          "policyTypes",
+          "kubectl"
+        ],
+        "feedback": "Трафик закрыт по умолчанию, открыт только нужный."
+      },
+      "validation_hint": "NetworkPolicy создана; прямой запрос из другого namespace не проходит."
+    },
+    {
+      "id": "incident-playbook",
+      "title": "Написать playbook утечки ключа",
+      "level": "manual",
+      "goal": "Зафиксировать порядок действий до инцидента.",
+      "instructions": [
+        "Опишите шаги обнаружения и изоляции.",
+        "Укажите, кто отзывает ключи и как.",
+        "Добавьте шаблон уведомления.",
+        "Проведите учебную тревогу и отметьте время."
+      ],
+      "hints": [
+        "Сначала ротация, потом расследование.",
+        "Укажите конкретные команды/консоли.",
+        "Проверьте, что контакты актуальны."
+      ],
+      "solution": "cat > PLAYBOOK-SECRET.md <<'EOF'\n# Утечка секрета\n\n1. Подтвердить инцидент, открыть канал #sec-incident\n2. Отозвать ключ (консоль/CLI), выпустить новый\n3. Проверить логи использования за 24 часа\n4. Изолировать затронутые сервисы\n5. Уведомить по требованиям (GDPR 72 часа)\n6. Постмортем в течение 5 рабочих дней\nEOF",
+      "check": {
+        "type": "manual",
+        "feedback": "Playbook готов: команда знает, что делать до инцидента."
+      },
+      "validation_hint": "PLAYBOOK-SECRET.md содержит шаги, владельцев и сроки."
+    },
+    {
+      "id": "cve-triage",
+      "title": "Отработать новую CVE",
+      "level": "medium",
+      "goal": "Быстро понять, затронуты ли вы, и что делать.",
+      "instructions": [
+        "Найдите компонент в SBOM.",
+        "Оцените эксплуатируемость в вашем контексте.",
+        "Определите SLA и план обновления.",
+        "Задокументируйте решение."
+      ],
+      "hints": [
+        "`grype sbom:./sbom.json`.",
+        "Приоритет — по достижимости, а не только по CVSS."
+      ],
+      "solution": "grype sbom:./sbom.json | grep CVE-2026\ngit add cve-report.md && git commit -m 'docs: разбор CVE'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "grype|trivy",
+          "CVE",
+          "git\\s+commit"
+        ],
+        "feedback": "Решение обосновано, а не «обновим когда-нибудь»."
+      },
+      "validation_hint": "Отчёт связывает CVE с компонентом SBOM и содержит план."
+    },
+    {
+      "id": "admission-policy",
+      "title": "Запретить привилегированные поды",
+      "level": "hard",
+      "goal": "Не дать запустить опасную конфигурацию в кластере.",
+      "instructions": [
+        "Включите Pod Security Admission `restricted` в namespace.",
+        "Проверьте запуск привилегированного пода.",
+        "Опишите ошибку.",
+        "Проверьте, что обычный под запускается."
+      ],
+      "hints": [
+        "`pod-security.kubernetes.io/enforce: restricted`.",
+        "Метки ставятся на namespace."
+      ],
+      "solution": "kubectl label ns prod pod-security.kubernetes.io/enforce=restricted\nkubectl run bad --image=nginx --privileged -n prod\nkubectl get ns prod --show-labels\ngit add psa.md && git commit -m 'security: restricted PSA'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "pod-security\\.kubernetes\\.io/enforce",
+          "privileged",
+          "git\\s+commit"
+        ],
+        "feedback": "Опасная конфигурация отклоняется платформой."
+      },
+      "validation_hint": "Namespace размечен restricted, попытка привилегированного пода отклонена."
     }
   ]
 }

@@ -1,0 +1,157 @@
+---
+id: terraform-modules
+title: Модули, workspaces и окружения
+minutes: 28
+---
+
+# Модули, workspaces и окружения
+
+Terraform без структуры превращается в один файл на 2 000 строк, где непонятно,
+что от чего зависит. Модули и правильная организация окружений решают это.
+
+## Модуль: что это
+
+Модуль — каталог с `.tf`-файлами, который принимает переменные и отдаёт outputs.
+
+```
+modules/
+  network/
+    main.tf
+    variables.tf
+    outputs.tf
+  service/
+    main.tf
+    variables.tf
+    outputs.tf
+```
+
+```hcl
+module "network" {
+  source = "./modules/network"
+
+  name       = "prod"
+  cidr_block = "10.20.0.0/16"
+  azs        = ["eu-west-1a", "eu-west-1b"]
+}
+
+module "api" {
+  source = "./modules/service"
+
+  name          = "api"
+  subnet_ids    = module.network.private_subnet_ids
+  instance_type = "t3.small"
+}
+```
+
+## Хороший модуль
+
+1. **Одна ответственность**: сеть, база, сервис — отдельно.
+2. **Входы с валидацией**:
+
+```hcl
+variable "environment" {
+  type        = string
+  description = "Окружение: staging или prod"
+  validation {
+    condition     = contains(["staging", "prod"], var.environment)
+    error_message = "environment должен быть staging или prod"
+  }
+}
+```
+
+3. **Разумные значения по умолчанию**, но без «магии».
+4. **Outputs** для всего, что нужно снаружи (id, arn, endpoint).
+5. **Версионирование**: `?ref=v1.2.0` для git-модулей, версия для registry.
+
+```hcl
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.8.1"
+}
+```
+
+Фиксация версии обязательна: обновление модуля может изменить инфраструктуру.
+
+## Workspaces: осторожно
+
+Workspaces позволяют иметь несколько state в одном каталоге:
+
+```bash
+terraform workspace new staging
+terraform workspace select prod
+terraform workspace list
+```
+
+```hcl
+resource "aws_instance" "web" {
+  instance_type = terraform.workspace == "prod" ? "t3.large" : "t3.micro"
+}
+```
+
+Проблема: конфигурация одна, а отличий становится много — появляются условия в
+каждом ресурсе. Workspaces хороши для **эфемерных** окружений (feature-ветки), а
+не для staging/prod.
+
+## Окружения через каталоги
+
+Более явный подход:
+
+```
+envs/
+  staging/
+    main.tf
+    terraform.tfvars
+  prod/
+    main.tf
+    terraform.tfvars
+modules/
+  ...
+```
+
+Каждый env — отдельный state, отдельный backend, отдельные права. Одинаковые
+модули, разные параметры. Это проще читать и безопаснее: prod нельзя случайно
+изменить, выбрав не тот workspace.
+
+## Terragrunt
+
+Для больших проектов — обёртка, которая генерирует backend и передаёт переменные:
+
+```hcl
+terraform {
+  source = "../../modules/service"
+}
+
+include "root" {
+  path = find_in_parent_folders()
+}
+
+inputs = {
+  name = "api"
+}
+```
+
+Плюс — DRY для десятков окружений. Минус — дополнительный слой абстракции и
+зависимость от инструмента.
+
+## Права и окружения
+
+| Окружение | Кто применяет | Права |
+| --- | --- | --- |
+| dev | разработчик | ограниченный аккаунт |
+| staging | CI | роль с доступом к staging |
+| prod | CI + approval | отдельная роль, MFA |
+
+Prod не должен применяться с ноутбука: только через пайплайн с ревью и планом.
+Иначе один `terraform apply` в неверном каталоге меняет продакшен.
+
+## Проверьте себя
+
+1. Что должен содержать хороший модуль?
+2. Почему workspaces не лучший выбор для staging/prod?
+3. Чем каталоги окружений лучше workspaces?
+4. Почему prod нельзя применять локально?
+
+!!! warning "Важно"
+    `terraform apply` без `plan` в prod — риск. Всегда сохраняйте план
+    (`-out=tfplan`) и применяйте именно его: между plan и apply состояние
+    может измениться.

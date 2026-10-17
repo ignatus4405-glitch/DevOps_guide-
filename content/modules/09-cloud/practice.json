@@ -107,6 +107,167 @@
         "feedback": "Правило FinOps: расходы нужно видеть в цифрах и в разрезе владельцев. Отчёт с рекомендациями — самый ценный артефакт для бизнеса."
       },
       "validation_hint": "В отчёте есть минимум три пункта с оценкой экономии и ответственным."
+    },
+    {
+      "id": "iam-scope",
+      "title": "Сузить IAM-политику до bucket",
+      "level": "hard",
+      "goal": "Заменить wildcard на конкретные действия и ресурс.",
+      "instructions": [
+        "Создайте политику с s3:* на *.",
+        "Сузьте до GetObject/PutObject на конкретный bucket.",
+        "Проверьте через simulate-principal-policy.",
+        "Сохраните обе версии в iam-report.md."
+      ],
+      "hints": [
+        "Resource: arn:aws:s3:::bucket/* — только объекты.",
+        "simulate-principal-policy покажет allowed/denied.",
+        "Для списка bucket нужен ресурс без /*."
+      ],
+      "solution": "aws iam simulate-principal-policy --policy-source-arn arn:aws:iam::123:role/app --action-names s3:PutObject --resource-arns arn:aws:s3:::app-uploads/test.txt\ncat > iam-report.md <<'EOF'\n# IAM\n\n## Было\nAction: s3:*\nResource: *\n\n## Стало\nAction: s3:GetObject, s3:PutObject\nResource: arn:aws:s3:::app-uploads/*\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "simulate-principal-policy",
+          "iam-report\\.md",
+          "s3:GetObject"
+        ],
+        "feedback": "Политика сужена: доступ только к нужному bucket и операциям."
+      },
+      "validation_hint": "iam-report.md содержит обе версии; simulate показывает Deny для чужих ресурсов."
+    },
+    {
+      "id": "vpc-plan",
+      "title": "Спланировать VPC без пересечений",
+      "level": "medium",
+      "goal": "Спроектировать адресное пространство и маршруты.",
+      "instructions": [
+        "Выберите CIDR для VPC и четырёх подсетей (2 AZ).",
+        "Опишите public/private и маршруты.",
+        "Проверьте, что CIDR не пересекается с on-premise.",
+        "Сохраните схему в VPC.md."
+      ],
+      "hints": [
+        "VPC /16, подсети /24.",
+        "Public → IGW, private → NAT.",
+        "Резерв: не занимайте все адреса."
+      ],
+      "solution": "cat > VPC.md <<'EOF'\n# VPC\n\n| Подсеть | CIDR | AZ | Тип | Маршрут |\n| --- | --- | --- | --- | --- |\n| public-a | 10.20.1.0/24 | a | public | igw |\n| public-b | 10.20.2.0/24 | b | public | igw |\n| private-a | 10.20.11.0/24 | a | private | nat |\n| private-b | 10.20.12.0/24 | b | private | nat |\nEOF\nterraform init || true",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "VPC\\.md",
+          "10\\.20\\.",
+          "igw|nat"
+        ],
+        "feedback": "Схема готова: две зоны, разделение на public/private, запас адресов."
+      },
+      "validation_hint": "VPC.md содержит CIDR, зоны и маршруты; пересечений с on-premise нет."
+    },
+    {
+      "id": "managed-db",
+      "title": "Поднять managed-базу с защитой",
+      "level": "hard",
+      "goal": "Отработать обязательные настройки RDS.",
+      "instructions": [
+        "Опишите RDS в Terraform с Multi-AZ.",
+        "Включите бэкапы 14 дней и шифрование.",
+        "Включите deletion_protection.",
+        "Проверьте plan и сохраните его в db-plan.txt."
+      ],
+      "hints": [
+        "multi_az = true, storage_encrypted = true.",
+        "deletion_protection = true защищает от destroy.",
+        "Пароль — из Secrets Manager, не в коде."
+      ],
+      "solution": "cat > db.tf <<'EOF'\nresource \"aws_db_instance\" \"app\" {\n  engine = \"postgres\"\n  instance_class = \"db.t3.medium\"\n  allocated_storage = 100\n  multi_az = true\n  storage_encrypted = true\n  backup_retention_period = 14\n  deletion_protection = true\n}\nEOF\nterraform fmt\nterraform validate\nterraform plan -out=tfplan | tee db-plan.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "multi_az\\s*=\\s*true",
+          "deletion_protection\\s*=\\s*true",
+          "terraform\\s+plan"
+        ],
+        "feedback": "База защищена от потери данных и удаления."
+      },
+      "validation_hint": "db-plan.txt показывает параметры Multi-AZ, шифрование и защиту."
+    },
+    {
+      "id": "dr-drill",
+      "title": "Провести учения DR",
+      "level": "manual",
+      "goal": "Проверить, что восстановление действительно работает.",
+      "instructions": [
+        "Выберите сервис и его RTO/RPO.",
+        "Восстановите его из бэкапа в отдельном окружении.",
+        "Замерьте время восстановления.",
+        "Запишите фактический RTO в DR-REPORT.md."
+      ],
+      "hints": [
+        "Учения проводят на копии, не на проде.",
+        "Фиксируйте каждый шаг и время.",
+        "Расхождение с планом — повод обновить документацию."
+      ],
+      "solution": "cat > DR-REPORT.md <<'EOF'\n# Учения DR\n\n- Сервис: api\n- План RTO: 1 час\n- Факт: 47 минут\n- Потеря данных: 5 минут\n- Проблемы: не хватало прав на восстановление снапшота\n- Действия: выдать роль, повторить через месяц\nEOF",
+      "check": {
+        "type": "manual",
+        "feedback": "Учения показали реальный RTO и выявили пробел в правах."
+      },
+      "validation_hint": "DR-REPORT.md содержит фактические метрики и план исправления."
+    },
+    {
+      "id": "budget-alert",
+      "title": "Настроить бюджет и алерт",
+      "level": "easy",
+      "goal": "Узнать о перерасходе до счёта.",
+      "instructions": [
+        "Создайте бюджет на месяц.",
+        "Добавьте алерт на 80 % и прогноз 100 %.",
+        "Укажите получателей.",
+        "Проверьте тестовым порогом."
+      ],
+      "hints": [
+        "`aws budgets create-budget`.",
+        "Прогнозный алерт ловит тренд раньше факта."
+      ],
+      "solution": "aws budgets create-budget --account-id 123 --budget file://budget.json\naws budgets describe-budgets --account-id 123\ngit add budget.json && git commit -m 'feat: бюджет и алерт'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "budgets",
+          "budget\\.json",
+          "git\\s+commit"
+        ],
+        "feedback": "Перерасход замечен заранее, а не по факту."
+      },
+      "validation_hint": "Бюджет создан, алерты на 80 % и прогноз настроены."
+    },
+    {
+      "id": "s3-hardening",
+      "title": "Закрыть публичный S3-бакет",
+      "level": "medium",
+      "goal": "Убрать случайную публичность и проверить политику.",
+      "instructions": [
+        "Включите Block Public Access.",
+        "Проверьте ACL и bucket policy.",
+        "Включите шифрование и версионирование.",
+        "Проверьте результат из CLI."
+      ],
+      "hints": [
+        "`put-public-access-block`.",
+        "Проверка: `get-public-access-block`."
+      ],
+      "solution": "aws s3api put-public-access-block --bucket demo --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true\naws s3api get-bucket-versioning --bucket demo\ngit add s3.md && git commit -m 'security: закрыт публичный доступ'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "put-public-access-block",
+          "versioning",
+          "git\\s+commit"
+        ],
+        "feedback": "Бакет закрыт, шифрование и версии включены."
+      },
+      "validation_hint": "Block Public Access активен, проверка версионирования выполнена."
     }
   ]
 }

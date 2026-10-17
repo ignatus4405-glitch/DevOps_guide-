@@ -110,6 +110,173 @@
         "feedback": "Теперь любой тег v1.2.0 автоматически публикует релиз с файлами и контрольными суммами — это и есть автообновление для клиентов."
       },
       "validation_hint": "После git push origin v0.1.0 в разделе Releases появился релиз с прикреплёнными файлами."
+    },
+    {
+      "id": "pipeline-blueprint",
+      "title": "Спроектировать пайплайн для сервиса",
+      "level": "medium",
+      "goal": "Описать стадии, артефакт и гейты до написания YAML.",
+      "instructions": [
+        "Опишите стадии от lint до deploy для своего проекта.",
+        "Определите, какой артефакт собирается и как он тегируется.",
+        "Укажите три гейта, без которых нельзя мержить/деплоить.",
+        "Сохраните схему в PIPELINE.md."
+      ],
+      "hints": [
+        "Быстрые проверки должны идти раньше медленных.",
+        "Артефакт — один на все окружения.",
+        "Гейт должен быть автоматическим."
+      ],
+      "solution": "cat > PIPELINE.md <<'EOF'\n# Пайплайн\n\n| Стадия | Время | Гейт |\n| --- | --- | --- |\n| lint | 20 c | обязательно |\n| test | 3 мин | обязательно |\n| build | 4 мин | образ по SHA |\n| security | 2 мин | нет critical |\n| deploy staging | 2 мин | авто |\n| deploy prod | 2 мин | approval + smoke |\nEOF\ngit add PIPELINE.md && git commit -m 'docs: схема пайплайна'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "PIPELINE\\.md",
+          "lint",
+          "deploy",
+          "git\\s+commit"
+        ],
+        "feedback": "Схема готова: видно, где узкие места и какие гейты обязательны."
+      },
+      "validation_hint": "PIPELINE.md содержит стадии, времена и гейты."
+    },
+    {
+      "id": "cache-speed",
+      "title": "Ускорить CI кэшем",
+      "level": "medium",
+      "goal": "Добавить кэш зависимостей и измерить эффект.",
+      "instructions": [
+        "Замерьте время текущего пайплайна (или локальной установки зависимостей).",
+        "Добавьте actions/cache с ключом по lock-файлу.",
+        "Запустите дважды и сравните время.",
+        "Запишите результат в CI-SPEED.md."
+      ],
+      "hints": [
+        "Ключ: ${{ hashFiles('**/requirements*.txt') }}.",
+        "Restore-keys даёт частичное попадание.",
+        "Смотрите время шага в логе Actions."
+      ],
+      "solution": "- uses: actions/cache@v4\n  with:\n    path: ~/.cache/pip\n    key: pip-${{ hashFiles('**/requirements*.txt') }}\n    restore-keys: pip-\n\ncat > CI-SPEED.md <<'EOF'\n# Скорость CI\n\n| Запуск | Установка зависимостей |\n| --- | --- |\n| без кэша | 95 c |\n| с кэшем | 18 c |\nEOF",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "actions/cache",
+          "hashFiles",
+          "CI-SPEED\\.md"
+        ],
+        "feedback": "Кэш дал пятикратное ускорение шага установки — это типичный результат."
+      },
+      "validation_hint": "CI-SPEED.md содержит замеры до и после, workflow использует actions/cache."
+    },
+    {
+      "id": "secret-rotation",
+      "title": "Настроить секрет и ротацию",
+      "level": "hard",
+      "goal": "Отработать безопасную работу с секретом в CI.",
+      "instructions": [
+        "Создайте секрет репозитория через gh secret set.",
+        "Используйте его в workflow без вывода в лог.",
+        "Проверьте список секретов.",
+        "Опишите процедуру ротации в SECRETS.md."
+      ],
+      "hints": [
+        "gh secret set NAME --body \"$(openssl rand -hex 32)\".",
+        "В workflow: ${{ secrets.NAME }}.",
+        "Удаление: gh secret delete NAME."
+      ],
+      "solution": "TOKEN=$(openssl rand -hex 32)\ngh secret set DEMO_TOKEN --body \"$TOKEN\"\ngh secret list | grep DEMO_TOKEN\ncat > SECRETS.md <<'EOF'\n# Секреты\n\n- DEMO_TOKEN — токен демо-сервиса, владелец: platform\n- Ротация: каждые 90 дней или при инциденте\n- Хранение: GitHub Secrets, в код не попадает\n- При утечке: отозвать, выпустить новый, проверить логи использования\nEOF\ngh secret delete DEMO_TOKEN",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "gh\\s+secret\\s+set",
+          "gh\\s+secret\\s+list",
+          "SECRETS\\.md"
+        ],
+        "feedback": "Секрет создан и удалён по процедуре; политика зафиксирована в репозитории."
+      },
+      "validation_hint": "SECRETS.md описывает владельца, срок ротации и действия при утечке."
+    },
+    {
+      "id": "test-matrix",
+      "title": "Добавить матрицу и порог покрытия",
+      "level": "medium",
+      "goal": "Проверять совместимость версий и не терять покрытие.",
+      "instructions": [
+        "Добавьте в workflow матрицу Python 3.11/3.12.",
+        "Включите fail-fast: false.",
+        "Добавьте шаг coverage с порогом 70 %.",
+        "Убедитесь, что оба job'а запускаются."
+      ],
+      "hints": [
+        "matrix.python переиспользуется в setup-python.",
+        "coverage report --fail-under=70.",
+        "Проверьте статусы в PR."
+      ],
+      "solution": "strategy:\n  fail-fast: false\n  matrix:\n    python: ['3.11', '3.12']\n\n- uses: actions/setup-python@v5\n  with:\n    python-version: ${{ matrix.python }}\n- run: pytest --cov=app --cov-report=term\n- run: coverage report --fail-under=70",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "matrix",
+          "fail-fast:\\s*false",
+          "fail-under=70"
+        ],
+        "feedback": "Матрица запускает обе версии, покрытие ниже порога ломает сборку."
+      },
+      "validation_hint": "Workflow содержит матрицу и порог покрытия; PR показывает два зелёных job'а."
+    },
+    {
+      "id": "reusable-workflow",
+      "title": "Вынести общий workflow",
+      "level": "medium",
+      "goal": "Убрать копипаст между пайплайнами.",
+      "instructions": [
+        "Создайте `.github/workflows/reusable-test.yml` с `workflow_call`.",
+        "Принимайте версию Python через `inputs`.",
+        "Вызовите его из другого workflow.",
+        "Проверьте, что оба пайплайна зелёные."
+      ],
+      "hints": [
+        "`on: workflow_call` делает workflow переиспользуемым.",
+        "`uses: ./.github/workflows/reusable-test.yml`."
+      ],
+      "solution": "cat > .github/workflows/reusable-test.yml <<'EOF'\non: workflow_call\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: pytest -q\nEOF\ngit add .github && git commit -m 'ci: reusable test workflow'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "workflow_call",
+          "reusable-test\\.yml",
+          "git\\s+commit"
+        ],
+        "feedback": "Логика тестов теперь в одном месте."
+      },
+      "validation_hint": "Есть workflow с `workflow_call` и вызов из другого pipeline."
+    },
+    {
+      "id": "deploy-gate",
+      "title": "Добавить approval-гейт в прод",
+      "level": "medium",
+      "goal": "Не выпускать в прод без явного решения.",
+      "instructions": [
+        "Создайте environment `production`.",
+        "Добавьте required reviewers.",
+        "Разделите job'ы staging и prod.",
+        "Проверьте, что prod ждёт подтверждения."
+      ],
+      "hints": [
+        "Environment задаётся в job через `environment:`.",
+        "Approval настраивается в настройках репозитория."
+      ],
+      "solution": "cat > .github/workflows/deploy.yml <<'EOF'\njobs:\n  prod:\n    environment:\n      name: production\n      url: https://example.com\n    steps:\n      - run: ./deploy.sh prod\nEOF\ngit add .github/workflows/deploy.yml && git commit -m 'ci: approval gate'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "environment:",
+          "production",
+          "git\\s+commit"
+        ],
+        "feedback": "Прод-деплой требует человеческого решения."
+      },
+      "validation_hint": "Job использует environment production с required reviewers."
     }
   ]
 }

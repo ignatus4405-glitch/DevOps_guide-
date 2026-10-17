@@ -18,7 +18,12 @@
       "solution": "#!/usr/bin/env bash\nset -euo pipefail\n\ndir=\"${1:?укажите каталог для деплоя}\"\n[[ -d \"$dir\" ]] || { echo \"каталог $dir не найден\" >&2; exit 1; }\necho \"деплоим из $dir\"",
       "check": {
         "type": "regex_all",
-        "patterns": ["#!/usr/bin/env bash", "set -euo pipefail", "\\$\\{1:\\?", "\\[\\[ -d"],
+        "patterns": [
+          "#!/usr/bin/env bash",
+          "set -euo pipefail",
+          "\\$\\{1:\\?",
+          "\\[\\[ -d"
+        ],
         "feedback": "Так выглядит вход в любой безопасный скрипт: обязательный аргумент, проверка, понятная ошибка в stderr."
       },
       "validation_hint": "Запустите ./deploy.sh без аргументов (получите ошибку) и с существующим каталогом (получите сообщение)."
@@ -40,7 +45,12 @@
       "solution": "#!/usr/bin/env bash\nset -euo pipefail\nSRC=/opt/app/data; DEST=/backup; KEEP_DAYS=7\nmkdir -p \"$DEST\"\narchive=\"$DEST/app-$(date +%F).tar.gz\"\ntar czf \"$archive\" -C \"$(dirname \"$SRC\")\" \"$(basename \"$SRC\")\"\ntar tzf \"$archive\" >/dev/null\nfind \"$DEST\" -name 'app-*.tar.gz' -mtime \"+$KEEP_DAYS\" -delete\necho \"готово: $archive\"",
       "check": {
         "type": "regex_all",
-        "patterns": ["tar\\s+czf", "tar\\s+tzf", "find\\s+.*-mtime", "date\\s+\\+%F"],
+        "patterns": [
+          "tar\\s+czf",
+          "tar\\s+tzf",
+          "find\\s+.*-mtime",
+          "date\\s+\\+%F"
+        ],
         "feedback": "Проверка архива и ротация — то, что отличает рабочий бэкап от «надеюсь, сработает»."
       },
       "validation_hint": "ls -la /backup показывает архив, который открывается командой tar tzf."
@@ -62,7 +72,12 @@
       "solution": "#!/usr/bin/env bash\nset -uo pipefail\nservices=(nginx docker ssh)\nfail=0\nfor s in \"${services[@]}\"; do\n  if ! systemctl is-active --quiet \"$s\"; then\n    echo \"FAIL: $s не активен\" >&2\n    fail=$((fail + 1))\n  fi\ndone\necho \"проблем: $fail\"\n[[ \"$fail\" -eq 0 ]] || exit 1",
       "check": {
         "type": "regex_all",
-        "patterns": ["services=\\(", "for\\s+\\w+\\s+in\\s+\"\\$\\{services", "systemctl\\s+is-active", "exit\\s+1"],
+        "patterns": [
+          "services=\\(",
+          "for\\s+\\w+\\s+in\\s+\"\\$\\{services",
+          "systemctl\\s+is-active",
+          "exit\\s+1"
+        ],
         "feedback": "Скрипт возвращает корректный код — именно этого ждёт CI и система мониторинга."
       },
       "validation_hint": "echo $? после запуска: 0 — всё хорошо, 1 — есть проблемы."
@@ -84,10 +99,185 @@
       "solution": "sudo tee /etc/systemd/system/backup.service >/dev/null <<'EOF'\n[Unit]\nDescription=Ночной бэкап\n[Service]\nType=oneshot\nUser=backup\nExecStart=/opt/scripts/backup.sh\nEOF\nsudo tee /etc/systemd/system/backup.timer >/dev/null <<'EOF'\n[Unit]\nDescription=Ежедневно в 02:30\n[Timer]\nOnCalendar=*-*-* 02:30:00\nPersistent=true\n[Install]\nWantedBy=timers.target\nEOF\nsudo systemctl daemon-reload\nsudo systemctl enable --now backup.timer\nsystemctl list-timers backup.timer\njournalctl -u backup.service -n 20",
       "check": {
         "type": "regex_all",
-        "patterns": ["\\.timer", "OnCalendar", "Persistent=true", "enable", "list-timers"],
+        "patterns": [
+          "\\.timer",
+          "OnCalendar",
+          "Persistent=true",
+          "enable",
+          "list-timers"
+        ],
         "feedback": "Таймер настроен. В отличие от cron, у вас есть логи, зависимости и догон пропущенных запусков."
       },
       "validation_hint": "systemctl list-timers показывает NEXT и LAST для backup.timer."
+    },
+    {
+      "id": "log-stats",
+      "title": "Разобрать access-лог одной строкой",
+      "level": "medium",
+      "goal": "Научиться получать статистику из лога конвейером, а не глазами.",
+      "instructions": [
+        "Создайте тестовый access.log с 20 строками разных кодов ответа.",
+        "Посчитайте распределение кодов ответа по частоте.",
+        "Найдите топ-3 IP по количеству запросов.",
+        "Сохраните команды и вывод в log-stats.txt."
+      ],
+      "hints": [
+        "Поле кода ответа в combined-формате — девятое.",
+        "Считайте через awk + sort | uniq -c | sort -rn.",
+        "Поле IP — первое."
+      ],
+      "solution": "cat > access.log <<'EOF'\n10.0.0.1 - - [17/Oct/2026:10:00:00 +0000] \"GET / HTTP/1.1\" 200 512\n10.0.0.1 - - [17/Oct/2026:10:00:01 +0000] \"GET /health HTTP/1.1\" 200 2\n10.0.0.2 - - [17/Oct/2026:10:00:02 +0000] \"GET /missing HTTP/1.1\" 404 0\n10.0.0.3 - - [17/Oct/2026:10:00:03 +0000] \"POST /api HTTP/1.1\" 500 0\nEOF\n{ echo '# коды ответа'; awk '{print $9}' access.log | sort | uniq -c | sort -rn; echo '# топ IP'; awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -3; } > log-stats.txt",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "awk\\s+'\\{print\\s+\\$9\\}'",
+          "uniq\\s+-c",
+          "log-stats\\.txt"
+        ],
+        "feedback": "Статистика готова: теперь видно долю ошибок и самых активных клиентов."
+      },
+      "validation_hint": "log-stats.txt содержит распределение кодов ответа и топ IP."
+    },
+    {
+      "id": "strict-backup",
+      "title": "Сделать бэкап-скрипт надёжным",
+      "level": "hard",
+      "goal": "Добавить в скрипт строгий режим, проверку аргументов и уборку.",
+      "instructions": [
+        "Возьмите свой скрипт бэкапа (или создайте новый).",
+        "Добавьте set -Eeuo pipefail и IFS.",
+        "Проверьте обязательный аргумент каталога через ${VAR:?}.",
+        "Добавьте trap на удаление временного каталога.",
+        "Прогоните shellcheck и исправьте замечания."
+      ],
+      "hints": [
+        "Временный каталог удобно создавать через mktemp -d.",
+        "shellcheck подскажет конкретные номера строк.",
+        "Проверьте запуск без аргументов — должен быть код 2."
+      ],
+      "solution": "cat > backup.sh <<'EOF'\n#!/usr/bin/env bash\nset -Eeuo pipefail\nIFS=$'\\n\\t'\n\nSRC=${1:?укажите каталог для бэкапа}\nDEST=${2:-/backup}\nmkdir -p \"$DEST\"\nTMP=$(mktemp -d)\ntrap 'rm -rf \"$TMP\"' EXIT\n\ntar -czf \"$TMP/app.tgz\" \"$SRC\"\nmv \"$TMP/app.tgz\" \"$DEST/app-$(date +%F).tgz\"\necho \"бэкап готов: $DEST/app-$(date +%F).tgz\"\nEOF\nchmod +x backup.sh\nshellcheck backup.sh\nbash -n backup.sh",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "set\\s+-Eeuo\\s+pipefail",
+          "trap",
+          "shellcheck",
+          "bash\\s+-n"
+        ],
+        "feedback": "Скрипт падает рано и громко, убирает за собой и проходит статический анализ."
+      },
+      "validation_hint": "backup.sh содержит строгий режим, проверку аргумента и trap; shellcheck не выдаёт ошибок."
+    },
+    {
+      "id": "bats-test",
+      "title": "Покрыть функцию bats-тестом",
+      "level": "hard",
+      "goal": "Научиться тестировать shell-функции, а не только запускать вручную.",
+      "instructions": [
+        "Вынесите функцию parse_version в lib.sh.",
+        "Создайте tests/lib.bats с двумя тестами: успех и ошибка.",
+        "Установите bats и запустите тесты.",
+        "Добавьте запуск bats в CI-workflow."
+      ],
+      "hints": [
+        "Функция должна возвращать версию через echo и код 0.",
+        "В bats используйте run и проверяйте $status и $output.",
+        "Установка: sudo apt-get install -y bats."
+      ],
+      "solution": "cat > lib.sh <<'EOF'\nparse_version() {\n  [[ \"$1\" =~ ^v?([0-9]+\\.[0-9]+\\.[0-9]+)$ ]] || return 1\n  echo \"${BASH_REMATCH[1]}\"\n}\nEOF\nmkdir -p tests\ncat > tests/lib.bats <<'EOF'\n#!/usr/bin/env bats\nsetup() { source ./lib.sh; }\n\n@test \"извлекает версию\" {\n  run parse_version \"v1.2.3\"\n  [ \"$status\" -eq 0 ]\n  [ \"$output\" = \"1.2.3\" ]\n}\n\n@test \"падает на мусоре\" {\n  run parse_version \"nope\"\n  [ \"$status\" -ne 0 ]\n}\nEOF\nbats tests/",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "bats\\s+tests",
+          "parse_version",
+          "\\$status"
+        ],
+        "feedback": "Функция покрыта тестами: успех и отказ проверяются автоматически."
+      },
+      "validation_hint": "tests/lib.bats содержит два теста; bats tests/ проходит."
+    },
+    {
+      "id": "timer-deep",
+      "title": "Оформить задачу как systemd timer",
+      "level": "medium",
+      "goal": "Заменить cron на таймер с журналом, догоном и разбросом.",
+      "instructions": [
+        "Создайте backup.service типа oneshot.",
+        "Создайте backup.timer с OnCalendar и Persistent.",
+        "Включите таймер и проверьте список таймеров.",
+        "Убедитесь, что запуск виден в journalctl."
+      ],
+      "hints": [
+        "Проверка расписания: systemd-analyze calendar.",
+        "Включение: systemctl enable --now backup.timer.",
+        "Список: systemctl list-timers --all."
+      ],
+      "solution": "sudo tee /etc/systemd/system/backup.service >/dev/null <<'EOF'\n[Unit]\nDescription=Ночной бэкап\n[Service]\nType=oneshot\nExecStart=/opt/scripts/backup.sh\nEOF\nsudo tee /etc/systemd/system/backup.timer >/dev/null <<'EOF'\n[Unit]\nDescription=Бэкап в 03:30\n[Timer]\nOnCalendar=*-*-* 03:30:00\nPersistent=true\nRandomizedDelaySec=600\n[Install]\nWantedBy=timers.target\nEOF\nsudo systemctl daemon-reload\nsudo systemctl enable --now backup.timer\nsystemctl list-timers --all | grep backup\nsystemd-analyze calendar '*-*-* 03:30:00'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "backup\\.timer",
+          "OnCalendar",
+          "Persistent=true",
+          "list-timers"
+        ],
+        "feedback": "Таймер настроен: пропущенный запуск догонится, нагрузка размазана, логи в journald."
+      },
+      "validation_hint": "systemctl list-timers показывает backup.timer; журнал содержит запуск service."
+    },
+    {
+      "id": "idempotent-script",
+      "title": "Сделать скрипт идемпотентным",
+      "level": "medium",
+      "goal": "Повторный запуск не должен ломать систему.",
+      "instructions": [
+        "Создайте каталог только если его нет.",
+        "Проверяйте наличие пользователя перед созданием.",
+        "Не перезаписывайте конфиг без нужды.",
+        "Запустите скрипт дважды и сравните результат."
+      ],
+      "hints": [
+        "`mkdir -p` идемпотентен.",
+        "Для пользователя — `id -u user`."
+      ],
+      "solution": "#!/usr/bin/env bash\nset -euo pipefail\nid -u app >/dev/null 2>&1 || useradd -r app\nmkdir -p /var/lib/app\n[ -f /etc/app.conf ] || cp app.conf /etc/app.conf\n./setup.sh && ./setup.sh\ngit add setup.sh && git commit -m 'fix: идемпотентный setup'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "set\\s+-euo",
+          "mkdir\\s+-p",
+          "git\\s+commit"
+        ],
+        "feedback": "Повторный запуск безопасен."
+      },
+      "validation_hint": "Скрипт содержит проверки и успешно запускается дважды."
+    },
+    {
+      "id": "parse-json",
+      "title": "Разобрать JSON без jq-хаков",
+      "level": "easy",
+      "goal": "Извлечь поля надёжно, а не регуляркой.",
+      "instructions": [
+        "Возьмите вывод API в файл.",
+        "Извлеките имя и статус через `jq`.",
+        "Обработайте отсутствующее поле.",
+        "Сохраните скрипт."
+      ],
+      "hints": [
+        "`jq -r '.name'` даёт строку без кавычек.",
+        "`// \"unknown\"` задаёт значение по умолчанию."
+      ],
+      "solution": "curl -s https://api.example.com/item > item.json\nname=$(jq -r '.name // \"unknown\"' item.json)\nstatus=$(jq -r '.status // \"unknown\"' item.json)\necho \"$name $status\"\ngit add parse.sh && git commit -m 'feat: разбор JSON'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "jq\\s+-r",
+          "//",
+          "git\\s+commit"
+        ],
+        "feedback": "Поля извлекаются структурно, без хрупких regex."
+      },
+      "validation_hint": "Скрипт использует jq и значение по умолчанию."
     }
   ]
 }
