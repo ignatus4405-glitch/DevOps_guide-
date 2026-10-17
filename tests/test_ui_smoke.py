@@ -9,6 +9,15 @@ from devops_academy.progress import ProgressStore
 from devops_academy.ui.main_window import MainWindow, build_exam_module
 
 
+def _wait_until(qtest, condition, timeout_ms: int = 1000) -> bool:
+    """Ждёт асинхронный Qt-переход, регулярно прокачивая event loop."""
+    for _ in range(timeout_ms // 10):
+        if condition():
+            return True
+        qtest.qWait(10)
+    return condition()
+
+
 @pytest.fixture()
 def window(course, qapp, tmp_path):
     store = ProgressStore(QSettings(str(tmp_path / "ui.ini"), QSettings.IniFormat))
@@ -335,9 +344,8 @@ def test_main_window_waits_for_update_checker_before_closing(window, monkeypatch
 
     window.close()
     assert window._close_after_checker
-    QTest.qWait(50)
-    assert not checker.isRunning()
-    assert not window.isVisible()
+    assert _wait_until(QTest, lambda: not checker.isRunning()), "update checker did not stop"
+    assert _wait_until(QTest, lambda: not window.isVisible()), "main window stayed visible after close"
 
 
 def test_stale_update_checker_finish_cannot_close_window_for_new_checker(window):
@@ -396,6 +404,5 @@ def test_update_dialog_waits_for_download_worker_on_close(monkeypatch, qapp):
 
     dialog.close()
     assert dialog._close_when_worker_stops
-    QTest.qWait(50)
-    assert not worker.isRunning()
-    assert not dialog.isVisible()
+    assert _wait_until(QTest, lambda: not worker.isRunning()), "download worker did not stop"
+    assert _wait_until(QTest, lambda: not dialog.isVisible()), "update dialog stayed visible after close"
