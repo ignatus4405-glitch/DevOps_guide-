@@ -280,11 +280,12 @@ jobs:
             echo "Тег v$VERSION уже существует; дублирующая публикация отменена" >&2
             exit 1
           fi
-          git tag -a "v$VERSION" "$RELEASE_SHA" -m "DevOps Academy $VERSION"
-          git push origin "v$VERSION"
+          # Создаём тег и Release через GitHub API на проверенном SHA;
+          # так тег не зависит от отдельного git push из runner.
           gh release create "v$VERSION" release/* \
             --title "DevOps Academy $VERSION" \
             --notes-file release/RELEASE_NOTES.md \
+            --target "$RELEASE_SHA" \
             --latest
       - name: Итог сборки
         run: |

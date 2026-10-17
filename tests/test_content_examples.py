@@ -86,6 +86,19 @@ def test_repository_workflows_parse_as_yaml():
         assert isinstance(workflow.get("jobs"), dict) and workflow["jobs"], workflow_path.name
 
 
+def test_windows_gui_workflow_uses_diagnostic_test_runner():
+    workflow_path = ROOT / ".github/workflows/ci.yml"
+    workflow = yaml.load(workflow_path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+    steps = workflow["jobs"]["windows-gui"]["steps"]
+    gui_test = next(step for step in steps if step.get("name") == "Прогон GUI-тестов в offscreen-режиме")
+    assert "tools/run_tests.py" in gui_test["run"]
+    assert "tests/test_ui_smoke.py -q" in gui_test["run"]
+    assert "reports/gui-pytest.log" in gui_test["run"]
+    report_upload = next(step for step in steps if step.get("name") == "Сохранить отчёты GUI-тестов")
+    assert report_upload["if"] == "always()"
+    assert report_upload["with"]["name"] == "reports-windows-gui"
+
+
 def test_release_workflow_uses_one_prepared_commit_and_main_only():
     workflow_path = ROOT / ".github/workflows/build.yml"
     workflow = yaml.load(workflow_path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
@@ -100,7 +113,9 @@ def test_release_workflow_uses_one_prepared_commit_and_main_only():
     for job_name in ("windows", "linux"):
         assert jobs[job_name]["steps"][0]["with"]["ref"] == "${{ needs.guard.outputs.sha }}"
     release_text = "\n".join(step.get("run", "") for step in jobs["release"]["steps"])
-    assert 'git tag -a "v$VERSION" "$RELEASE_SHA"' in release_text
+    assert 'gh release create "v$VERSION"' in release_text
+    assert '--target "$RELEASE_SHA"' in release_text
+    assert 'git push origin "v$VERSION"' not in release_text
     assert "git push origin HEAD:main" not in release_text
     preparation = jobs["guard"]["steps"]
     commit_step = next(step for step in preparation if step.get("id") == "release_commit")
