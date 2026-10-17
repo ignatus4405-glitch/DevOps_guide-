@@ -109,6 +109,16 @@ def test_auto_check_can_be_disabled(tmp_path):
     assert should_check(store) is False
 
 
+def test_startup_check_ignores_daily_interval_but_respects_setting(tmp_path):
+    store = make_store(tmp_path)
+    mark_checked(store)
+    assert should_check(store) is False
+    assert should_check(store, on_startup=True) is True
+
+    store.set("updates/auto_check", "false")
+    assert should_check(store, on_startup=True) is False
+
+
 def test_skip_version_and_snooze(tmp_path):
     store = make_store(tmp_path)
     skip_version(store, "1.5.0")

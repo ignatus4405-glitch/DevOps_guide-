@@ -30,13 +30,14 @@ class UpdateDialog(QDialog):
         self.worker: DownloadWorker | None = None
         self.snoozed = False
         self.skipped = False
+        self.installer_started = False
 
         self.setWindowTitle(f"Доступна новая версия {info.version}")
         self.resize(760, 600)
 
         title = QLabel(f"🚀 Вышла новая версия {info.version}")
         title.setObjectName("Title")
-        subtitle = QLabel(f"Текущая версия обновится автоматически. Тег релиза: {info.tag}")
+        subtitle = QLabel(f"Хотите установить обновление? Тег релиза: {info.tag}")
         subtitle.setObjectName("Subtitle")
 
         self.notes = QTextBrowser(self)
@@ -105,6 +106,7 @@ class UpdateDialog(QDialog):
         ok, message = install_update(path)
         self.status.setText(("✅ " if ok else "❌ ") + message)
         if ok:
+            self.installer_started = self.info.installer_asset() is not None
             self.accept()
 
     def _failed(self, message: str) -> None:

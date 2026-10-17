@@ -17,7 +17,7 @@ pytest -q
 
 ```bash
 ruff check .                      # линтер
-pytest -q                         # 137 тестов
+pytest -q                         # 139 тестов
 python tools/validate_content.py  # структура курса
 QT_QPA_PLATFORM=offscreen python tools/smoke_test.py
 ```
