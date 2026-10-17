@@ -1,0 +1,31 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListOnlyStatePrefix",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::org-tfstate",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "prod/app/terraform.tfstate",
+            "prod/app/terraform.tfstate.tflock"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ReadWriteState",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::org-tfstate/prod/app/terraform.tfstate"
+    },
+    {
+      "Sid": "ManageOnlyLockFile",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::org-tfstate/prod/app/terraform.tfstate.tflock"
+    }
+  ]
+}

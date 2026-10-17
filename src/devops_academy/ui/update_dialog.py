@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QDialog,
@@ -31,6 +31,9 @@ class UpdateDialog(QDialog):
         self.snoozed = False
         self.skipped = False
         self.installer_started = False
+        self._close_when_worker_stops = False
+        self._download_path: str | None = None
+        self._download_error: str | None = None
 
         self.setWindowTitle(f"Доступна новая версия {info.version}")
         self.resize(760, 600)
@@ -53,9 +56,18 @@ class UpdateDialog(QDialog):
         self.status = QLabel("", self)
         self.status.setObjectName("Subtitle")
 
-        self.install_button = QPushButton("⬇ Скачать и установить", self)
+        if info.installer_asset() is not None:
+            install_label = "⬇ Скачать и установить"
+        elif info.archive_asset() is not None:
+            install_label = "⬇ Скачать архив (установка вручную)"
+        else:
+            install_label = "Нет сборки для этой платформы"
+        self.install_button = QPushButton(install_label, self)
         self.install_button.setObjectName("Primary")
+        self.install_button.setEnabled(info.installer_asset() is not None or info.archive_asset() is not None)
         self.install_button.clicked.connect(self._download)
+        if not self.install_button.isEnabled():
+            self.status.setText("Автоматическая установка для этой ОС/архитектуры не поддерживается. Откройте страницу релиза.")
         self.page_button = QPushButton("Открыть страницу релиза", self)
         self.page_button.clicked.connect(self._open_page)
         self.later_button = QPushButton("Позже", self)
@@ -92,24 +104,107 @@ class UpdateDialog(QDialog):
         self.accept()
 
     def _download(self) -> None:
+        if self.worker is not None and self.worker.isRunning():
+            return
         self.install_button.setEnabled(False)
+        self.later_button.setEnabled(False)
+        self.skip_button.setEnabled(False)
         self.progress.setVisible(True)
-        self.status.setText("Скачиваем обновление…")
+        self.progress.setValue(0)
+        self._download_path = None
+        self._download_error = None
+        self.status.setText("Скачиваем обновление и проверяем обязательную SHA-256-сумму…")
         self.worker = DownloadWorker(self.info, self)
         self.worker.progress.connect(self.progress.setValue)
         self.worker.finished_file.connect(self._downloaded)
         self.worker.failed.connect(self._failed)
+        self.worker.finished.connect(self._worker_finished)
         self.worker.start()
 
     def _downloaded(self, path: str) -> None:
-        self.status.setText("Файл получен, проверяем контрольную сумму и запускаем установку…")
-        ok, message = install_update(path)
-        self.status.setText(("✅ " if ok else "❌ ") + message)
-        if ok:
-            self.installer_started = self.info.installer_asset() is not None
-            self.accept()
+        # Сигнал приходит до QThread.finished: не закрываем диалог, пока поток жив.
+        self._download_path = path
 
     def _failed(self, message: str) -> None:
+        self._download_error = message
+
+    def _worker_finished(self) -> None:
+        if self.worker is not None:
+            # Join after finished before a reject/accept can release the QThread parent.
+            self.worker.wait()
+        if self._close_when_worker_stops:
+            self._close_when_worker_stops = False
+            super().reject()
+            return
+        if self._download_error:
+            self.install_button.setEnabled(True)
+            self.later_button.setEnabled(True)
+            self.skip_button.setEnabled(True)
+            self.progress.setVisible(False)
+            self.status.setText(f"❌ {self._download_error}. Проверьте страницу релиза.")
+            return
+        if not self._download_path:
+            return
+
+        ok, message = install_update(self._download_path)
+        if ok:
+            self.status.setText("✅ " + message)
+            self.installer_started = True
+            self.accept()
+            return
+        if message.startswith("Архив скачан:"):
+            self.status.setText("ℹ️ " + message)
+            self.install_button.setText("Архив сохранён")
+            self.progress.setVisible(False)
+            self.later_button.setEnabled(True)
+            self.skip_button.setEnabled(True)
+            return
+        self.status.setText("❌ " + message)
         self.install_button.setEnabled(True)
+        self.later_button.setEnabled(True)
+        self.skip_button.setEnabled(True)
         self.progress.setVisible(False)
-        self.status.setText(f"❌ {message}. Скачайте установщик со страницы релиза.")
+
+    def _defer_close_for_worker(self) -> bool:
+        if self.worker is None or not self.worker.isRunning():
+            return False
+        if not self._close_when_worker_stops:
+            self._close_when_worker_stops = True
+            QTimer.singleShot(25, self._finish_deferred_close)
+        self.worker.requestInterruption()
+        self.install_button.setEnabled(False)
+        self.later_button.setEnabled(False)
+        self.skip_button.setEnabled(False)
+        self.status.setText("Останавливаем загрузку перед закрытием…")
+        return True
+
+    def _finish_deferred_close(self) -> None:
+        """Закрывает диалог по таймеру, даже если queued finished ещё не обработан."""
+        if not self._close_when_worker_stops:
+            return
+        worker = self.worker
+        if worker is not None and worker.isRunning():
+            QTimer.singleShot(25, self._finish_deferred_close)
+            return
+        if worker is not None:
+            worker.wait()
+        # Keep the flag until finished is delivered so a late result cannot launch install.
+        super().reject()
+
+    def reject(self) -> None:
+        # Escape вызывает reject(), минуя closeEvent; тоже безопасно ждём QThread.
+        if self._defer_close_for_worker():
+            return
+        super().reject()
+
+    def accept(self) -> None:
+        # Защита от закрытия диалога кнопкой/внешним вызовом во время загрузки.
+        if self.worker is not None and self.worker.isRunning():
+            return
+        super().accept()
+
+    def closeEvent(self, event) -> None:  # noqa: N802 - API Qt
+        if self._defer_close_for_worker():
+            event.ignore()
+            return
+        super().closeEvent(event)

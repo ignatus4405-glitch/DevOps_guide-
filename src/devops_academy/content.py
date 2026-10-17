@@ -94,6 +94,14 @@ class Quiz:
         return len(self.questions)
 
 
+@dataclass(frozen=True)
+class CommandRequirement:
+    """Команда и обязательные последовательные аргументы для проверки практики."""
+
+    name: str
+    args: list[str] = field(default_factory=list)
+
+
 @dataclass
 class Task:
     """Практическая задача с автопроверкой введённых команд/ответов."""
@@ -109,6 +117,7 @@ class Task:
     patterns: list[str]
     feedback: str
     validation_hint: str = ""
+    commands: list[CommandRequirement] = field(default_factory=list)
 
 
 @dataclass
@@ -245,6 +254,21 @@ def _load_practice(module_id: str, path: Path) -> Practice:
     tasks: list[Task] = []
     for index, raw_t in enumerate(data.get("tasks", []), start=1):
         check = raw_t.get("check", {}) or {}
+        if not isinstance(check, dict):
+            raise ContentError(f"{path}: check для задачи {raw_t.get('id', index)} должен быть объектом")
+        raw_commands = check.get("commands", [])
+        if not isinstance(raw_commands, list):
+            raise ContentError(f"{path}: check.commands для задачи {raw_t.get('id', index)} должен быть списком")
+        commands = []
+        for raw_command in raw_commands:
+            if not isinstance(raw_command, dict) or not isinstance(raw_command.get("args", []), list):
+                raise ContentError(f"{path}: некорректная команда в задаче {raw_t.get('id', index)}")
+            commands.append(
+                CommandRequirement(
+                    name=str(raw_command.get("name", "")).strip(),
+                    args=[str(argument) for argument in raw_command.get("args", [])],
+                )
+            )
         tasks.append(
             Task(
                 tid=str(raw_t.get("id") or f"t{index}"),
@@ -258,6 +282,7 @@ def _load_practice(module_id: str, path: Path) -> Practice:
                 patterns=[str(p) for p in check.get("patterns", [])],
                 feedback=str(check.get("feedback", "")),
                 validation_hint=str(raw_t.get("validation_hint", "")),
+                commands=commands,
             )
         )
     if not tasks:

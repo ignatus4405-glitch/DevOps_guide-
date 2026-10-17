@@ -1,0 +1,17 @@
+{
+  "resource_changes": [
+    {
+      "address": "aws_security_group_rule.ssh_from_vpn",
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "ssh_from_vpn",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "cidr_blocks": ["10.20.0.0/16"],
+          "from_port": 22
+        }
+      }
+    }
+  ]
+}

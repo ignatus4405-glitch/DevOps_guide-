@@ -107,7 +107,17 @@ def main() -> int:
                 if task.check_type == "manual":
                     check(errors, bool(task.validation_hint),
                           f"{module.module_id}/{task.tid}: manual-задача без validation_hint")
+                elif task.check_type == "commands":
+                    check(errors, bool(task.commands),
+                          f"{module.module_id}/{task.tid}: нет требований check.commands")
+                    for command in task.commands:
+                        check(errors, bool(command.name),
+                              f"{module.module_id}/{task.tid}: пустое имя команды")
+                        check(errors, all(isinstance(arg, str) and arg for arg in command.args),
+                              f"{module.module_id}/{task.tid}: аргументы команд должны быть непустыми строками")
                 else:
+                    check(errors, task.check_type in {"regex_all", "regex_any", "equals"},
+                          f"{module.module_id}/{task.tid}: неизвестный тип проверки {task.check_type}")
                     check(errors, bool(task.patterns),
                           f"{module.module_id}/{task.tid}: нет шаблонов автопроверки")
                 for pattern in task.patterns:

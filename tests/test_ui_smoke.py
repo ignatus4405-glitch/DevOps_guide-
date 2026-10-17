@@ -263,3 +263,139 @@ def test_found_update_prompts_automatically_and_keeps_banner_action(window, monk
     assert window.pending_update is info
     assert not window.update_banner.isHidden()
     assert window.store.get("updates/last_check")
+
+    # После «Позже» UpdateInfo сохраняется и диалог можно открыть повторно.
+    window.update_details_button.click()
+    assert prompted == [info, info]
+    assert window.pending_update is info
+    assert not window.update_banner.isHidden()
+
+
+def test_closing_update_dialog_keeps_banner_reopenable(window, monkeypatch):
+    import devops_academy.ui.main_window as main_window
+    from devops_academy.updater import UpdateInfo
+
+    info = UpdateInfo(
+        version="0.7.0",
+        tag="v0.7.0",
+        title="DevOps Academy 0.7.0",
+        notes="",
+        published_at="",
+        html_url="https://github.com/example/repo/releases/tag/v0.7.0",
+    )
+    opened = []
+
+    class ClosedDialog:
+        snoozed = False
+        skipped = False
+        installer_started = False
+
+        def __init__(self, update, theme, parent):
+            opened.append(update)
+
+        def exec(self):
+            return 0  # пользователь закрыл окно крестиком
+
+    monkeypatch.setattr(main_window, "UpdateDialog", ClosedDialog)
+    window.notify_update(info, manual=False)
+    assert opened == [info]
+    assert window.pending_update is info
+    assert not window.update_banner.isHidden()
+
+    window.update_details_button.click()
+    assert opened == [info, info]
+    assert window.pending_update is info
+
+
+def test_main_window_waits_for_update_checker_before_closing(window, monkeypatch, qapp):
+    from PySide6.QtCore import QThread, Signal
+    from PySide6.QtTest import QTest
+
+    import devops_academy.ui.main_window as main_window
+
+    class BlockingChecker(QThread):
+        found = Signal(object)
+        checked = Signal(object)
+        failed = Signal(str)
+
+        def __init__(self, current_version, parent=None):
+            super().__init__(parent)
+
+        def run(self):
+            while not self.isInterruptionRequested():
+                self.msleep(5)
+
+    monkeypatch.setattr(main_window, "UpdateChecker", BlockingChecker)
+    window.show()
+    window.check_updates_silent(manual=True)
+    checker = window.checker
+    assert checker is not None
+    QTest.qWait(20)
+    assert checker.isRunning()
+
+    window.close()
+    assert window._close_after_checker
+    QTest.qWait(50)
+    assert not checker.isRunning()
+    assert not window.isVisible()
+
+
+def test_stale_update_checker_finish_cannot_close_window_for_new_checker(window):
+    stale_checker = object()
+    active_checker = object()
+    window.checker = active_checker
+    window._close_after_checker = True
+
+    window._update_checker_finished(stale_checker)
+
+    assert window._close_after_checker
+    assert window.checker is active_checker
+    window.checker = None
+    window._close_after_checker = False
+
+
+def test_update_dialog_waits_for_download_worker_on_close(monkeypatch, qapp):
+    from PySide6.QtCore import QThread, Signal
+    from PySide6.QtTest import QTest
+
+    import devops_academy.ui.update_dialog as update_dialog
+    from devops_academy.updater import ReleaseAsset, UpdateInfo
+
+    class BlockingDownloadWorker(QThread):
+        progress = Signal(int)
+        finished_file = Signal(str)
+        failed = Signal(str)
+
+        def __init__(self, info, parent=None):
+            super().__init__(parent)
+
+        def run(self):
+            while not self.isInterruptionRequested():
+                self.msleep(5)
+
+    monkeypatch.setattr(update_dialog, "DownloadWorker", BlockingDownloadWorker)
+    info = UpdateInfo(
+        version="0.7.0",
+        tag="v0.7.0",
+        title="DevOps Academy 0.7.0",
+        notes="",
+        published_at="",
+        html_url="https://example/releases/v0.7.0",
+        assets=[ReleaseAsset("DevOpsAcademy-0.7.0-linux-x64.tar.gz", "https://example/course.tar.gz")],
+    )
+    monkeypatch.setattr(info, "installer_asset", lambda: None)
+    monkeypatch.setattr(info, "archive_asset", lambda: info.assets[0])
+    dialog = update_dialog.UpdateDialog(info)
+    assert dialog.install_button.isEnabled()
+    dialog.show()
+    dialog.install_button.click()
+    worker = dialog.worker
+    assert worker is not None
+    QTest.qWait(20)
+    assert worker.isRunning()
+
+    dialog.close()
+    assert dialog._close_when_worker_stops
+    QTest.qWait(50)
+    assert not worker.isRunning()
+    assert not dialog.isVisible()

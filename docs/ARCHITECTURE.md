@@ -8,16 +8,17 @@
 │  ui/dashboard.py          прогресс и дорожная карта                     │
 │  ui/lesson_view.py        просмотр урока (QTextBrowser + CSS)           │
 │  ui/quiz_widget.py        тест: вопросы, проверка, разбор               │
-│  ui/practice_widget.py    задачи + TaskChecker (автопроверка)           │
+│  ui/practice_widget.py    интерфейс практики                            │
 │  ui/glossary_dialog.py    глоссарий с поиском                           │
 │  ui/update_dialog.py      уведомление о новой версии                    │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  content.py      модель курса: Course → Module → Lesson/Quiz/Practice    │
+│  practice_checker.py проверка regex и argv-команд без исполнения          │
 │  markdown_renderer.py  markdown → HTML (+admonitions, подсветка, [[терм]])│
-│  progress.py     прогресс: QSettings + JSON-зеркало, отчёты              │
-│  updater.py      GitHub Releases: проверка, загрузка, SHA-256, установка │
+│  progress.py     прогресс: schema, backup, atomic JSON, отчёты            │
+│  updater.py      GitHub Releases: fail-closed SHA-256, .part, установка  │
 │  theme.py        QSS-темы (dark/light) и CSS для урока                    │
-│  paths.py        пути в исходниках и в собранном exe                     │
+│  paths.py        пути checkout, wheel и собранного exe                    │
 │  version.py      версия (генерируется tools/generate_version.py)          │
 └─────────────────────────────────────────────────────────────────────────┘
         ▲                                     ▲
@@ -54,10 +55,11 @@
    и стилизуя таблицы инлайновыми стилями текущей темы (см. ниже).
 5. **Тест** → `Question.is_correct()` сравнивает ответы; результат уходит в
    `ProgressStore.save_quiz_result()` и в дашборд.
-6. **Практика** → `TaskChecker.check()` разбирает ответ по правилам задачи,
-   `ProgressStore.set_task_done()` фиксирует выполнение.
+6. **Практика** → `practice_checker.TaskChecker.check()` разбирает ответ по правилам задачи
+   (для `commands` — argv-токены без выполнения shell), `ProgressStore.set_task_done()` фиксирует выполнение.
 7. **Обновление** → `UpdateChecker` (QThread) опрашивает GitHub API; найденный релиз
-   показывается баннером, `DownloadWorker` скачивает файл и сверяет SHA-256.
+   остаётся доступен из баннера. `DownloadWorker` требует SHA-256, пишет `.part` и
+   атомарно публикует файл только после совпадения digest.
 
 ## Ключевые решения и почему так
 
@@ -68,9 +70,10 @@
 | Своя подсветка кода (без Pygments) | компактный exe, предсказуемый результат |
 | QTextBrowser вместо WebEngine | не тянет 150 МБ Chromium, офлайн-надёжность |
 | Стили таблиц — инлайново в HTML, а не в QSS | QSS Qt не применяет границы к содержимому `QTextBrowser`; проверено рендером (`theme.lesson_css` + `markdown_renderer.style_tables`) |
-| QSettings + JSON-зеркало | прогресс переживает переустановку, легко бэкапить |
+| QSettings + versioned JSON-зеркало | восстановление из валидной копии; атомарная запись и статистика только по ключам курса |
 | PyInstaller one-dir | быстрый старт, простая замена файлов при обновлении |
 | Обновление через GitHub Releases API | не нужен свой сервер, публичный репозиторий — без токена |
+| Wheel хранит `content/` как package data | `pip install` запускается вне checkout и остаётся офлайн |
 
 ## Тестирование
 
@@ -79,10 +82,11 @@
 | Контент | `tests/test_content.py` | структура, ссылки, решения проходят свои проверки |
 | Рендер | `tests/test_markdown.py` | admonitions, подсветка, картинки, термины |
 | Прогресс | `tests/test_progress.py` | сохранение, лучший результат, повреждённые данные |
-| Проверка задач | `tests/test_task_checker.py` | типы проверок и пограничные случаи |
-| Обновления | `tests/test_updater.py` | сравнение версий, разбор релиза, интервалы |
+| Проверка задач | `tests/test_task_checker.py` | типы проверок, командные токены и ложные совпадения |
+| Обновления | `tests/test_updater.py`, `tests/test_updater_integrity.py` | версии, платформы, fail-closed SHA-256, атомарная загрузка |
 | Инструменты | `tests/test_version_tooling.py` | генерация версии, индекс контента, независимость хешей от CRLF |
-| Релиз | `tests/test_release_tools.py` | расчёт следующей версии по коммитам, манифест обновления |
+| Релиз | `tests/test_release_tools.py`, `tests/test_content_examples.py` | расчёт bump, YAML-практики, единый commit SHA |
+| Wheel | `tests/test_packaging.py` + CI packaging job | версия metadata, ресурсы вне checkout |
 | Заметки | `tests/test_release_notes.py` | группировка коммитов, запись в CHANGELOG |
 | Запуск | `tests/test_launcher.py` | `run.py --version/--self-test/--help` |
 | CI-обвязка | `tests/test_run_tests.py` | экранирование аннотаций, сводка упавших тестов |
@@ -96,7 +100,7 @@ GUI-тесты работают в offscreen-режиме (`QT_QPA_PLATFORM=offs
 ## Расширение
 
 - **Новый модуль** — см. `docs/CONTENT_GUIDE.md`.
-- **Новый тип задания** — добавьте обработку в `TaskChecker.check()`
-  и проверку в `tests/test_task_checker.py`.
+- **Новый тип задания** — добавьте обработку в `practice_checker.TaskChecker.check()`
+  и тест в `tests/test_task_checker.py`.
 - **Новый источник обновлений** — замените `fetch_latest_release()` в `updater.py`.
 - **Новая тема оформления** — словарь в `theme.py` + тест на контраст.

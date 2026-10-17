@@ -24,6 +24,12 @@ def resource_path(*parts: str) -> Path:
 
 
 def content_dir() -> Path:
+    """Каталог курса в приложении, wheel или исходном checkout."""
+    if _frozen():
+        return resource_path("content")
+    packaged_content = Path(__file__).resolve().parent / "content"
+    if packaged_content.is_dir():
+        return packaged_content
     return resource_path("content")
 
 

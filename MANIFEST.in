@@ -1,0 +1,3 @@
+recursive-include content *
+include VERSION
+include src/devops_academy/version.py

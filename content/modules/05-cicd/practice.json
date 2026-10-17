@@ -43,7 +43,7 @@
         "matrix: python: ['3.11','3.12']",
         "actions/upload-artifact@v4 с параметром name и path"
       ],
-      "solution": "strategy:\n  fail-fast: false\n  matrix:\n    python: ['3.11','3.12']\nsteps:\n  - uses: actions/setup-python@v5\n    with: { python-version: '${{ matrix.python }}' }\n  - run: pip install build && python -m build\n  - uses: actions/upload-artifact@v4\n    with:\n      name: dist-${{ matrix.python }}\n      path: dist/*\n      retention-days: 14",
+      "solution": "name: Test matrix\non:\n  push:\n    branches: [main]\n  pull_request:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      fail-fast: false\n      matrix:\n        python: ['3.11', '3.12']\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"${{ matrix.python }}\"\n          cache: pip\n      - run: pip install build && python -m build\n      - uses: actions/upload-artifact@v4\n        with:\n          name: \"dist-${{ matrix.python }}\"\n          path: dist/*\n          retention-days: 14",
       "check": {
         "type": "regex_all",
         "patterns": [
@@ -212,7 +212,7 @@
         "coverage report --fail-under=70.",
         "Проверьте статусы в PR."
       ],
-      "solution": "strategy:\n  fail-fast: false\n  matrix:\n    python: ['3.11', '3.12']\n\n- uses: actions/setup-python@v5\n  with:\n    python-version: ${{ matrix.python }}\n- run: pytest --cov=app --cov-report=term\n- run: coverage report --fail-under=70",
+      "solution": "name: Test matrix with coverage\non:\n  push:\n  pull_request:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      fail-fast: false\n      matrix:\n        python: ['3.11', '3.12']\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"${{ matrix.python }}\"\n      - run: pip install pytest pytest-cov\n      - run: pytest --cov=app --cov-report=term\n      - run: coverage report --fail-under=70",
       "check": {
         "type": "regex_all",
         "patterns": [

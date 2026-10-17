@@ -151,16 +151,16 @@
       ],
       "hints": [
         "terraform show -json tfplan > plan.json.",
-        "conftest test plan.json.",
-        "Правило смотрит в resource_changes[].change.after."
+        "Укажите --namespace, совпадающий с package в Rego.",
+        "Проверьте политику на безопасном и заведомо запрещённом плане."
       ],
-      "solution": "terraform plan -out=tfplan\nterraform show -json tfplan > plan.json\ncat > policy/ssh.rego <<'EOF'\npackage main\n\ndeny[msg] {\n  r := input.resource_changes[_]\n  r.type == \"aws_security_group_rule\"\n  r.change.after.cidr_blocks[_] == \"0.0.0.0/0\"\n  r.change.after.from_port == 22\n  msg := \"SSH открыт в интернет\"\n}\nEOF\nconftest test plan.json --policy policy",
+      "solution": "cat > policy/ssh.rego <<'EOF'\npackage terraform\n\ndeny contains msg if {\n  resource := input.resource_changes[_]\n  resource.type == \"aws_security_group_rule\"\n  resource.change.after.cidr_blocks[_] == \"0.0.0.0/0\"\n  resource.change.after.from_port == 22\n  msg := sprintf(\"SSH открыт в интернет: %s\", [resource.address])\n}\nEOF\nterraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nconftest test plan.json --policy policy/ --namespace terraform\nconftest test content/modules/08-iac/examples/policy/plan-safe.json --policy policy/ --namespace terraform\nif conftest test content/modules/08-iac/examples/policy/plan-public-ssh.json --policy policy/ --namespace terraform; then\n  echo \"ОШИБКА: публичный SSH прошёл проверку\" >&2\n  exit 1\nfi",
       "check": {
         "type": "regex_all",
         "patterns": [
           "terraform\\s+show\\s+-json",
           "conftest\\s+test",
-          "deny\\[msg\\]"
+          "deny\\s+contains"
         ],
         "feedback": "Политика блокирует опасное изменение до apply."
       },
@@ -172,27 +172,28 @@
       "level": "medium",
       "goal": "Научиться хранить секреты в git безопасно.",
       "instructions": [
-        "Создайте vault-файл с паролем БД.",
-        "Зашифруйте его ansible-vault.",
-        "Используйте переменную в playbook.",
-        "Проверьте, что в git лежит шифртекст."
+        "Создайте зашифрованный vault-файл командой ansible-vault create (она сразу шифрует файл).",
+        "Опишите безопасный способ передать пароль Vault: файл вне репозитория или менеджер секретов.",
+        "Подключите secrets.yml через vars_files в playbook.",
+        "Проверьте заголовок шифртекста и выполните syntax-check без вывода секрета."
       ],
       "hints": [
-        "ansible-vault create secrets.yml.",
-        "Пароль vault — в отдельном файле вне репозитория.",
-        "Проверка: head secrets.yml покажет $ANSIBLE_VAULT."
+        "ansible-vault create secrets.yml сам создаёт зашифрованный файл; повторный encrypt не нужен.",
+        "Пароль Vault держите вне репозитория и ограничьте права файла.",
+        "vars_files: [secrets.yml] подключает переменные к playbook."
       ],
-      "solution": "ansible-vault create secrets.yml\n# в редакторе: db_password: s3cr3t\nansible-vault encrypt secrets.yml\nansible-vault view secrets.yml\nhead -1 secrets.yml\n# $ANSIBLE_VAULT;1.1;AES256\nansible-playbook site.yml --vault-password-file ~/.vault_pass --check",
+      "solution": "# VAULT_PASSWORD_FILE points to a chmod-600 file outside the repository, provisioned securely.\n: \"${VAULT_PASSWORD_FILE:?configure a secure vault password file outside the repository}\"\nansible-vault create secrets.yml --vault-password-file \"$VAULT_PASSWORD_FILE\"\n# В редакторе создайте YAML: db_password: \"<секрет>\"\ncat > site.yml <<'EOF'\n- hosts: app\n  become: true\n  vars_files:\n    - secrets.yml\n  tasks:\n    - name: Проверить, что переменная Vault загружена\n      ansible.builtin.assert:\n        that: db_password is defined\nEOF\ngrep -q '^\\$ANSIBLE_VAULT' secrets.yml\nansible-playbook -i 'app,' --syntax-check --vault-password-file \"$VAULT_PASSWORD_FILE\" site.yml",
       "check": {
         "type": "regex_all",
         "patterns": [
-          "ansible-vault\\s+(create|encrypt)",
+          "ansible-vault\\s+create\\s+secrets\\.yml",
+          "vars_files",
           "vault-password-file",
-          "\\$ANSIBLE_VAULT"
+          "\\\\?\\$ANSIBLE_VAULT"
         ],
-        "feedback": "Секрет зашифрован: в репозитории только шифртекст."
+        "feedback": "Vault-файл создан уже зашифрованным, подключён через vars_files и проверен без вывода содержимого."
       },
-      "validation_hint": "Файл начинается с $ANSIBLE_VAULT; playbook читает переменную."
+      "validation_hint": "secrets.yml начинается с $ANSIBLE_VAULT; syntax-check проходит с паролем из файла вне репозитория."
     },
     {
       "id": "module-version",
@@ -229,16 +230,17 @@
       "level": "medium",
       "goal": "Убедиться, что параллельные запуски не портят инфраструктуру.",
       "instructions": [
-        "Настройте backend с блокировкой (S3 + DynamoDB или аналог).",
-        "Запустите план в двух терминалах.",
-        "Убедитесь, что второй получил lock error.",
-        "Опишите поведение при упавшем процессе."
+        "Настройте S3 backend с native use_lockfile и требованием Terraform 1.10+.",
+        "Ограничьте IAM: ListBucket только для префикса, чтение/запись state и управление только его .tflock.",
+        "Запустите plan в двух терминалах и убедитесь, что второй получает lock error.",
+        "Опишите восстановление после аварии и риск force-unlock; не удаляйте lock активного процесса."
       ],
       "hints": [
-        "Для S3 backend нужен `dynamodb_table`.",
-        "Lock освобождается после завершения или по force-unlock."
+        "Для новых backend используйте use_lockfile = true; dynamodb_table deprecated и остаётся для перехода.",
+        "В examples/state/backend-iam-policy.json приведён пример least-privilege IAM для bucket, state и lock object.",
+        "force-unlock запускайте только после проверки, что процесс-владелец остановлен."
       ],
-      "solution": "terraform init -migrate-state\nterraform plan &\nterraform plan\n# второй процесс: Error acquiring the state lock\nterraform force-unlock <id>\ngit add backend.tf && git commit -m 'chore: state lock'",
+      "solution": "cp content/modules/08-iac/examples/state/backend-iam-policy.json backend-iam-policy.json\n# Привяжите policy к роли Terraform и замените bucket/key на свои значения.\ncat > backend.tf <<'EOF'\nterraform {\n  required_version = \">= 1.10.0\"\n  backend \"s3\" {\n    bucket       = \"org-tfstate\"\n    key          = \"prod/app/terraform.tfstate\"\n    region       = \"eu-west-1\"\n    encrypt      = true\n    use_lockfile = true\n  }\n}\nEOF\nterraform init -migrate-state\nterraform plan\n# Во втором терминале: terraform plan\n# Второй процесс должен получить Error acquiring the state lock.\n# Если процесс аварийно завершился, сначала проверьте lock id и состояние владельца.\nterraform force-unlock \"$LOCK_ID\"\ngit add backend.tf backend-iam-policy.json && git commit -m 'chore: native S3 state lock'\n",
       "check": {
         "type": "regex_all",
         "patterns": [
@@ -289,10 +291,11 @@
         "Опишите исключения."
       ],
       "hints": [
-        "conftest test plan.json -p policy/.",
-        "Сообщение должно объяснять, что делать."
+        "Для package main используйте --namespace main.",
+        "Тестируйте план с owner и без owner.",
+        "Сообщение должно объяснять, что исправить."
       ],
-      "solution": "cat > policy/tags.rego <<'EOF'\npackage main\n\ndeny[msg] {\n  resource := input.resource_changes[_]\n  not resource.change.after.tags.owner\n  msg := sprintf(\"ресурс %s без owner\", [resource.address])\n}\nEOF\nterraform show -json plan.out > plan.json\nconftest test plan.json -p policy/\ngit add policy && git commit -m 'feat: политика тегов'",
+      "solution": "cat > policy/tags.rego <<'EOF'\npackage main\n\ndeny contains msg if {\n  resource := input.resource_changes[_]\n  after := resource.change.after\n  is_object(after)\n  tags := object.get(after, \"tags\", {})\n  is_object(tags)\n  owner := object.get(tags, \"owner\", \"\")\n  owner == \"\"\n  msg := sprintf(\"ресурс %s без owner\", [resource.address])\n}\nEOF\nterraform plan -out=plan.out\nterraform show -json plan.out > plan.json\nconftest test plan.json --policy policy/ --namespace main\nconftest test content/modules/08-iac/examples/tags/plan-with-owner.json --policy policy/ --namespace main\nif conftest test content/modules/08-iac/examples/tags/plan-without-owner.json --policy policy/ --namespace main; then\n  echo \"ОШИБКА: ресурс без owner прошёл проверку\" >&2\n  exit 1\nfi\ngit add policy && git commit -m 'feat: политика тегов'\n",
       "check": {
         "type": "regex_all",
         "patterns": [

@@ -30,7 +30,7 @@ QT_QPA_PLATFORM=offscreen python tools/smoke_test.py
 python tools/generate_version.py --version "$(cat VERSION)" --build local   # если менялся content/
 ```
 
-## Текущее состояние контента (0.5.0)
+## Текущее состояние контента (0.6.0)
 
 | Показатель | Значение |
 | --- | --- |
@@ -42,6 +42,10 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 | Терминов глоссария | 107 |
 | Объём | ~75 000 слов, ~85 часов |
 
+`VERSION` — единственный источник версии; `pyproject.toml` читает из него wheel metadata,
+а `src/devops_academy/version.py` генерируется скриптом. Контент включается в обычный wheel,
+проверка сборки и установки находится в CI.
+
 Правила, которые проверяются тестами и валидатором:
 
 - у каждого модуля не меньше 3 задач и 8 вопросов; у каждого вопроса обязателен
@@ -49,12 +53,13 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 - каждый SVG из `content/assets/img` обязан упоминаться хотя бы в одном уроке
   (`tests/test_diagrams.py::test_lesson_images_exist_and_are_used`), а каждая
   ссылка в уроке — существовать;
-- эталонное решение каждой задачи проходит её же regex-проверку
-  (`test_solution_matches_own_patterns`) — если меняете `patterns`, обновите
-  `solution`;
+- эталонное решение каждой задачи проходит собственный checker
+  (`test_solution_passes_own_checker`): regex-типам нужны шаблоны, а для `commands`
+  проверяются реальное имя команды, регистр, аргументы и комментарии не учитываются;
 - после правок контента пересоберите индекс:
-  `python tools/generate_version.py`, затем откатите сгенерированный
-  `src/devops_academy/version.py` и `VERSION`, если версия ещё не выпускается.
+  `python tools/generate_version.py --version "$(cat VERSION)" --build local`;
+  если версия ещё не выпускается, откатите только `src/devops_academy/version.py` и
+  `VERSION`, сохранив изменившийся `content/content_index.json`.
 
 Схемы, добавленные в 0.4.0: `kubernetes-networking.svg`, `incident-response.svg`,
 `terraform-state.svg`; в 0.5.0 — `consistency-spectrum.svg` и
@@ -73,17 +78,18 @@ python tools/generate_version.py --version "$(cat VERSION)" --build local   # е
 | Иллюстрации | `tools/make_diagrams.py` (код схемы) | перегенерировать SVG командой |
 | Интерфейс | `src/devops_academy/ui/**` | тест в `tests/test_ui_smoke.py` |
 | Модель контента | `src/devops_academy/content.py` | `tools/validate_content.py`, тесты |
-| Обновления | `src/devops_academy/updater.py` | `tests/test_updater.py`, `docs/RELEASING.md` |
-| CI/CD | `.github/workflows/**` | `docs/RELEASING.md`, проверить `python -c "import yaml,glob; yaml.safe_load(open(f))"` |
+| Обновления | `src/devops_academy/updater.py` | `tests/test_updater.py`, `tests/test_updater_integrity.py`, `docs/RELEASING.md` |
+| CI/CD | `.github/workflows/**` | `docs/RELEASING.md`, YAML-тесты в `tests/test_content_examples.py` |
 | Версии и релизы | `tools/next_version.py`, `tools/release_notes.py`, `tools/make_update_manifest.py` | `tests/test_release_tools.py`, `tests/test_release_notes.py` |
-| Сборка | `packaging/**` | `docs/RELEASING.md`, проверить локальную сборку |
+| Wheel и ресурсы | `setup.py`, `MANIFEST.in`, `src/devops_academy/paths.py` | `python -m build --wheel`, `tools/check_wheel_content.py` |
+| Сборка PyInstaller | `packaging/**` | `docs/RELEASING.md`, проверить локальную сборку |
 
 ## Локальное окружение
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest -q                                            # 139 тестов
+pytest -q                                            # полный набор тестов
 ```
 
 В headless-средах (сервер, контейнер) Qt требует библиотек; используйте
@@ -93,8 +99,9 @@ pytest -q                                            # 139 тестов
 
 ## Как выпускается версия
 
-Автоматически, см. `docs/RELEASING.md`. Вручную — Actions → **Build & Release** →
-Run workflow (выбор bump). Отдельно тег ставить не нужно: релизный job делает тег сам.
+Автоматически, см. `docs/RELEASING.md`. Вручную — только из `main`: Actions →
+**Build & Release** → Run workflow (выбор bump). Отдельно тег ставить не нужно:
+релизный job создаёт его после сборки по SHA.
 
 ## Если упал CI
 
@@ -128,7 +135,7 @@ Run workflow (выбор bump). Отдельно тег ставить не ну
 
 | Симптом | Причина | Решение |
 | --- | --- | --- |
-| Тест `test_solution_matches_own_patterns` падает | эталонное решение не проходит свои же regex | обновите `solution` или `patterns` |
+| Тест `test_solution_passes_own_checker` падает | эталонное решение не проходит собственную проверку | исправьте `solution`, `patterns` или требования `commands` |
 | `content_index.json` помечен как изменённый в CI | контент правили без регенерации | `python tools/generate_version.py --version "$(cat VERSION)"` |
 | GUI-тесты падают с ошибкой платформы | нет `QT_QPA_PLATFORM=offscreen` | выставьте переменную окружения |
 | Сборка exe не находит контент | контент не попал в `datas` | проверьте `packaging/devops_academy.spec` |
