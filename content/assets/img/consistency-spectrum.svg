@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470" role="img" aria-label="Спектр консистентности">
+<rect width="900" height="470" rx="14" fill="#0f172a"/>
+<title>Спектр консистентности</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">От строгой согласованности к eventual</text>
+<rect x="40" y="90" width="240" height="120" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="160.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Линейизуемость</text>
+<text x="160.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">один порядок для всех</text>
+<text x="160.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">чтение видит запись</text>
+<text x="160.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">цена: задержка и кворум</text>
+<rect x="330" y="90" width="240" height="120" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="450.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Read-your-writes</text>
+<text x="450.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">клиент видит свои записи</text>
+<text x="450.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">компромисс для UX</text>
+<text x="450.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">часто достаточно</text>
+<rect x="620" y="90" width="240" height="120" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="740.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Eventual</text>
+<text x="740.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">реплики сойдутся</text>
+<text x="740.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">низкая задержка</text>
+<text x="740.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">риск старых данных</text>
+<line x1="284" y1="150" x2="326" y2="150" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="574" y1="150" x2="616" y2="150" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="40" y="250" width="390" height="170" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="235.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Кворум</text>
+<text x="235.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">N реплик, W подтверждений записи, R чтений</text>
+<text x="235.0" y="313" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">W + R &gt; N — чтение пересекается с записью</text>
+<text x="235.0" y="330" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">N=3, W=2, R=2 переживает отказ одного узла</text>
+<text x="235.0" y="347" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">конфликты разрешаются версией, а не часами</text>
+<rect x="470" y="250" width="390" height="170" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="665.0" y="276" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Когда что выбирать</text>
+<text x="665.0" y="296" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">деньги и инвентарь — строгая модель</text>
+<text x="665.0" y="313" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">ленты и счётчики — eventual</text>
+<text x="665.0" y="330" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">профиль пользователя — read-your-writes</text>
+<text x="665.0" y="347" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">решение фиксируется в ADR</text>
+</svg>

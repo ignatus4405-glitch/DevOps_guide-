@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470" role="img" aria-label="Паттерны устойчивости">
+<rect width="900" height="470" rx="14" fill="#0f172a"/>
+<title>Паттерны устойчивости</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker></defs>
+<text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Четыре базовых защиты от каскадного отказа</text>
+<rect x="50" y="90" width="380" height="130" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="240.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Таймауты</text>
+<text x="240.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">бюджет запроса меньше, чем у клиента</text>
+<text x="240.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">таймауты уменьшаются вглубь</text>
+<text x="240.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">без таймаута поток занят вечно</text>
+<rect x="470" y="90" width="380" height="130" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
+<text x="660.0" y="116" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Ретраи с jitter</text>
+<text x="660.0" y="136" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">только идемпотентные операции</text>
+<text x="660.0" y="153" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">2-3 попытки и общий бюджет</text>
+<text x="660.0" y="170" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">задержка с случайным разбросом</text>
+<rect x="50" y="260" width="380" height="130" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="240.0" y="286" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Circuit breaker</text>
+<text x="240.0" y="306" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">Closed → Open → Half-open</text>
+<text x="240.0" y="323" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">порог ошибок и минимум запросов</text>
+<text x="240.0" y="340" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">не тратит ресурсы на мёртвый сервис</text>
+<rect x="470" y="260" width="380" height="130" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="660.0" y="286" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Bulkhead и лимиты</text>
+<text x="660.0" y="306" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">отдельные пулы на зависимость</text>
+<text x="660.0" y="323" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">token bucket и 429 с Retry-After</text>
+<text x="660.0" y="340" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">деградация вместо каскада</text>
+<text x="450" y="430" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="13" font-weight="400" fill="#9fb0cc">Проверяйте паттерны учениями: отказ реплики, задержка, блокировка DNS</text>
+</svg>

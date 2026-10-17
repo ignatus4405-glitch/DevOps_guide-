@@ -303,6 +303,33 @@
         "feedback": "Юнит ограничен, сервис проверен после изменений."
       },
       "validation_hint": "Unit содержит директивы hardening и описан результат проверки."
+    },
+    {
+      "id": "trace-syscall",
+      "title": "Найти дорогой системный вызов",
+      "level": "medium",
+      "goal": "Понять, на чём процесс тратит время вне CPU.",
+      "instructions": [
+        "Запустите процесс под `strace -f -T`.",
+        "Найдите вызовы с наибольшей длительностью.",
+        "Сформулируйте гипотезу и проверьте её.",
+        "Опишите результат."
+      ],
+      "hints": [
+        "`-T` показывает длительность каждого вызова.",
+        "Часто виноваты `connect`, `futex`, `read`."
+      ],
+      "solution": "strace -f -tt -T -e trace=network,file ./app 2> trace.log\nsort -t'<' -k2 -nr trace.log | head\ngit add trace.log && git commit -m 'docs: разбор syscall'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "strace\\s+-f",
+          "-T",
+          "git\\s+commit"
+        ],
+        "feedback": "Видно, какой вызов создаёт задержку."
+      },
+      "validation_hint": "Лог strace содержит длительности, есть вывод о причине."
     }
   ]
 }

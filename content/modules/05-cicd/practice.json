@@ -277,6 +277,33 @@
         "feedback": "Прод-деплой требует человеческого решения."
       },
       "validation_hint": "Job использует environment production с required reviewers."
+    },
+    {
+      "id": "canary-plan",
+      "title": "Спланировать canary-релиз",
+      "level": "medium",
+      "goal": "Ограничить радиус поражения нового релиза.",
+      "instructions": [
+        "Задайте шаги 5 % → 25 % → 100 %.",
+        "Определите метрики и порог отката.",
+        "Опишите автоматический откат.",
+        "Запишите план."
+      ],
+      "hints": [
+        "Сравнивайте error rate и p99 с baseline.",
+        "Откат — возврат веса на 100 % старой версии."
+      ],
+      "solution": "cat > CANARY.md <<'EOF'\n# Canary 1.4.2\n\n1. 5% трафика, 10 минут\n2. 25%, 20 минут\n3. 100%\n\nМетрики: error_rate < 1%, p99 < 800ms\nОткат: вес 100% на 1.4.1\nEOF\ngit add CANARY.md && git commit -m 'docs: canary-план'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "5%|5 %",
+          "error",
+          "git\\s+commit"
+        ],
+        "feedback": "Релиз ограничен долей трафика и имеет критерии отката."
+      },
+      "validation_hint": "План содержит шаги, метрики и условие отката."
     }
   ]
 }

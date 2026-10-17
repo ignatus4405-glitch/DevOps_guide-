@@ -563,6 +563,42 @@
       "tags": [
         "storage"
       ]
+    },
+    {
+      "id": "q32",
+      "type": "single",
+      "question": "Чем `memory.max` отличается от `memory.high` в cgroups v2?",
+      "options": [
+        "Ничем",
+        "max — жёсткий лимит с OOM, high — мягкий порог вытеснения",
+        "max задаёт swap",
+        "high задаёт CPU"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "memory.max приводит к OOM внутри cgroup, memory.high заставляет ядро активнее вытеснять страницы.",
+      "tags": [
+        "cgroups"
+      ]
+    },
+    {
+      "id": "q33",
+      "type": "single",
+      "question": "Что показывает PSI (pressure stall information)?",
+      "options": [
+        "Число процессов",
+        "Долю времени, когда задачи ждали ресурс",
+        "Скорость диска",
+        "Температуру CPU"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "PSI честнее load average: он измеряет давление на CPU, память и I/O.",
+      "tags": [
+        "cgroups"
+      ]
     }
   ]
 }

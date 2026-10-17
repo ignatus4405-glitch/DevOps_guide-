@@ -252,6 +252,33 @@
         "feedback": "Протокол подтверждён, а не предположен."
       },
       "validation_hint": "Отчёт показывает ALPN h2 и версию в ответе."
+    },
+    {
+      "id": "http-cache-headers",
+      "title": "Настроить кэш и ETag",
+      "level": "medium",
+      "goal": "Сделать ответы кэшируемыми и безопасными.",
+      "instructions": [
+        "Добавьте Cache-Control с max-age и private.",
+        "Сгенерируйте ETag.",
+        "Обработайте If-None-Match ответом 304.",
+        "Проверьте curl."
+      ],
+      "hints": [
+        "`Cache-Control: private, max-age=60`.",
+        "304 экономит трафик."
+      ],
+      "solution": "Cache-Control: private, max-age=60\nETag: \"v42\"\n# при If-None-Match: \"v42\" → 304\ncurl -sI -H 'If-None-Match: \"v42\"' https://app/api/profile\ngit add cache.md && git commit -m 'docs: HTTP-кэш'",
+      "check": {
+        "type": "regex_all",
+        "patterns": [
+          "Cache-Control",
+          "ETag",
+          "git\\s+commit"
+        ],
+        "feedback": "Кэш настроен, условный запрос работает."
+      },
+      "validation_hint": "Указаны Cache-Control, ETag и поведение 304."
     }
   ]
 }

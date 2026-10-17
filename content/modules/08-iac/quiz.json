@@ -500,6 +500,42 @@
       "tags": [
         "iac-testing"
       ]
+    },
+    {
+      "id": "q29",
+      "type": "single",
+      "question": "Что такое drift в Terraform?",
+      "options": [
+        "Ошибка синтаксиса",
+        "Расхождение между кодом/state и реальной инфраструктурой",
+        "Смена провайдера",
+        "Потеря lock-файла"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Дрейф ловят регулярным plan с `-detailed-exitcode`.",
+      "tags": [
+        "terraform"
+      ]
+    },
+    {
+      "id": "q30",
+      "type": "single",
+      "question": "Зачем Ansible собирает facts?",
+      "options": [
+        "Для отчёта",
+        "Чтобы использовать параметры хоста в условиях и шаблонах",
+        "Для шифрования",
+        "Для инвентаря"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Facts — данные об ОС, сети и ресурсах, на которых строятся when/templates.",
+      "tags": [
+        "ansible"
+      ]
     }
   ]
 }

@@ -223,6 +223,55 @@ curl -H "Authorization: Bearer $TOKEN" ...
 - Health-check собирает все проблемы и только потом возвращает ошибку (без `set -e`).
 - Для расписания используйте logrotate + systemd timers, а не самодельные решения.
 
+## POSIX и bash: где граница
+
+`#!/bin/sh` может быть dash, ash или bash в режиме POSIX. Скрипт, который
+работает в bash, может сломаться в sh:
+
+- `[[ ... ]]` — только bash;
+- массивы — только bash;
+- `set -o pipefail` — не во всех sh;
+- `local` — не POSIX (хотя поддерживается многими).
+
+Если нужен bash — пишите `#!/usr/bin/env bash` и проверяйте `bash --version`.
+Если нужен переносимый скрипт — тестируйте в `dash`/`busybox sh`.
+
+### Портативность в контейнерах
+
+В alpine нет bash по умолчанию, в distroless его нет вообще. Скрипты в
+entrypoint должны быть либо POSIX, либо образ должен содержать bash. Это
+частая причина `exec format error`/`not found` при запуске.
+
+### Аргументы и подкоманды
+
+```bash
+usage() { echo "usage: $0 {backup|restore} <dir>"; exit 2; }
+[ $# -ge 2 ] || usage
+case "$1" in
+  backup) backup "$2" ;;
+  restore) restore "$2" ;;
+  *) usage ;;
+esac
+```
+
+`getopts` для флагов, `case` для подкоманд. Никогда не разбирайте `$*`
+регулярками.
+
+### Временные файлы
+
+```bash
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+```
+
+`mktemp` предотвращает коллизии и symlink-атаки. Уборка через `trap EXIT`
+работает и при ошибке.
+
+### Секреты в аргументах
+
+Аргументы видны в `ps`. Передавайте секреты через stdin/файл с правами 600,
+а не `--password`.
+
 ## Проверьте себя
 
 1. Почему в health-check намеренно не используется `set -e`?
