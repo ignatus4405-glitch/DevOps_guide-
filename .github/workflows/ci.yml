@@ -141,18 +141,31 @@ jobs:
         run: |
           set -euo pipefail
           conftest="$RUNNER_TEMP/conftest/conftest"
+
+          expect_case() {
+            local expected="$1" label="$2" output status=0 detail
+            shift 2
+            output=$("$conftest" "$@" 2>&1) || status=$?
+            printf '%s\n' "$output"
+            if [[ "$expected" == "pass" ]]; then
+              if (( status == 0 )); then return 0; fi
+            elif (( status != 0 )) && [[ "$output" == *"$expected"* ]]; then
+              return 0
+            fi
+            detail=${output//'%'/'%25'}
+            detail=${detail//$'\r'/}
+            detail=${detail//$'\n'/'%0A'}
+            echo "::error title=Conftest $label::$detail"
+            return 1
+          }
+
           policy=content/modules/08-iac/examples/policy
-          "$conftest" test "$policy/plan-safe.json" --policy "$policy" --namespace terraform
-          if "$conftest" test "$policy/plan-public-ssh.json" --policy "$policy" --namespace terraform; then
-            echo "Политика пропустила публичный SSH" >&2
-            exit 1
-          fi
+          expect_case pass "safe Terraform plan" test "$policy/plan-safe.json" --policy "$policy" --namespace terraform
+          expect_case "SSH открыт в интернет" "public SSH denial" test "$policy/plan-public-ssh.json" --policy "$policy" --namespace terraform
+
           tags=content/modules/08-iac/examples/tags
-          "$conftest" test "$tags/plan-with-owner.json" --policy "$tags" --namespace main
-          if "$conftest" test "$tags/plan-without-owner.json" --policy "$tags" --namespace main; then
-            echo "Политика пропустила ресурс без owner" >&2
-            exit 1
-          fi
+          expect_case pass "Terraform resource with owner" test "$tags/plan-with-owner.json" --policy "$tags" --namespace main
+          expect_case "без owner" "missing owner denial" test "$tags/plan-without-owner.json" --policy "$tags" --namespace main
 
   windows-gui:
     name: GUI-тесты на Windows

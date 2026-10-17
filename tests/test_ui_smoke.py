@@ -308,12 +308,16 @@ def test_closing_update_dialog_keeps_banner_reopenable(window, monkeypatch):
 
 
 def test_main_window_waits_for_update_checker_before_closing(window, monkeypatch, qapp):
-    from PySide6.QtCore import QThread
+    from PySide6.QtCore import QThread, Signal
     from PySide6.QtTest import QTest
 
     import devops_academy.ui.main_window as main_window
 
     class BlockingChecker(QThread):
+        found = Signal(object)
+        checked = Signal(object)
+        failed = Signal(str)
+
         def __init__(self, current_version, parent=None):
             super().__init__(parent)
 
@@ -361,6 +365,9 @@ def test_update_dialog_waits_for_download_worker_on_close(monkeypatch, qapp):
         progress = Signal(int)
         finished_file = Signal(str)
         failed = Signal(str)
+
+        def __init__(self, info, parent=None):
+            super().__init__(parent)
 
         def run(self):
             while not self.isInterruptionRequested():
