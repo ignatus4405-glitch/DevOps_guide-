@@ -12,6 +12,7 @@ from devops_academy.ui.main_window import MainWindow, build_exam_module
 @pytest.fixture()
 def window(course, qapp, tmp_path):
     store = ProgressStore(QSettings(str(tmp_path / "ui.ini"), QSettings.IniFormat))
+    store.set("updates/auto_check", "false")
     win = MainWindow(course, store)
     yield win
     win.close()
@@ -226,3 +227,39 @@ def test_every_module_boundary_is_crossable(course, window):
     assert len(visited) == sum(module.lesson_count for module in course.modules)
     assert len({module_id for module_id, _ in visited}) == len(course.modules)
     assert window.current_mode == "exam"
+
+
+def test_found_update_prompts_automatically_and_keeps_banner_action(window, monkeypatch):
+    """Автопроверка открывает диалог, а после «Позже» диалог доступен из баннера."""
+    import devops_academy.ui.main_window as main_window
+    from devops_academy.updater import UpdateInfo
+
+    info = UpdateInfo(
+        version="0.6.0",
+        tag="v0.6.0",
+        title="DevOps Academy 0.6.0",
+        notes="Улучшения",
+        published_at="2026-10-17T10:00:00Z",
+        html_url="https://github.com/example/repo/releases/tag/v0.6.0",
+    )
+    prompted = []
+
+    class LaterDialog:
+        snoozed = True
+        skipped = False
+        installer_started = False
+
+        def __init__(self, update, theme, parent):
+            prompted.append(update)
+
+        def exec(self):
+            return 0
+
+    monkeypatch.setattr(main_window, "UpdateDialog", LaterDialog)
+
+    window.notify_update(info, manual=False)
+
+    assert prompted == [info]
+    assert window.pending_update is info
+    assert not window.update_banner.isHidden()
+    assert window.store.get("updates/last_check")

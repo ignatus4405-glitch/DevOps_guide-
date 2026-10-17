@@ -2,10 +2,10 @@
 
 Как это работает
 ----------------
-1. Приложение раз в сутки (настраивается) запрашивает последний релиз репозитория
+1. При каждом запуске приложение запрашивает последний релиз репозитория в фоне
    через публичный GitHub API — токен не нужен, репозиторий публичный.
-2. Если версия тега новее текущей APP_VERSION, клиент показывает уведомление
-   с описанием изменений (release notes).
+2. Если версия тега новее текущей APP_VERSION, приложение спрашивает пользователя
+   об установке обновления и показывает описание изменений (release notes).
 3. Пользователь может скачать установщик прямо из приложения: файл проверяется по
    SHA-256 из ассета ``SHA256SUMS.txt``, затем запускается тихая установка
    (Inno Setup ``/VERYSILENT``), а приложение закрывается.
@@ -213,10 +213,12 @@ def install_update(path: str) -> tuple[bool, str]:
         return False, f"Не удалось запустить установку: {error}"
 
 
-def should_check(store, min_interval_hours: int = 24) -> bool:
-    """Не чаще раза в сутки и только если автообновление включено."""
+def should_check(store, min_interval_hours: int = 24, *, on_startup: bool = False) -> bool:
+    """Разрешает автопроверку, не чаще интервала, кроме проверки при запуске."""
     if str(store.get("updates/auto_check", "true")).lower() not in ("true", "1"):
         return False
+    if on_startup:
+        return True
     last = str(store.get("updates/last_check", ""))
     if not last:
         return True

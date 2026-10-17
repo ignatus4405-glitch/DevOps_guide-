@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
         if geometry:
             self.restoreGeometry(geometry)
         if str(self.store.get("updates/auto_check", "true")).lower() in ("true", "1"):
-            QTimer.singleShot(2500, self.check_updates_silent)
+            QTimer.singleShot(2500, self.check_updates_on_startup)
 
     # ------------------------------------------------------------------
     # Построение интерфейса
@@ -457,8 +457,12 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # Обновления
     # ------------------------------------------------------------------
-    def check_updates_silent(self, manual: bool = False) -> None:
-        if not manual and not should_check(self.store):
+    def check_updates_on_startup(self) -> None:
+        """Запускает фоновую проверку при каждом старте приложения."""
+        self.check_updates_silent(on_startup=True)
+
+    def check_updates_silent(self, manual: bool = False, on_startup: bool = False) -> None:
+        if not manual and not should_check(self.store, on_startup=on_startup):
             return
         if manual:
             self.statusBar().showMessage("Проверяем обновления на GitHub…", 5000)
@@ -495,21 +499,27 @@ class MainWindow(QMainWindow):
         )
         self.update_banner.setVisible(True)
         self.status_version.setText(f"версия {APP_VERSION} → доступна {info.version}")
-        if manual:
-            self.show_pending_update()
+        # На старте тоже сразу спрашиваем, устанавливать ли найденную версию.
+        # Баннер остаётся доступен, если пользователь выберет «Позже».
+        self.show_pending_update()
 
     def show_pending_update(self) -> None:
         if self.pending_update is None:
             return
-        dialog = UpdateDialog(self.pending_update, self.theme, self)
+        info = self.pending_update
+        dialog = UpdateDialog(info, self.theme, self)
         dialog.exec()
-        if dialog.skipped:
-            skip_version(self.store, self.pending_update.version)
+        if dialog.installer_started:
+            self.pending_update = None
             self.update_banner.setVisible(False)
+            self.close()
+        elif dialog.skipped:
+            skip_version(self.store, info.version)
+            self.update_banner.setVisible(False)
+            self.pending_update = None
             self.statusBar().showMessage("Эта версия пропущена до следующего обновления", 5000)
         elif dialog.snoozed:
             snooze(self.store)
-        self.pending_update = None
 
     # ------------------------------------------------------------------
     def closeEvent(self, event) -> None:  # noqa: N802 - API Qt
