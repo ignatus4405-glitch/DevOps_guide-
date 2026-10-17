@@ -1,5 +1,15 @@
 # История изменений
 
+## [0.6.1] — 2026-10-17
+
+### Исправлено
+- Close update windows after thread shutdown
+- Tighten tag policy and QThread shutdown
+- Address DevOps Academy audit findings
+
+### Инфраструктура и тесты
+- Fix CI worker stubs and policy diagnostics
+
 ## [0.6.0] — 2026-10-17
 
 ### Добавлено
