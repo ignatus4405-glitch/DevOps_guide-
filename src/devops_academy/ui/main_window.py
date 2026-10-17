@@ -97,6 +97,8 @@ class MainWindow(QMainWindow):
         self.current_module: Module | None = None
         self.current_lesson_index = 0
         self.current_mode = ""
+        self.checker: UpdateChecker | None = None
+        self._close_after_checker = False
 
         self._build_sidebar()
         self._build_toolbar()
@@ -120,6 +122,8 @@ class MainWindow(QMainWindow):
 
         self.apply_theme(self.theme, save=False)
         self.sidebar.setCurrentRow(0)  # дашборд
+        if self.store.recovery_warning:
+            self.statusBar().showMessage(self.store.recovery_warning)
 
         geometry = self.store.get("ui/geometry")
         if geometry:
@@ -207,6 +211,8 @@ class MainWindow(QMainWindow):
         row.addWidget(later)
 
         self.banner_label = label
+        self.update_details_button = details
+        self.update_later_button = later
         self.pending_update: UpdateInfo | None = None
         return banner
 
@@ -464,16 +470,33 @@ class MainWindow(QMainWindow):
     def check_updates_silent(self, manual: bool = False, on_startup: bool = False) -> None:
         if not manual and not should_check(self.store, on_startup=on_startup):
             return
+        if self.checker is not None and self.checker.isRunning():
+            if manual:
+                self.statusBar().showMessage("Проверка обновлений уже выполняется…", 5000)
+            return
         if manual:
             self.statusBar().showMessage("Проверяем обновления на GitHub…", 5000)
-        self.checker = UpdateChecker(APP_VERSION, self)
-        self.checker.found.connect(lambda info: self.notify_update(info, manual))
-        self.checker.checked.connect(lambda _: self.on_no_updates(manual))
-        self.checker.failed.connect(lambda message: self.on_check_failed(message, manual))
-        self.checker.start()
+        checker = UpdateChecker(APP_VERSION, self)
+        self.checker = checker
+        checker.found.connect(lambda info: self.notify_update(info, manual) if self.checker is checker else None)
+        checker.checked.connect(lambda _: self.on_no_updates(manual) if self.checker is checker else None)
+        checker.failed.connect(
+            lambda message: self.on_check_failed(message, manual) if self.checker is checker else None
+        )
+        checker.finished.connect(lambda: self._update_checker_finished(checker))
+        checker.start()
+
+    def _update_checker_finished(self, checker: UpdateChecker) -> None:
+        if checker is not self.checker:
+            return
+        if self._close_after_checker:
+            self._close_after_checker = False
+            self.close()
 
     def on_no_updates(self, manual: bool) -> None:
         mark_checked(self.store)
+        if self._close_after_checker:
+            return
         if manual:
             QMessageBox.information(
                 self, "Обновления", f"У вас последняя версия — {APP_VERSION}."
@@ -481,6 +504,8 @@ class MainWindow(QMainWindow):
 
     def on_check_failed(self, message: str, manual: bool) -> None:
         mark_checked(self.store)
+        if self._close_after_checker:
+            return
         if manual:
             QMessageBox.warning(
                 self,
@@ -490,6 +515,8 @@ class MainWindow(QMainWindow):
 
     def notify_update(self, info: UpdateInfo, manual: bool) -> None:
         mark_checked(self.store)
+        if self._close_after_checker:
+            return
         if info.version == skipped_version(self.store) and not manual:
             return
         self.pending_update = info
@@ -523,6 +550,12 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------
     def closeEvent(self, event) -> None:  # noqa: N802 - API Qt
+        if self.checker is not None and self.checker.isRunning():
+            self._close_after_checker = True
+            self.checker.requestInterruption()
+            self.statusBar().showMessage("Завершаем фоновую проверку обновлений перед закрытием…")
+            event.ignore()
+            return
         self.store.set("ui/geometry", self.saveGeometry())
         self.store.save()
         super().closeEvent(event)

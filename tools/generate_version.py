@@ -84,8 +84,21 @@ def build_content_index() -> dict:
         digest, size = file_digest(path)
         total_bytes += size
         files[str(path.relative_to(content_dir)).replace("\\", "/")] = digest
+    generated = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    if INDEX_FILE.exists():
+        try:
+            previous = json.loads(INDEX_FILE.read_text(encoding="utf-8"))
+            content_unchanged = (
+                previous.get("files") == len(files)
+                and previous.get("total_bytes") == total_bytes
+                and previous.get("hashes") == files
+            )
+            if content_unchanged and isinstance(previous.get("generated"), str):
+                generated = previous["generated"]
+        except (OSError, TypeError, ValueError):
+            pass
     return {
-        "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "generated": generated,
         "files": len(files),
         "total_bytes": total_bytes,
         "hashes": files,

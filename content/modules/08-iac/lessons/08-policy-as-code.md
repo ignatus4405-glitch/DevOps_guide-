@@ -25,7 +25,7 @@ Open Policy Agent — универсальный движок политик. П
 ```rego
 package kubernetes.admission
 
-deny[msg] {
+deny contains msg if {
   input.request.kind.kind == "Pod"
   image := input.request.object.spec.containers[_].image
   endswith(image, ":latest")
@@ -68,8 +68,13 @@ spec:
 
 ```bash
 terraform show -json plan.out > plan.json
-conftest test plan.json -p policy/
+conftest test plan.json --policy policy/ --namespace terraform
 ```
+
+Для правила с `package kubernetes.admission` задайте соответствующий namespace:
+`conftest test manifest.yaml --policy policy/ --namespace kubernetes.admission`.
+Используйте Rego v1 (`deny contains ... if { ... }`) либо явно закрепите старый
+режим; не смешивайте синтаксис и namespace.
 
 ## Как внедрять
 

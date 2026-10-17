@@ -49,7 +49,7 @@ Open Policy Agent (OPA) или Sentinel проверяют plan на прави�
 ```rego
 package terraform
 
-deny[msg] {
+deny contains msg if {
   resource := input.resource_changes[_]
   resource.type == "aws_security_group_rule"
   resource.change.after.cidr_blocks[_] == "0.0.0.0/0"
@@ -59,7 +59,27 @@ deny[msg] {
 ```
 
 ```bash
-conftest test plan.json
+conftest test plan.json --policy policy/ --namespace terraform
+```
+
+Namespace должен совпадать с `package` (либо используйте `package main` и
+`--namespace main`). Синтаксис `deny contains msg if { ... }` — формат Rego v1;
+старый `deny[msg] { ... }` требует режима совместимости и не работает как есть
+во всех современных версиях OPA/Conftest.
+
+В репозитории есть два проверочных примера в
+`content/modules/08-iac/examples/policy/`: безопасный план и план с публичным
+SSH. Запускайте команды из корня репозитория. Первая должна пройти, вторая —
+завершиться ненулевым кодом:
+
+```bash
+conftest test content/modules/08-iac/examples/policy/plan-safe.json \
+  --policy content/modules/08-iac/examples/policy/ --namespace terraform
+if conftest test content/modules/08-iac/examples/policy/plan-public-ssh.json \
+  --policy content/modules/08-iac/examples/policy/ --namespace terraform; then
+  echo "ОШИБКА: политика пропустила публичный SSH" >&2
+  exit 1
+fi
 ```
 
 Политики версионируются вместе с инфраструктурой. Это единственный способ

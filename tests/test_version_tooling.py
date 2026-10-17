@@ -53,6 +53,16 @@ def test_content_index_matches_disk(generate_version):
     assert fresh["hashes"] == stored["hashes"], "индекс устарел — запустите tools/generate_version.py"
 
 
+def test_content_index_timestamp_is_stable_without_content_changes(generate_version):
+    import json
+
+    index_file = ROOT / "content" / "content_index.json"
+    stored = json.loads(index_file.read_text(encoding="utf-8"))
+    fresh = generate_version.build_content_index()
+    if fresh["files"] == stored["files"] and fresh["hashes"] == stored["hashes"]:
+        assert fresh["generated"] == stored["generated"]
+
+
 def test_version_module_is_generated(generate_version):
     """version.py содержит сгенерированные константы, версия совпадает с VERSION."""
     version_py = ROOT / "src" / "devops_academy" / "version.py"

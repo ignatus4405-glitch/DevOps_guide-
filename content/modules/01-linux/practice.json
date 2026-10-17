@@ -17,13 +17,37 @@
       ],
       "solution": "sudo mkdir -p /opt/app\nsudo touch /opt/app/secrets.env\nsudo chown deploy:devs /opt/app/secrets.env\nsudo chmod 640 /opt/app/secrets.env\nls -l /opt/app/secrets.env",
       "check": {
-        "type": "regex_all",
-        "patterns": [
-          "mkdir\\s+-p\\s+/opt/app",
-          "chown\\s+deploy:devs",
-          "chmod\\s+640"
+        "type": "commands",
+        "commands": [
+          {
+            "name": "mkdir",
+            "args": [
+              "-p",
+              "/opt/app"
+            ]
+          },
+          {
+            "name": "touch",
+            "args": [
+              "/opt/app/secrets.env"
+            ]
+          },
+          {
+            "name": "chown",
+            "args": [
+              "deploy:devs",
+              "/opt/app/secrets.env"
+            ]
+          },
+          {
+            "name": "chmod",
+            "args": [
+              "640",
+              "/opt/app/secrets.env"
+            ]
+          }
         ],
-        "feedback": "Права 640 для секретов — верно: пишет владелец, читает только группа, остальные не видят файл."
+        "feedback": "Каталог создан, владелец назначен, файл доступен владельцу и группе без прав для остальных."
       },
       "validation_hint": "ls -l показывает -rw-r----- deploy devs."
     },

@@ -77,15 +77,17 @@ def test_practice_patterns_compile(course):
     for module in course.modules:
         for task in module.practice.tasks:
             assert task.goal and task.solution
-            if task.check_type != "manual":
+            if task.check_type == "commands":
+                assert task.commands, f"{module.module_id}/{task.tid}: нет требований к командам"
+            elif task.check_type != "manual":
                 assert task.patterns, f"{module.module_id}/{task.tid}: нет шаблонов проверки"
             for pattern in task.patterns:
                 re.compile(pattern)  # бросит re.error, если шаблон плохой
 
 
-def test_solution_matches_own_patterns(course):
+def test_solution_passes_own_checker(course):
     """Эталонное решение обязано проходить собственную проверку задачи."""
-    from devops_academy.ui.practice_widget import TaskChecker
+    from devops_academy.practice_checker import TaskChecker
 
     for module in course.modules:
         for task in module.practice.tasks:

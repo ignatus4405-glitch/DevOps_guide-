@@ -19,9 +19,17 @@ State — главная особенность Terraform и главный ис
 - атрибуты (IP, ARN, теги);
 - зависимости между ресурсами.
 
-State **не** содержит секретов в открытом виде, но может содержать
-чувствительные значения (пароли БД, ключи). Поэтому он хранится в защищённом
-backend и не коммитится в git.
+State и сохранённый plan могут содержать секреты **в открытом виде** — например,
+пароли БД, токены и приватные ключи. Поэтому относитесь к ним как к секретным
+файлам: не коммитьте в Git, ограничивайте IAM-доступ и защищайте резервные копии.
+
+`sensitive = true` только маскирует значение в CLI/UI; оно не шифрует и не
+удаляет его из state или plan. Шифрование backend (например, SSE-KMS в S3)
+защищает данные при хранении, но не заменяет контроль доступа. В Terraform 1.10+
+`ephemeral = true` позволяет не сохранять поддерживаемые значения в plan/state;
+write-only аргументы ресурсов, появившиеся в Terraform 1.11+, позволяют передать
+значение провайдеру, не записывая его в state. Эти механизмы доступны только для
+поддерживаемых переменных, ресурсов и аргументов.
 
 ## Local state и его проблемы
 
@@ -36,26 +44,52 @@ backend и не коммитится в git.
 
 ```hcl
 terraform {
+  required_version = ">= 1.10.0"
   backend "s3" {
-    bucket         = "org-tfstate"
-    key            = "prod/network/terraform.tfstate"
-    region         = "eu-west-1"
-    dynamodb_table = "tf-locks"
-    encrypt        = true
+    bucket       = "org-tfstate"
+    key          = "prod/network/terraform.tfstate"
+    region       = "eu-west-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 ```
 
+Для S3 используйте встроенную блокировку `use_lockfile` (Terraform 1.10+).
+Старый параметр `dynamodb_table` пока поддерживается для совместимости, но
+объявлен устаревшим; планируйте миграцию вместо того, чтобы вводить его в новые
+backend-конфигурации.
+
 | Backend | Locking | Комментарий |
 | --- | --- | --- |
-| S3 + DynamoDB | да | классика AWS |
+| S3 | `use_lockfile` | нативная блокировка, Terraform 1.10+ |
+| S3 + DynamoDB | да, legacy | поддерживается для миграции, параметр deprecated |
 | GCS | да | нативный для GCP |
 | Azure Storage | да | нативный для Azure |
 | Terraform Cloud | да | плюс UI и политики |
 | Postgres | да | self-hosted |
 
 Locking не даёт двум `apply` работать одновременно. Без него возможно
-повреждение state и дублирование ресурсов.
+повреждение state и дублирование ресурсов. При переходе существующего backend
+с `dynamodb_table` сохраните резервную копию, добавьте `use_lockfile = true` и
+выполните `terraform init -migrate-state`; не удаляйте DynamoDB-таблицу, пока
+все workspace не мигрированы и старые процессы не остановлены.
+
+### IAM для S3 backend
+
+Выдавайте доступ только к нужному bucket/prefix и конкретному state key:
+
+- `s3:ListBucket` — на bucket, с условием по нужному prefix;
+- `s3:GetObject` и `s3:PutObject` — на объект state;
+- `s3:GetObject`, `s3:PutObject` и `s3:DeleteObject` — на соответствующий объект
+  `<key>.tflock` (Terraform удаляет lock-файл после завершения операции);
+- при SSE-KMS — минимальные `kms:Encrypt`, `kms:Decrypt` и `kms:GenerateDataKey`
+  на используемый ключ.
+
+Не выдавайте `s3:DeleteObject` на сам state без отдельной необходимости. Включите
+версионирование bucket для восстановления предыдущего state, блокируйте публичный
+доступ и требуйте TLS. `encrypt = true` включает шифрование S3; для customer-managed
+KMS key дополнительно настройте `kms_key_id` и IAM выше.
 
 ## Команды работы со state
 

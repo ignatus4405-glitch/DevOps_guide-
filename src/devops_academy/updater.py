@@ -6,12 +6,11 @@
    через публичный GitHub API — токен не нужен, репозиторий публичный.
 2. Если версия тега новее текущей APP_VERSION, приложение спрашивает пользователя
    об установке обновления и показывает описание изменений (release notes).
-3. Пользователь может скачать установщик прямо из приложения: файл проверяется по
-   SHA-256 из ассета ``SHA256SUMS.txt``, затем запускается тихая установка
-   (Inno Setup ``/VERYSILENT``), а приложение закрывается.
-4. Если установщика нет (например, портативная сборка), клиент скачивает ZIP и
-   распаковывает его в %LOCALAPPDATA%.DevOpsAcademy/updates и предлагает
-   обновить файлы скриптом замены после выхода.
+3. Перед передачей установщика проверяется обязательная SHA-256-запись из
+   ``SHA256SUMS.txt``; отсутствующий/недоступный/некорректный манифест отменяет загрузку.
+4. Windows-установщик запускается в тихом режиме. На Linux приложение может
+   скачать проверенный x64-архив, но установка выполняется вручную; на неподдерживаемых
+   платформах предлагается открыть страницу релиза.
 
 Все сетевые ошибки глушатся: офлайн-режим не должен мешать учёбе.
 """
@@ -20,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -36,6 +36,15 @@ from .version import GITHUB_REPO, RELEASES_API_URL, is_newer
 
 REQUEST_TIMEOUT = 10
 USER_AGENT = "DevOpsAcademy-Updater"
+SHA256_RE = re.compile(r"^\s*([0-9a-fA-F]{64})\s+\*?(.+?)\s*$")
+
+
+class UpdateIntegrityError(ValueError):
+    """Релиз нельзя безопасно установить: контрольная сумма не подтверждена."""
+
+
+def _is_x64_host() -> bool:
+    return platform.machine().casefold() in {"x86_64", "amd64", "x64"}
 
 
 @dataclass
@@ -66,14 +75,18 @@ class UpdateInfo:
         return self.asset(r"SHA256SUMS.*\.txt$")
 
     def installer_asset(self) -> ReleaseAsset | None:
-        if sys.platform.startswith("win"):
+        if sys.platform.startswith("win") and _is_x64_host():
             return self.asset(r"Setup[-_.].*\.exe$") or self.asset(r".*-Setup.*\.exe$")
         return None
 
     def archive_asset(self) -> ReleaseAsset | None:
+        if not _is_x64_host():
+            return None
         if sys.platform.startswith("win"):
-            return self.asset(r"windows.*\.zip$") or self.asset(r".*Windows.*\.zip$")
-        return self.asset(r".*(Linux|AppImage).*\.(zip|tar\.gz|AppImage)$")
+            return self.asset(r".*windows-x64\.zip$")
+        if sys.platform.startswith("linux"):
+            return self.asset(r".*linux-x64\.tar\.gz$") or self.asset(r".*linux-x64\.appimage$")
+        return None
 
 
 def fetch_latest_release(include_prerelease: bool = False) -> UpdateInfo | None:
@@ -127,7 +140,11 @@ class UpdateChecker(QThread):
         self.current_version = current_version
 
     def run(self) -> None:  # pragma: no cover - сетевой код
+        if self.isInterruptionRequested():
+            return
         info = fetch_latest_release()
+        if self.isInterruptionRequested():
+            return
         if info is None:
             self.failed.emit("Не удалось получить данные о релизах GitHub")
             return
@@ -149,66 +166,112 @@ class DownloadWorker(QThread):
         self.info = info
 
     def run(self) -> None:  # pragma: no cover - сетевой код
+        part: Path | None = None
         try:
+            if self.isInterruptionRequested():
+                return
             asset = self.info.installer_asset() or self.info.archive_asset()
             if asset is None:
-                self.failed.emit("В релизе нет подходящего файла для этой платформы")
+                self.failed.emit("Для этой ОС/архитектуры нет подходящего файла обновления")
+                return
+            if not asset.url:
+                raise UpdateIntegrityError("У файла обновления отсутствует URL загрузки")
+
+            expected = self._expected_hash(asset.name)
+            if self.isInterruptionRequested():
                 return
             target_dir = user_data_dir() / "updates"
             target_dir.mkdir(parents=True, exist_ok=True)
-            target = target_dir / asset.name
-            expected = self._expected_hash(asset.name)
+            target = target_dir / Path(asset.name).name
+            part = target.with_name(target.name + ".part")
+
             digest = hashlib.sha256()
+            cancelled = False
             with requests.get(
-                asset.url, stream=True, timeout=REQUEST_TIMEOUT * 6, headers={"User-Agent": USER_AGENT}
+                asset.url,
+                stream=True,
+                timeout=(REQUEST_TIMEOUT, REQUEST_TIMEOUT),
+                headers={"User-Agent": USER_AGENT},
             ) as response:
                 response.raise_for_status()
-                total = int(response.headers.get("Content-Length", 0)) or asset.size or 1
+                try:
+                    total = int(response.headers.get("Content-Length", 0)) or asset.size or 1
+                except (TypeError, ValueError):
+                    total = asset.size or 1
                 done = 0
-                with open(target, "wb") as handle:
+                with part.open("wb") as handle:
                     for chunk in response.iter_content(chunk_size=262_144):
+                        if self.isInterruptionRequested():
+                            cancelled = True
+                            break
+                        if not chunk:
+                            continue
                         handle.write(chunk)
                         digest.update(chunk)
                         done += len(chunk)
                         self.progress.emit(min(100, int(done * 100 / total)))
-            if expected and digest.hexdigest().lower() != expected.lower():
-                target.unlink(missing_ok=True)
-                self.failed.emit("Контрольная сумма не совпала — загрузка отменена")
+
+            if cancelled or self.isInterruptionRequested():
                 return
+            actual = digest.hexdigest()
+            if actual.casefold() != expected.casefold():
+                raise UpdateIntegrityError("Контрольная сумма SHA-256 не совпала — загрузка отменена")
+            self.progress.emit(100)
+            os.replace(part, target)
             self.finished_file.emit(str(target))
-        except (requests.RequestException, OSError) as error:  # pragma: no cover
-            self.failed.emit(f"Ошибка загрузки: {error}")
+        except UpdateIntegrityError as error:
+            self.failed.emit(str(error))
+        except (requests.RequestException, OSError, ValueError) as error:  # pragma: no cover
+            self.failed.emit(f"Ошибка безопасной загрузки: {error}")
+        finally:
+            if part is not None:
+                try:
+                    part.unlink(missing_ok=True)
+                except OSError:
+                    pass
 
     def _expected_hash(self, filename: str) -> str:
         manifest = self.info.manifest_asset()
         if manifest is None:
-            return ""
+            raise UpdateIntegrityError("В релизе отсутствует SHA256SUMS.txt — установка запрещена")
+        if not manifest.url:
+            raise UpdateIntegrityError("У манифеста SHA256SUMS.txt отсутствует URL")
         try:
-            text = requests.get(
-                manifest.url, timeout=REQUEST_TIMEOUT, headers={"User-Agent": USER_AGENT}
-            ).text
-        except requests.RequestException:
-            return ""
+            with requests.get(
+                manifest.url,
+                timeout=REQUEST_TIMEOUT,
+                headers={"User-Agent": USER_AGENT},
+            ) as response:
+                response.raise_for_status()
+                text = response.text
+        except requests.RequestException as error:
+            raise UpdateIntegrityError(f"Не удалось получить SHA256SUMS.txt: {error}") from error
+
         for line in text.splitlines():
-            parts = line.split()
-            if len(parts) >= 2 and Path(parts[-1].lstrip("*")).name == Path(filename).name:
-                return parts[0]
-        return ""
+            match = SHA256_RE.match(line)
+            if not match:
+                continue
+            listed_name = match.group(2).strip()
+            if Path(listed_name).name == Path(filename).name:
+                return match.group(1).lower()
+        raise UpdateIntegrityError(f"В SHA256SUMS.txt нет корректной SHA-256 записи для {Path(filename).name}")
 
 
 def install_update(path: str) -> tuple[bool, str]:
-    """Запускает установку скачанного файла. Возвращает (успех, сообщение)."""
+    """Запускает поддерживаемый установщик; архивы не выдаются за установленное обновление."""
     target = Path(path)
-    if not target.exists():
+    if not target.is_file():
         return False, "Файл обновления не найден"
     try:
-        if target.suffix.lower() == ".exe" and sys.platform.startswith("win"):
+        if target.suffix.lower() == ".exe" and sys.platform.startswith("win") and _is_x64_host():
             subprocess.Popen(  # noqa: S603,S607 - запускаем только проверенный установщик
                 [str(target), "/SILENT", "/SUPPRESSMSGBOXES", "/NOCANCEL", "/RESTARTAPPLICATIONS"],
                 close_fds=True,
             )
             return True, "Установщик запущен — приложение сейчас закроется"
-        return True, f"Файл обновления сохранён: {target}"
+        if target.name.lower().endswith((".zip", ".tar.gz", ".appimage")):
+            return False, f"Архив скачан: {target}. Автоматическая установка этого формата не поддерживается; установите его вручную."
+        return False, "Для этой ОС/архитектуры автоматическая установка не поддерживается. Откройте страницу релиза."
     except OSError as error:  # pragma: no cover
         return False, f"Не удалось запустить установку: {error}"
 

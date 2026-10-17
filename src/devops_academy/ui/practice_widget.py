@@ -2,13 +2,11 @@
 
 Проверка намеренно «мягкая»: приложение не запускает команды на машине
 пользователя, а анализирует введённый текст по правилам из practice.json
-(типы: regex_all, regex_any, equals, manual). Для каждой задачи есть подсказки,
+(типы: regex_all, regex_any, equals, commands, manual). Для каждой задачи есть подсказки,
 эталонное решение и способ проверить результат руками.
 """
 
 from __future__ import annotations
-
-import re
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -25,48 +23,8 @@ from PySide6.QtWidgets import (
 
 from ..content import Module, Task
 from ..markdown_renderer import render_plain
+from ..practice_checker import TaskChecker
 from ..theme import lesson_css
-
-
-class TaskChecker:
-    """Логика проверки ответа — вынесена отдельно, чтобы покрывать тестами."""
-
-    @staticmethod
-    def normalise(text: str) -> str:
-        text = text.strip().lower()
-        text = text.replace("«", '"').replace("»", '"')
-        return re.sub(r"\s+", " ", text)
-
-    @classmethod
-    def check(cls, task: Task, answer: str) -> tuple[bool, str]:
-        if not answer.strip():
-            return False, "Введите команду или ответ"
-        if task.check_type == "manual":
-            return True, task.feedback or "Задача на самопроверку — сверьтесь с эталоном ниже."
-        value = cls.normalise(answer)
-        if task.check_type == "equals":
-            allowed = {cls.normalise(p) for p in task.patterns}
-            if value in allowed:
-                return True, task.feedback or "Верно."
-            return False, "Ответ не совпал с эталоном. Проверьте синтаксис и порядок аргументов."
-        if task.check_type == "regex_any":
-            for pattern in task.patterns:
-                if re.search(pattern, answer, re.IGNORECASE | re.MULTILINE):
-                    return True, task.feedback or "Верно."
-            return False, "Ни одно из ожидаемых решений не найдено. Перечитайте подсказки."
-        # по умолчанию regex_all
-        missing = [
-            pattern
-            for pattern in task.patterns
-            if not re.search(pattern, answer, re.IGNORECASE | re.MULTILINE)
-        ]
-        if not missing:
-            return True, task.feedback or "Верно."
-        return (
-            False,
-            f"Не хватает {len(missing)} элемента(ов) из {len(task.patterns)}. "
-            "Подсказка: включите нужные ключи и параметры.",
-        )
 
 
 class PracticeWidget(QWidget):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from PySide6.QtCore import QSettings
 
 from devops_academy import progress
@@ -66,7 +67,8 @@ def test_summary_counts(course, tmp_path, monkeypatch):
     summary = store.summary(course)
     assert summary["lessons_total"] == len(course.all_lessons())
     assert summary["tasks_total"] == len(course.all_tasks())
-    assert summary["modules_total"] == len(course.modules)
+    quiz_count = sum(1 for module in course.modules if module.quiz and module.quiz.questions)
+    assert summary["modules_total"] == quiz_count
     assert summary["overall_percent"] == 0
     for lesson in course.all_lessons():
         store.set_lesson_done(lesson.key, True)
@@ -111,3 +113,69 @@ def test_progress_data_serialisation():
     restored = ProgressData.from_json(json.loads(json.dumps(data.to_json())))
     assert restored.completed_lessons == {"a/b"}
     assert restored.streak_days == ["2025-01-31"]
+    assert data.to_json()["schema_version"] == 1
+
+
+def test_invalid_progress_schema_falls_back_without_crashing(tmp_path, monkeypatch):
+    isolate_user_data(tmp_path, monkeypatch)
+    settings = QSettings(str(tmp_path / "schema.ini"), QSettings.IniFormat)
+    settings.setValue("progress/json", json.dumps({"schema_version": 99, "completed_lessons": []}))
+    store = ProgressStore(settings)
+    assert store.data.completed_lessons == set()
+    assert "не удалось прочитать" in store.recovery_warning.lower()
+
+
+def test_corrupt_settings_recover_from_valid_mirror(tmp_path, monkeypatch):
+    isolate_user_data(tmp_path, monkeypatch)
+    settings = QSettings(str(tmp_path / "recover.ini"), QSettings.IniFormat)
+    settings.setValue("progress/json", "not-json")
+    (tmp_path / "progress.json").write_text(
+        json.dumps({"completed_lessons": ["intro/lesson-1"], "completed_tasks": [], "quiz_scores": {}}),
+        encoding="utf-8",
+    )
+    store = ProgressStore(settings)
+    assert store.data.completed_lessons == {"intro/lesson-1"}
+    assert "резервной копии" in store.recovery_warning.lower()
+
+
+def test_invalid_progress_field_types_are_rejected():
+    with pytest.raises(ValueError, match="списком строк"):
+        ProgressData.from_json({"completed_lessons": "not-a-list"})
+    with pytest.raises(ValueError, match="quiz_scores"):
+        ProgressData.from_json({"quiz_scores": ["not-an-object"]})
+
+
+def test_streak_data_is_bounded_on_load():
+    days = [f"2026-01-{day:02d}" for day in range(1, 101)]
+    restored = ProgressData.from_json({"streak_days": days})
+    assert len(restored.streak_days) == 60
+    assert restored.streak_days == days[-60:]
+
+
+def test_summary_ignores_stale_keys(course, tmp_path, monkeypatch):
+    store = make_store(tmp_path, monkeypatch)
+    store.data.completed_lessons.add("removed-module/removed-lesson")
+    store.data.completed_tasks.add("removed-module/removed-task")
+    store.data.quiz_scores["removed-module"] = {
+        "correct": 1,
+        "total": 1,
+        "percent": 100,
+        "passed": True,
+        "attempts": 1,
+        "updated": "2026-01-01T00:00:00+00:00",
+    }
+    summary = store.summary(course)
+    assert summary["lessons_done"] == 0
+    assert summary["tasks_done"] == 0
+    assert summary["quizzes_passed"] == 0
+    assert summary["overall_percent"] == 0
+
+
+def test_progress_mirror_is_atomically_saved(tmp_path, monkeypatch):
+    store = make_store(tmp_path, monkeypatch)
+    store.set_lesson_done("intro/lesson-1", True)
+    mirror = tmp_path / "progress.json"
+    payload = json.loads(mirror.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == 1
+    assert payload["completed_lessons"] == ["intro/lesson-1"]
+    assert not list(tmp_path.glob(".progress.json.*.tmp"))

@@ -45,6 +45,34 @@ jobs:
             echo "::warning title=content_index.json устарел::Запустите python tools/generate_version.py и закоммитьте результат"
           fi
 
+  package-wheel:
+    name: Wheel и встроенный курс
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Собрать wheel
+        run: |
+          python -m pip install build==1.6.1
+          python -m build --wheel --outdir dist
+      - name: Проверить состав и версию wheel
+        run: python tools/check_wheel_content.py dist/*.whl
+      - name: Установить wheel вне checkout и загрузить курс
+        run: |
+          python -m pip install --no-deps --target "$RUNNER_TEMP/wheel-site" dist/*.whl
+          cd "$RUNNER_TEMP"
+          PYTHONPATH="$RUNNER_TEMP/wheel-site" python - <<'PY'
+          from devops_academy.content import Course
+          from devops_academy.paths import content_dir
+
+          course = Course.load(content_dir())
+          assert course.stats()["lessons"] > 0
+          print(f"installed wheel loaded {course.stats()['lessons']} lessons from {content_dir()}")
+          PY
+
   test:
     name: Тесты (${{ matrix.os }}, python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
@@ -68,6 +96,8 @@ jobs:
             libgl1 libegl1 libxkbcommon0 libdbus-1-3 libfontconfig1
       - name: Установить зависимости
         run: pip install -r requirements-dev.txt
+      - name: Аудит runtime-зависимостей
+        run: pip-audit -r requirements.txt --progress-spinner off
       - name: Линтер (ruff)
         run: ruff check .
       - name: Тесты (pytest)
@@ -89,6 +119,40 @@ jobs:
             .pytest_cache/
           if-no-files-found: ignore
           retention-days: 7
+
+  policy-examples:
+    name: Conftest / OPA Rego v1 примеры
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Установить закреплённую версию Conftest
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=0.71.1
+          archive="conftest_${version}_Linux_x86_64.tar.gz"
+          base="https://github.com/open-policy-agent/conftest/releases/download/v${version}"
+          curl -fsSL "$base/$archive" -o "$RUNNER_TEMP/$archive"
+          mkdir -p "$RUNNER_TEMP/conftest"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/conftest" conftest
+          "$RUNNER_TEMP/conftest/conftest" --version
+      - name: Прогнать allow/deny планы Terraform
+        shell: bash
+        run: |
+          set -euo pipefail
+          conftest="$RUNNER_TEMP/conftest/conftest"
+          policy=content/modules/08-iac/examples/policy
+          "$conftest" test "$policy/plan-safe.json" --policy "$policy" --namespace terraform
+          if "$conftest" test "$policy/plan-public-ssh.json" --policy "$policy" --namespace terraform; then
+            echo "Политика пропустила публичный SSH" >&2
+            exit 1
+          fi
+          tags=content/modules/08-iac/examples/tags
+          "$conftest" test "$tags/plan-with-owner.json" --policy "$tags" --namespace main
+          if "$conftest" test "$tags/plan-without-owner.json" --policy "$tags" --namespace main; then
+            echo "Политика пропустила ресурс без owner" >&2
+            exit 1
+          fi
 
   windows-gui:
     name: GUI-тесты на Windows

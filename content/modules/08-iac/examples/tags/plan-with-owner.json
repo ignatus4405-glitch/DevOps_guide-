@@ -1,0 +1,19 @@
+{
+  "resource_changes": [
+    {
+      "address": "aws_s3_bucket.logs",
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "logs",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "tags": {
+            "Name": "logs",
+            "owner": "platform"
+          }
+        }
+      }
+    }
+  ]
+}
