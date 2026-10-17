@@ -162,3 +162,67 @@ def test_progress_bar_updates(course, window):
     window.store.save_quiz_result(course.modules[0].module_id, 10, 10, True)
     window.dashboard.refresh()
     assert window.dashboard.progress.value() > 0
+
+
+def test_next_button_finishes_module_and_opens_next_topic(course, window):
+    """На последнем уроке темы «Следующий» ведёт в следующий модуль.
+
+    Раньше кнопка там просто блокировалась, и курс обрывался на каждой теме.
+    """
+    first, second = course.modules[0], course.modules[1]
+    window.open_module(first.module_id)
+    window.open_lesson(first, first.lesson_count - 1)
+
+    assert window.lesson_view.next_button.isEnabled()
+    window.lesson_view.next_button.click()
+
+    assert window.current_module.module_id == second.module_id
+    assert window.current_lesson_index == 0
+    assert window.sidebar.currentRow() == course.modules.index(second) + 1
+
+
+def test_prev_button_returns_to_previous_topic_end(course, window):
+    first, second = course.modules[0], course.modules[1]
+    window.open_module(second.module_id)
+
+    assert window.lesson_view.prev_button.isEnabled()
+    window.lesson_view.prev_button.click()
+
+    assert window.current_module.module_id == first.module_id
+    assert window.current_lesson_index == first.lesson_count - 1
+    assert window.sidebar.currentRow() == course.modules.index(first) + 1
+
+
+def test_first_lesson_has_no_previous_step(course, window):
+    window.open_module(course.modules[0].module_id)
+    assert not window.lesson_view.prev_button.isEnabled()
+
+    window.navigate_lesson(-1)
+    assert window.current_module.module_id == course.modules[0].module_id
+    assert window.current_lesson_index == 0
+
+
+def test_last_lesson_of_course_offers_final_exam(course, window):
+    last_module = course.modules[-1]
+    window.open_module(last_module.module_id)
+    window.open_lesson(last_module, last_module.lesson_count - 1)
+
+    assert window.lesson_view.next_button.isEnabled()
+    assert "экзамен" in window.lesson_view.next_button.text().lower()
+
+    window.lesson_view.next_button.click()
+    assert window.current_mode == "exam"
+    assert window.stack.currentWidget() is window.quiz_view
+
+
+def test_every_module_boundary_is_crossable(course, window):
+    """Сквозной проход по всем урокам: «Следующий» не блокируется нигде."""
+    window.open_module(course.modules[0].module_id)
+    visited = []
+    while window.current_mode == "lesson":
+        visited.append((window.current_module.module_id, window.current_lesson_index))
+        assert window.lesson_view.next_button.isEnabled(), visited[-1]
+        window.lesson_view.next_button.click()
+    assert len(visited) == sum(module.lesson_count for module in course.modules)
+    assert len({module_id for module_id, _ in visited}) == len(course.modules)
+    assert window.current_mode == "exam"
