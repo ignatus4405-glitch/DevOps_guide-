@@ -180,4 +180,16 @@ jobs:
       - name: Прогон GUI-тестов в offscreen-режиме
         env:
           QT_QPA_PLATFORM: offscreen
-        run: pytest tests/test_ui_smoke.py -q
+        run: >-
+          python tools/run_tests.py
+          --pytest-args "tests/test_ui_smoke.py -q"
+          --junitxml reports/gui-pytest.xml
+          --log reports/gui-pytest.log
+      - name: Сохранить отчёты GUI-тестов
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-windows-gui
+          path: reports/gui-pytest.*
+          if-no-files-found: ignore
+          retention-days: 7

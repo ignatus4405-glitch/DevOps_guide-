@@ -119,7 +119,7 @@ gh workflow run build.yml --ref main -f bump=patch
 | Список запусков | `gh run list` или вкладка Actions |
 | Какие job'ы упали | `gh run view <run-id>` |
 | Текст ошибки без скачивания логов | аннотации проверки (`gh api repos/<owner>/<repo>/check-runs/<id>/annotations`) — имена упавших тестов и хвост вывода публикует `tools/run_tests.py` |
-| Полный лог pytest | артефакт `reports-<os>-<python>` (`reports/pytest.log`, `reports/pytest.xml`) |
+| Полный лог pytest | артефакт `reports-<os>-<python>` (`reports/pytest.log`, `reports/pytest.xml`); для отдельного GUI job — `reports-windows-gui` (`reports/gui-pytest.log`, `reports/gui-pytest.xml`) |
 | Самотест приложения | шаги «Проверка режима --self-test» (из исходников) и «Проверить собранный exe» (готовая сборка) |
 | Журнал собранного приложения | `dist/self-test.log` (переменная `DEVOPS_ACADEMY_LOG`) — в GUI-сборке ошибку иначе не увидеть; шаг печатает журнал в лог workflow |
 
@@ -129,9 +129,11 @@ gh workflow run build.yml --ref main -f bump=patch
 
 Тесты в CI запускает `tools/run_tests.py` (а не `pytest` напрямую): он пишет
 `reports/pytest.log` и `reports/pytest.xml`, печатает вывод в лог шага и добавляет
-аннотацию с именами упавших тестов. Это важно, потому что GitHub запускает bash
-с `-e` (обработчик провала просто не успевает выполниться), а логи workflow
-скачиваются отдельным сервисом, который может быть недоступен.
+аннотацию с именами упавших тестов. Отдельный Windows GUI job использует тот же runner
+и сохраняет `reports/gui-pytest.log` и `reports/gui-pytest.xml` в артефакт
+`reports-windows-gui`. Это важно, потому что GitHub запускает bash с `-e`
+(обработчик провала просто не успевает выполниться), а логи workflow скачиваются
+отдельным сервисом, который может быть недоступен.
 `tools/ci_annotate.py` делает то же самое для произвольного лога.
 
 ## Секреты
