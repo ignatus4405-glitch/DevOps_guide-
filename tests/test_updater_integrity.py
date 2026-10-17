@@ -74,6 +74,7 @@ def run_worker(monkeypatch, tmp_path, info, manifest_response, download_response
 
 
 def test_download_requires_matching_sha256_and_publishes_atomically(tmp_path, monkeypatch):
+    prepare_platform(monkeypatch, tmp_path)
     payload = b"verified release contents\n"
     digest = hashlib.sha256(payload).hexdigest()
     info = make_info()
@@ -115,6 +116,7 @@ def test_unavailable_manifest_fails_closed(tmp_path, monkeypatch):
 
 
 def test_malformed_or_missing_entry_fails_closed_and_preserves_old_file(tmp_path, monkeypatch):
+    prepare_platform(monkeypatch, tmp_path)
     info = make_info()
     target_dir = tmp_path / "updates"
     target_dir.mkdir()
@@ -134,6 +136,7 @@ def test_malformed_or_missing_entry_fails_closed_and_preserves_old_file(tmp_path
 
 
 def test_digest_mismatch_discards_part_and_preserves_existing_target(tmp_path, monkeypatch):
+    prepare_platform(monkeypatch, tmp_path)
     info = make_info()
     target_dir = tmp_path / "updates"
     target_dir.mkdir()
@@ -155,6 +158,7 @@ def test_digest_mismatch_discards_part_and_preserves_existing_target(tmp_path, m
 
 
 def test_sha256_manifest_requires_hex_digest_and_exact_filename(tmp_path, monkeypatch):
+    prepare_platform(monkeypatch, tmp_path)
     info = make_info()
     payload = b"release"
     valid = hashlib.sha256(payload).hexdigest()

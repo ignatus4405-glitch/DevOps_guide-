@@ -129,6 +129,9 @@ class UpdateDialog(QDialog):
         self._download_error = message
 
     def _worker_finished(self) -> None:
+        if self.worker is not None:
+            # Join after finished before a reject/accept can release the QThread parent.
+            self.worker.wait()
         if self._close_when_worker_stops:
             self._close_when_worker_stops = False
             self.reject()

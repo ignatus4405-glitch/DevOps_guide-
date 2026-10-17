@@ -75,6 +75,8 @@ def test_terraform_tag_policy_fixtures_cover_valid_and_missing_owner():
     assert "owner" not in without_owner["resource_changes"][0]["change"]["after"]["tags"]
     assert "package main" in policy
     assert "deny contains msg if {" in policy
+    assert 'owner := object.get(tags, "owner", "")' in policy
+    assert 'owner == ""' in policy
 
 
 def test_repository_workflows_parse_as_yaml():

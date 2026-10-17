@@ -6,6 +6,7 @@ deny contains msg if {
   is_object(after)
   tags := object.get(after, "tags", {})
   is_object(tags)
-  not object.get(tags, "owner", "")
+  owner := object.get(tags, "owner", "")
+  owner == ""
   msg := sprintf("ресурс %s без owner", [resource.address])
 }

@@ -489,6 +489,9 @@ class MainWindow(QMainWindow):
     def _update_checker_finished(self, checker: UpdateChecker) -> None:
         if checker is not self.checker:
             return
+        # QThread.finished can be delivered just before native thread cleanup completes.
+        # Join only after finished, so closeEvent never re-defers and leaves the window open.
+        checker.wait()
         if self._close_after_checker:
             self._close_after_checker = False
             self.close()

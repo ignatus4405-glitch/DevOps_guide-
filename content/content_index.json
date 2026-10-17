@@ -1,7 +1,7 @@
 {
-  "generated": "2026-10-17T22:19:34+00:00",
+  "generated": "2026-10-17T22:31:02+00:00",
   "files": 201,
-  "total_bytes": 1590783,
+  "total_bytes": 1590824,
   "hashes": {
     "assets/img/aws-architecture.svg": "ecf5c2107a7fb623",
     "assets/img/career-roadmap.svg": "82e4f3f9e06924ae",
@@ -133,7 +133,7 @@
     "modules/08-iac/examples/state/backend-iam-policy.json": "87d256235ca1aef9",
     "modules/08-iac/examples/tags/plan-with-owner.json": "c4ce5b93c723fdaf",
     "modules/08-iac/examples/tags/plan-without-owner.json": "49a54a1e38ef4aa4",
-    "modules/08-iac/examples/tags/tags.rego": "fe39cd00e5909792",
+    "modules/08-iac/examples/tags/tags.rego": "a98bdc8d9802b8c5",
     "modules/08-iac/lessons/01-terraform.md": "e2723c3c76a1e191",
     "modules/08-iac/lessons/02-ansible.md": "3f4dc46a8448400a",
     "modules/08-iac/lessons/03-terraform-state.md": "5cbd64028309e488",
@@ -144,7 +144,7 @@
     "modules/08-iac/lessons/08-policy-as-code.md": "8bebce5b9e98f09e",
     "modules/08-iac/lessons/09-ansible-internals.md": "5c6cc0f3ccc8643e",
     "modules/08-iac/module.json": "132fc3297b37782a",
-    "modules/08-iac/practice.json": "9cc07cb4dce1fbc6",
+    "modules/08-iac/practice.json": "228f2c16dd0b9797",
     "modules/08-iac/quiz.json": "2a6862636921ad34",
     "modules/09-cloud/lessons/01-architecture-and-iam.md": "eb96de1d568dee57",
     "modules/09-cloud/lessons/02-cost-reliability.md": "a7d5e02f7aaf064f",
