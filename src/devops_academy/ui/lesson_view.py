@@ -17,6 +17,9 @@ from ..content import Lesson, Module
 from ..markdown_renderer import render_lesson
 from ..theme import lesson_css
 
+NEXT_LABEL = "Следующий →"
+EXAM_LABEL = "Итоговый экзамен →"
+
 
 class LessonView(QWidget):
     """Один урок: заголовок, метаданные, HTML-контент, кнопки навигации."""
@@ -45,7 +48,7 @@ class LessonView(QWidget):
         self.done_box.toggled.connect(self._on_done_toggled)
 
         self.prev_button = QPushButton("← Предыдущий", self)
-        self.next_button = QPushButton("Следующий →", self)
+        self.next_button = QPushButton(NEXT_LABEL, self)
         self.next_button.setObjectName("Primary")
         self.prev_button.clicked.connect(lambda: self.navigate.emit(-1))
         self.next_button.clicked.connect(lambda: self.navigate.emit(1))
@@ -64,7 +67,23 @@ class LessonView(QWidget):
         layout.addWidget(self.browser, 1)
         layout.addLayout(nav)
 
-    def load(self, module: Module, lesson: Lesson, done: bool = False, position: int = 0) -> None:
+    def load(
+        self,
+        module: Module,
+        lesson: Lesson,
+        done: bool = False,
+        position: int = 0,
+        *,
+        has_prev: bool | None = None,
+        has_next: bool | None = None,
+        next_label: str = NEXT_LABEL,
+    ) -> None:
+        """Показывает урок.
+
+        ``has_prev``/``has_next`` задаёт вызывающий: уроки идут сплошной лентой
+        через границы модулей, поэтому «край модуля» — не то же самое, что «край
+        курса». Если их не передали, поведение прежнее — навигация внутри модуля.
+        """
         self.module = module
         self.lesson = lesson
         self.title_label.setText(lesson.title)
@@ -78,8 +97,25 @@ class LessonView(QWidget):
         self.done_box.blockSignals(True)
         self.done_box.setChecked(done)
         self.done_box.blockSignals(False)
-        self.prev_button.setEnabled(position > 0)
-        self.next_button.setEnabled(position < module.lesson_count - 1)
+
+        if has_prev is None:
+            has_prev = position > 0
+        if has_next is None:
+            has_next = position < module.lesson_count - 1
+        self.set_navigation(has_prev, has_next, next_label)
+
+    def set_navigation(self, has_prev: bool, has_next: bool, next_label: str = NEXT_LABEL) -> None:
+        """Включает кнопки перехода и подписывает «Следующий» на краю курса."""
+        self.prev_button.setEnabled(has_prev)
+        self.next_button.setEnabled(has_next)
+        self.next_button.setText(next_label)
+        self.prev_button.setToolTip("" if has_prev else "Это первый урок курса")
+        if not has_next:
+            self.next_button.setToolTip("Это последний урок курса")
+        elif next_label != NEXT_LABEL:
+            self.next_button.setToolTip("После последнего урока открывается итоговый экзамен")
+        else:
+            self.next_button.setToolTip("")
 
     def current_theme(self) -> str:
         window = self.window()

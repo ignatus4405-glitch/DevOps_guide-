@@ -42,7 +42,7 @@ from ..updater import (
 from ..version import APP_NAME, APP_VERSION, BUILD_NUMBER, GITHUB_RELEASES_URL
 from .dashboard import DashboardView
 from .glossary_dialog import GlossaryDialog
-from .lesson_view import LessonView
+from .lesson_view import EXAM_LABEL, NEXT_LABEL, LessonView
 from .practice_widget import PracticeWidget
 from .quiz_widget import QuizWidget
 from .update_dialog import UpdateDialog
@@ -267,9 +267,19 @@ class MainWindow(QMainWindow):
     def open_lesson(self, module: Module, index: int) -> None:
         index = max(0, min(index, module.lesson_count - 1))
         lesson = module.lessons[index]
+        self.current_module = module
         self.current_lesson_index = index
+        module_index = self.course.modules.index(module) if module in self.course.modules else -1
+        at_start = module_index == 0 and index == 0
+        at_end = module_index == len(self.course.modules) - 1 and index == module.lesson_count - 1
         self.lesson_view.load(
-            module, lesson, self.store.is_lesson_done(lesson.key), position=index
+            module,
+            lesson,
+            self.store.is_lesson_done(lesson.key),
+            position=index,
+            has_prev=not at_start,
+            has_next=True,  # дальше всегда есть урок, модуль или итоговый экзамен
+            next_label=EXAM_LABEL if at_end else NEXT_LABEL,
         )
         self.store.set_last_lesson(lesson.key)
         self.stack.setCurrentWidget(self.lesson_view)
@@ -278,9 +288,34 @@ class MainWindow(QMainWindow):
         self.refresh_status()
 
     def navigate_lesson(self, delta: int) -> None:
-        if self.current_module is None:
+        """Переход к соседнему уроку — сквозь границы модулей.
+
+        За последним уроком модуля идёт первый урок следующего, а за последним
+        уроком курса открывается итоговый экзамен. Без этого кнопка «Следующий»
+        на последнем уроке темы была заблокирована, и курс «заканчивался» на
+        каждом модуле.
+        """
+        if self.current_module is None or self.current_mode != MODE_LESSON:
             return
-        self.open_lesson(self.current_module, self.current_lesson_index + delta)
+        modules = self.course.modules
+        if self.current_module not in modules:
+            return
+        module_index = modules.index(self.current_module)
+        index = self.current_lesson_index + delta
+
+        if index >= self.current_module.lesson_count:
+            if module_index + 1 < len(modules):
+                self.open_lesson(modules[module_index + 1], 0)
+            else:
+                self.start_exam()
+            return
+        if index < 0:
+            if module_index == 0:
+                return
+            previous = modules[module_index - 1]
+            self.open_lesson(previous, previous.lesson_count - 1)
+            return
+        self.open_lesson(self.current_module, index)
 
     def continue_learning(self) -> None:
         """Продолжить с последнего открытого урока, иначе — с первого модуля."""
