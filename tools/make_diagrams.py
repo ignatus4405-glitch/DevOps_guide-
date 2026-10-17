@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 from html import escape
 from pathlib import Path
 
@@ -39,6 +40,8 @@ class Svg:
             "<defs>"
             '<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
             'orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker>'
+            '<marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
+            'orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker>'
             "</defs>",
         ]
 
@@ -96,10 +99,18 @@ class Svg:
         )
         return self
 
-    def path(self, d: str, dashed: bool = False, color: str = "#8fa3bf") -> Svg:
+    def path(
+        self,
+        d: str,
+        dashed: bool = False,
+        color: str = "#8fa3bf",
+        width: float = 1.6,
+    ) -> Svg:
         dash = ' stroke-dasharray="6 4"' if dashed else ""
+        marker = "arrow-accent" if color.lower() == "#4f9cf9" else "arrow"
         self.parts.append(
-            f'<path d="{d}" fill="none" stroke="{color}" stroke-width="1.6"{dash} marker-end="url(#arrow)"/>'
+            f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{width}"{dash} '
+            f'marker-end="url(#{marker})"/>'
         )
         return self
 
@@ -121,10 +132,28 @@ class Svg:
 # ----------------------------------------------------------------------
 # Диаграммы
 # ----------------------------------------------------------------------
-def devops_lifecycle() -> Svg:
-    """Петля DevOps: 8 этапов по эллипсу и обратная связь «эксплуатация → планирование»."""
-    import math
+LIFECYCLE_PANEL = (290, 257, 320, 86)  # центральная панель: x, y, ширина, высота
+LIFECYCLE_RING = (450, 300, 320, 150)  # центр и радиусы кольца этапов
 
+
+def _ellipse_point(cx: float, cy: float, rx: float, ry: float, t: float) -> tuple[float, float]:
+    """Точка на эллипсе для параметра t (t = -pi/2 — верх, рост t — по часовой)."""
+    return cx + rx * math.cos(t), cy + ry * math.sin(t)
+
+
+def devops_lifecycle() -> Svg:
+    """Петля DevOps: 8 этапов на кольце, направление движения — по часовой стрелке.
+
+    Как устроено:
+      * кольцо рисуется как эллипс-«трасса» под блоками, поэтому взгляд читает цикл;
+      * на каждом участке между соседними блоками стоит наконечник по касательной —
+        он показывает направление, но не уходит в центр схемы;
+      * обратная связь «Мониторинг → Планирование» вынесена чуть наружу кольца
+        и подсвечена акцентом: это единственный участок, который меняет бэклог.
+
+    Раньше опорная точка дуг лежала в центре, поэтому линии шли сквозь панель —
+    не повторяйте: стрелки должны лежать на трассе, а центр оставаться свободным.
+    """
     svg = Svg(900, 560, "Жизненный цикл DevOps")
     svg.label(450, 34, "Жизненный цикл DevOps: бесконечная петля", size=17, color="#e6edf7", bold=True)
     steps = [
@@ -137,38 +166,67 @@ def devops_lifecycle() -> Svg:
         ("Эксплуатация", "SRE, алерты", "purple"),
         ("Мониторинг", "SLI/SLO, логи", "purple"),
     ]
-    cx, cy, rx, ry = 450, 300, 320, 150
+    cx, cy, rx, ry = LIFECYCLE_RING
     box_w, box_h = 168, 68
-    centers = []
-    for index in range(len(steps)):
-        angle = -math.pi / 2 + index * (2 * math.pi / len(steps))
-        x = cx + rx * math.cos(angle)
-        y = cy + ry * math.sin(angle)
+    half_w, half_h = box_w / 2, box_h / 2
+    step_angle = 2 * math.pi / len(steps)
+
+    # Перемычку рисуем до блоков: блоки её перекрывают, и кольцо выглядит «за кадром».
+    svg.parts.append(
+        f'<path d="M {cx + rx} {cy} A {rx} {ry} 0 1 0 {cx - rx} {cy} '
+        f'A {rx} {ry} 0 1 0 {cx + rx} {cy}" fill="none" stroke="#1d2c47" stroke-width="10"/>'
+    )
+    svg.parts.append(
+        f'<path d="M {cx + rx} {cy} A {rx} {ry} 0 1 0 {cx - rx} {cy} '
+        f'A {rx} {ry} 0 1 0 {cx + rx} {cy}" fill="none" stroke="#3b5170" '
+        'stroke-width="1.2" stroke-dasharray="4 8"/>'
+    )
+
+    centers: list[tuple[float, float]] = []
+    for index, (title, subtitle, color) in enumerate(steps):
+        angle = -math.pi / 2 + index * step_angle
+        x, y = _ellipse_point(cx, cy, rx, ry, angle)
         centers.append((x, y))
-        title, subtitle, color = steps[index]
-        svg.box(int(x - box_w / 2), int(y - box_h / 2), box_w, box_h, title, [subtitle], color)
-    # дуги между блоками по часовой стрелке
-    for index in range(len(steps)):
-        x1, y1 = centers[index]
-        x2, y2 = centers[(index + 1) % len(steps)]
-        start = (cx + (x1 - cx) * 0.72, cy + (y1 - cy) * 0.72)
-        end = (cx + (x2 - cx) * 0.72, cy + (y2 - cy) * 0.72)
+        svg.box(round(x - half_w), round(y - half_h), box_w, box_h, title, [subtitle], color)
+
+    # Наконечники: короткий фрагмент эллипса по касательной, по центру каждого участка.
+    for index in range(len(steps) - 1):  # последний участок — это обратная связь, см. ниже
+        t_mid = -math.pi / 2 + (index + 0.5) * step_angle
+        start = _ellipse_point(cx, cy, rx, ry, t_mid - 0.075)
+        end = _ellipse_point(cx, cy, rx, ry, t_mid + 0.075)
+        control = _ellipse_point(cx, cy, rx * 1.04, ry * 1.04, t_mid)
         svg.path(
-            f"M {start[0]:.0f} {start[1]:.0f} Q {cx} {cy + 40} {end[0]:.0f} {end[1]:.0f}",
-            dashed=index == len(steps) - 1,
+            f"M {start[0]:.0f} {start[1]:.0f} Q {control[0]:.0f} {control[1]:.0f} {end[0]:.0f} {end[1]:.0f}",
+            color="#a9bcd6",
+            width=1.8,
         )
-    # панель в центре, чтобы стрелки не пересекали текст
-    svg.parts.append(
-        '<rect x="330" y="256" width="240" height="66" rx="12" fill="#0f172a" stroke="#26375c" stroke-width="1.2"/>'
+
+    # Обратная связь «Мониторинг → Планирование»: это не следующий этап, а возврат
+    # к началу цикла, поэтому дуга идёт над кольцом пунктиром и входит в левую грань
+    # блока «Планирование» — так она не пересекает ни текст, ни другие стрелки.
+    monitor_center = centers[7]
+    plan_center = centers[0]
+    feedback_start = (monitor_center[0] + 26, monitor_center[1] - half_h - 4)
+    feedback_end = (plan_center[0] - half_w - 4, plan_center[1] - half_h + 14)
+    svg.path(
+        f"M {feedback_start[0]:.0f} {feedback_start[1]:.0f} "
+        f"C {feedback_start[0] + 20:.0f} {feedback_start[1] - 62:.0f} "
+        f"{feedback_end[0] - 26:.0f} {feedback_end[1] - 40:.0f} "
+        f"{feedback_end[0]:.0f} {feedback_end[1]:.0f}",
+        dashed=True,
+        color="#4f9cf9",
+        width=2.2,
     )
+
+    panel_x, panel_y, panel_w, panel_h = LIFECYCLE_PANEL
     svg.parts.append(
-        f'<text x="450" y="282" text-anchor="middle" font-family="{FONT}" font-size="14" '
-        'font-weight="700" fill="#e6edf7">Feedback loop</text>'
+        f'<rect x="{panel_x}" y="{panel_y}" width="{panel_w}" height="{panel_h}" rx="12" '
+        'fill="#0f172a" stroke="#26375c" stroke-width="1.2"/>'
     )
-    svg.parts.append(
-        f'<text x="450" y="304" text-anchor="middle" font-family="{FONT}" font-size="11.5" fill="#9fb0cc">'
-        "наблюдения возвращаются в планирование</text>"
-    )
+    svg.label(panel_x + panel_w / 2, panel_y + 30, "Feedback loop", size=14, color="#e6edf7", bold=True)
+    svg.label(panel_x + panel_w / 2, panel_y + 52, "наблюдения возвращаются в планирование", size=11)
+    svg.label(panel_x + panel_w / 2, panel_y + 70, "и меняют бэклог следующей итерации", size=11)
+
     svg.label(450, 516, "Чем короче петля и быстрее обратная связь, тем дешевле изменения и надёжнее продукт", size=13, bold=True)
     svg.label(450, 538, "Метрики скорости петли: lead time, deployment frequency, MTTR, change failure rate (DORA)", size=12)
     return svg

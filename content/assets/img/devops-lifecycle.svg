@@ -1,14 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-label="Жизненный цикл DevOps">
 <rect width="900" height="560" rx="14" fill="#0f172a"/>
 <title>Жизненный цикл DevOps</title>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker></defs>
 <text x="450" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">Жизненный цикл DevOps: бесконечная петля</text>
+<path d="M 770 300 A 320 150 0 1 0 130 300 A 320 150 0 1 0 770 300" fill="none" stroke="#1d2c47" stroke-width="10"/>
+<path d="M 770 300 A 320 150 0 1 0 130 300 A 320 150 0 1 0 770 300" fill="none" stroke="#3b5170" stroke-width="1.2" stroke-dasharray="4 8"/>
 <rect x="366" y="116" width="168" height="68" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
 <text x="450.0" y="142" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Планирование</text>
 <text x="450.0" y="162" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">бэклог, задачи</text>
-<rect x="592" y="159" width="168" height="68" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
-<text x="676.0" y="185" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Разработка</text>
-<text x="676.0" y="205" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">git, ревью</text>
+<rect x="592" y="160" width="168" height="68" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
+<text x="676.0" y="186" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Разработка</text>
+<text x="676.0" y="206" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">git, ревью</text>
 <rect x="686" y="266" width="168" height="68" rx="12" fill="#12402f" stroke="#3ecf8e" stroke-width="1.5"/>
 <text x="770.0" y="292" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Сборка</text>
 <text x="770.0" y="312" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">CI-пайплайн</text>
@@ -18,26 +20,27 @@
 <rect x="366" y="416" width="168" height="68" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
 <text x="450.0" y="442" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Релиз</text>
 <text x="450.0" y="462" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">артефакты, теги</text>
-<rect x="139" y="372" width="168" height="68" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
-<text x="223.0" y="398" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Деплой</text>
-<text x="223.0" y="418" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">staging, prod</text>
+<rect x="140" y="372" width="168" height="68" rx="12" fill="#4a2f12" stroke="#f0b429" stroke-width="1.5"/>
+<text x="224.0" y="398" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Деплой</text>
+<text x="224.0" y="418" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">staging, prod</text>
 <rect x="46" y="266" width="168" height="68" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
 <text x="130.0" y="292" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Эксплуатация</text>
 <text x="130.0" y="312" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SRE, алерты</text>
-<rect x="139" y="159" width="168" height="68" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
-<text x="223.0" y="185" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Мониторинг</text>
-<text x="223.0" y="205" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SLI/SLO, логи</text>
-<path d="M 450 192 Q 450 340 613 224" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 613 224 Q 450 340 680 300" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 680 300 Q 450 340 613 376" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 613 376 Q 450 340 450 408" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 450 408 Q 450 340 287 376" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 287 376 Q 450 340 220 300" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 220 300 Q 450 340 287 224" fill="none" stroke="#8fa3bf" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M 287 224 Q 450 340 450 192" fill="none" stroke="#8fa3bf" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
-<rect x="330" y="256" width="240" height="66" rx="12" fill="#0f172a" stroke="#26375c" stroke-width="1.2"/>
-<text x="450" y="282" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="14" font-weight="700" fill="#e6edf7">Feedback loop</text>
-<text x="450" y="304" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11.5" fill="#9fb0cc">наблюдения возвращаются в планирование</text>
+<rect x="140" y="160" width="168" height="68" rx="12" fill="#2c2148" stroke="#b18cff" stroke-width="1.5"/>
+<text x="224.0" y="186" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">Мониторинг</text>
+<text x="224.0" y="206" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" fill="#9fb0cc">SLI/SLO, логи</text>
+<path d="M 550 158 Q 577 156 594 166" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 736 232 Q 757 240 754 253" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 754 347 Q 757 360 736 368" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 594 434 Q 577 444 550 442" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 350 442 Q 323 444 306 434" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 164 368 Q 143 360 146 347" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 146 253 Q 143 240 164 232" fill="none" stroke="#a9bcd6" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M 250 156 C 270 94 336 90 362 130" fill="none" stroke="#4f9cf9" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#arrow-accent)"/>
+<rect x="290" y="257" width="320" height="86" rx="12" fill="#0f172a" stroke="#26375c" stroke-width="1.2"/>
+<text x="450.0" y="287" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="14" font-weight="700" fill="#e6edf7">Feedback loop</text>
+<text x="450.0" y="309" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">наблюдения возвращаются в планирование</text>
+<text x="450.0" y="327" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="11" font-weight="400" fill="#9fb0cc">и меняют бэклог следующей итерации</text>
 <text x="450" y="516" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="13" font-weight="700" fill="#9fb0cc">Чем короче петля и быстрее обратная связь, тем дешевле изменения и надёжнее продукт</text>
 <text x="450" y="538" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="12" font-weight="400" fill="#9fb0cc">Метрики скорости петли: lead time, deployment frequency, MTTR, change failure rate (DORA)</text>
 </svg>

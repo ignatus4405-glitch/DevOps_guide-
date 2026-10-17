@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="880" height="420" viewBox="0 0 880 420" role="img" aria-label="Права доступа в Linux">
 <rect width="880" height="420" rx="14" fill="#0f172a"/>
 <title>Права доступа в Linux</title>
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker></defs>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa3bf"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4f9cf9"/></marker></defs>
 <text x="440" y="34" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="17" font-weight="700" fill="#e6edf7">rwx: кто и что может делать с файлом</text>
 <rect x="60" y="70" width="760" height="120" rx="12" fill="#1d3557" stroke="#4f9cf9" stroke-width="1.5"/>
 <text x="440.0" y="96" text-anchor="middle" font-family="'Segoe UI','Inter','Noto Sans',sans-serif" font-size="15" font-weight="700" fill="#e6edf7">chmod 754 script.sh   →   -rwxr-xr--   владелец: группа: остальные</text>
