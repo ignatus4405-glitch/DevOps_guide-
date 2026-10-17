@@ -41,10 +41,11 @@ Merge-коммиты и служебные `chore(release): … [skip ci]` в о
    на свежем commit. Если новый push приходит уже во время сборки, текущий релиз не переписывает
    `main`: публикуется тег на неизменяемый SHA подготовки.
 4. Все запуски Build & Release сериализованы. Перед созданием тега проверяется, что `v<VERSION>`
-   ещё не существует; тег не форсируется. Workflow по умолчанию имеет `contents: read`; только
-   подготовительный job обновляет `main`, а release job в environment `release` получает
-   `contents: write` для тега и GitHub Release. В настройках environment можно включить обязательное
-   подтверждение публикации.
+   ещё не существует; тег не форсируется. `gh release create --target <SHA>` создаёт тег и Release
+   через GitHub API прямо на проверенном commit, без отдельного `git push` тега из runner. Workflow
+   по умолчанию имеет `contents: read`; только подготовительный job обновляет `main`, а release job
+   в environment `release` получает `contents: write`. В настройках environment можно включить
+   обязательное подтверждение публикации.
 
 Таким образом, нельзя запустить стабильный релиз из feature-ветки, а поздний push `HEAD:main`
 не может превратить готовую сборку в non-fast-forward ошибку.

@@ -100,7 +100,9 @@ def test_release_workflow_uses_one_prepared_commit_and_main_only():
     for job_name in ("windows", "linux"):
         assert jobs[job_name]["steps"][0]["with"]["ref"] == "${{ needs.guard.outputs.sha }}"
     release_text = "\n".join(step.get("run", "") for step in jobs["release"]["steps"])
-    assert 'git tag -a "v$VERSION" "$RELEASE_SHA"' in release_text
+    assert 'gh release create "v$VERSION"' in release_text
+    assert '--target "$RELEASE_SHA"' in release_text
+    assert 'git push origin "v$VERSION"' not in release_text
     assert "git push origin HEAD:main" not in release_text
     preparation = jobs["guard"]["steps"]
     commit_step = next(step for step in preparation if step.get("id") == "release_commit")
