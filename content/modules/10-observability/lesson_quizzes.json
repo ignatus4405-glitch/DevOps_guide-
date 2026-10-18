@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "metrics-logs-traces": {
+      "question_ids": [
+        "q16",
+        "q11",
+        "q6"
+      ],
+      "questions": []
+    },
+    "slo-alerts-incidents": {
+      "question_ids": [
+        "q4",
+        "q23",
+        "q10"
+      ],
+      "questions": []
+    },
+    "prometheus": {
+      "question_ids": [
+        "q11",
+        "q15",
+        "q12"
+      ],
+      "questions": []
+    },
+    "logging": {
+      "question_ids": [
+        "q16",
+        "q18",
+        "q28"
+      ],
+      "questions": []
+    },
+    "tracing": {
+      "question_ids": [
+        "q19",
+        "q20",
+        "q21"
+      ],
+      "questions": []
+    },
+    "dashboards": {
+      "question_ids": [
+        "q22",
+        "q24",
+        "q7"
+      ],
+      "questions": []
+    },
+    "telemetry-math": {
+      "question_ids": [
+        "q30",
+        "q12",
+        "q20"
+      ],
+      "questions": []
+    },
+    "opentelemetry": {
+      "question_ids": [
+        "q20",
+        "q31",
+        "q19"
+      ],
+      "questions": []
+    },
+    "incident-command": {
+      "question_ids": [
+        "q8",
+        "q25",
+        "q10"
+      ],
+      "questions": []
+    },
+    "alerting-design": {
+      "question_ids": [
+        "q4",
+        "q24",
+        "q7"
+      ],
+      "questions": []
+    }
+  }
+}

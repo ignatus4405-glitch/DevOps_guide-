@@ -6,8 +6,9 @@ content/
   glossary.json                     {"terms": [{"term","definition","see_also"}]}
   modules/NN-slug/module.json       описание модуля
   modules/NN-slug/lessons/*.md      уроки (front matter + markdown)
-  modules/NN-slug/quiz.json         вопросы теста
-  modules/NN-slug/practice.json     практические задачи
+  modules/NN-slug/quiz.json         вопросы теста модуля
+  modules/NN-slug/lesson_quizzes.json тесты после уроков
+  modules/NN-slug/practice.json    практические задачи
   assets/img/*.svg                  иллюстрации (векторные, лёгкие)
 
 Все структуры — dataclass'ы без внешних зависимостей, чтобы легко писать тесты.
@@ -40,6 +41,7 @@ class Lesson:
     order: int
     path: Path
     raw: str
+    quiz: Quiz | None = None
 
     @property
     def body(self) -> str:
@@ -213,40 +215,130 @@ def _load_lesson(module_id: str, path: Path, order: int) -> Lesson:
     )
 
 
-def _load_quiz(module_id: str, path: Path) -> Quiz:
-    data = _read_json(path)
-    questions: list[Question] = []
-    for index, raw_q in enumerate(data.get("questions", []), start=1):
-        qtype = raw_q.get("type", "single")
-        options = list(raw_q.get("options", []))
-        answer = raw_q.get("answer", [])
-        answer = answer if isinstance(answer, list) else [answer]
-        if qtype in ("single", "multiple"):
-            answer = [int(a) for a in answer]
-            if not options or not answer:
-                raise ContentError(f"{path}: вопрос {raw_q.get('id', index)} без вариантов/ответа")
-            if any(a < 0 or a >= len(options) for a in answer):
-                raise ContentError(f"{path}: индекс ответа вне диапазона у {raw_q.get('id')}")
-        questions.append(
-            Question(
-                qid=str(raw_q.get("id") or f"q{index}"),
-                qtype=qtype,
-                question=str(raw_q.get("question", "")).strip(),
-                options=options,
-                answer=answer if qtype != "text" else [],
-                answer_text=[str(a) for a in answer] if qtype == "text" else [],
-                explanation=str(raw_q.get("explanation", "")).strip(),
-                tags=list(raw_q.get("tags", [])),
-            )
-        )
+def _load_question(raw_question: dict, index: int, path: Path) -> Question:
+    if not isinstance(raw_question, dict):
+        raise ContentError(f"{path}: вопрос {index} должен быть объектом")
+    qtype = str(raw_question.get("type", "single"))
+    if qtype not in {"single", "multiple", "text"}:
+        raise ContentError(f"{path}: неизвестный тип вопроса {qtype!r}")
+    options = list(raw_question.get("options", []))
+    answer = raw_question.get("answer", [])
+    answer = answer if isinstance(answer, list) else [answer]
+    if qtype in {"single", "multiple"}:
+        try:
+            answer = [int(option) for option in answer]
+        except (TypeError, ValueError) as error:
+            raise ContentError(f"{path}: некорректный индекс ответа у {raw_question.get('id', index)}") from error
+        question_id = raw_question.get("id", index)
+        if not options or not answer:
+            raise ContentError(f"{path}: вопрос {question_id} без вариантов/ответа")
+        if qtype == "single" and len(answer) != 1:
+            raise ContentError(f"{path}: single-вопрос {question_id} должен иметь один правильный ответ")
+        if any(option < 0 or option >= len(options) for option in answer):
+            raise ContentError(f"{path}: индекс ответа вне диапазона у {question_id}")
+    elif not answer:
+        raise ContentError(f"{path}: text-вопрос {raw_question.get('id', index)} без ответа")
+    return Question(
+        qid=str(raw_question.get("id") or f"q{index}"),
+        qtype=qtype,
+        question=str(raw_question.get("question", "")).strip(),
+        options=options,
+        answer=answer if qtype != "text" else [],
+        answer_text=[str(item) for item in answer] if qtype == "text" else [],
+        explanation=str(raw_question.get("explanation", "")).strip(),
+        tags=list(raw_question.get("tags", [])),
+    )
+
+
+def _quiz_from_data(module_id: str, data: dict, path: Path) -> Quiz:
+    raw_questions = data.get("questions", [])
+    if not isinstance(raw_questions, list):
+        raise ContentError(f"{path}: questions должен быть списком")
+    questions = [_load_question(raw_question, index, path) for index, raw_question in enumerate(raw_questions, start=1)]
     if not questions:
         raise ContentError(f"{path}: нет вопросов")
+    ids = [question.qid for question in questions]
+    if len(ids) != len(set(ids)):
+        raise ContentError(f"{path}: повторяются id вопросов")
+    try:
+        pass_score = int(data.get("pass_score", 80))
+    except (TypeError, ValueError) as error:
+        raise ContentError(f"{path}: pass_score должен быть целым числом") from error
+    if not 0 < pass_score <= 100:
+        raise ContentError(f"{path}: pass_score должен быть от 1 до 100")
     return Quiz(
         module_id=module_id,
         title=str(data.get("title", module_id)),
-        pass_score=int(data.get("pass_score", 80)),
+        pass_score=pass_score,
         questions=questions,
     )
+
+
+def _load_quiz(module_id: str, path: Path) -> Quiz:
+    return _quiz_from_data(module_id, _read_json(path), path)
+
+
+def _load_lesson_quizzes(
+    module_id: str,
+    path: Path,
+    lessons: list[Lesson],
+    module_quiz: Quiz,
+) -> dict[str, Quiz]:
+    data = _read_json(path)
+    raw_lessons = data.get("lessons", {})
+    if not isinstance(raw_lessons, dict):
+        raise ContentError(f"{path}: lessons должен быть объектом")
+    expected_ids = {lesson.lesson_id for lesson in lessons}
+    if set(raw_lessons) != expected_ids:
+        missing = sorted(expected_ids - set(raw_lessons))
+        extra = sorted(set(raw_lessons) - expected_ids)
+        raise ContentError(f"{path}: несоответствие уроков (нет {missing}, лишние {extra})")
+
+    try:
+        default_pass_score = int(data.get("pass_score", 67))
+    except (TypeError, ValueError) as error:
+        raise ContentError(f"{path}: pass_score должен быть целым числом") from error
+    question_bank = {question.qid: question for question in module_quiz.questions}
+    result: dict[str, Quiz] = {}
+    for lesson in lessons:
+        raw_quiz = raw_lessons[lesson.lesson_id]
+        if not isinstance(raw_quiz, dict):
+            raise ContentError(f"{path}: тест урока {lesson.lesson_id} должен быть объектом")
+        question_ids = raw_quiz.get("question_ids", [])
+        raw_extra = raw_quiz.get("questions", [])
+        if not isinstance(question_ids, list) or any(not isinstance(item, str) for item in question_ids):
+            raise ContentError(f"{path}: question_ids для {lesson.lesson_id} должен быть списком строк")
+        if not isinstance(raw_extra, list):
+            raise ContentError(f"{path}: questions для {lesson.lesson_id} должен быть списком")
+        questions: list[Question] = []
+        for question_id in question_ids:
+            question = question_bank.get(question_id)
+            if question is None:
+                raise ContentError(f"{path}: неизвестный вопрос {question_id!r} в тесте {lesson.lesson_id}")
+            questions.append(question)
+        questions.extend(
+            _load_question(raw_question, index, path)
+            for index, raw_question in enumerate(raw_extra, start=1)
+        )
+        if len(questions) != 3:
+            raise ContentError(f"{path}: тест {lesson.lesson_id} должен содержать ровно 3 вопроса")
+        ids = [question.qid for question in questions]
+        if len(ids) != len(set(ids)):
+            raise ContentError(f"{path}: повторяются вопросы в тесте {lesson.lesson_id}")
+        try:
+            pass_score = int(raw_quiz.get("pass_score", default_pass_score))
+        except (TypeError, ValueError) as error:
+            raise ContentError(f"{path}: pass_score для {lesson.lesson_id} должен быть целым числом") from error
+        if not 0 < pass_score <= 100:
+            raise ContentError(f"{path}: pass_score для {lesson.lesson_id} должен быть от 1 до 100")
+        quiz_id = f"lesson:{module_id}/{lesson.lesson_id}"
+        result[lesson.lesson_id] = Quiz(
+            module_id=quiz_id,
+            title=str(raw_quiz.get("title", lesson.title)),
+            pass_score=pass_score,
+            questions=questions,
+        )
+    return result
 
 
 def _load_practice(module_id: str, path: Path) -> Practice:
@@ -321,7 +413,16 @@ class Course:
             if not lessons:
                 raise ContentError(f"{module_dir}: нет уроков")
             quiz_file = module_dir / "quiz.json"
+            lesson_quizzes_file = module_dir / "lesson_quizzes.json"
             practice_file = module_dir / "practice.json"
+            module_quiz = _load_quiz(meta["id"], quiz_file) if quiz_file.exists() else None
+            if module_quiz is None:
+                raise ContentError(f"{module_dir}: нет quiz.json")
+            if not lesson_quizzes_file.exists():
+                raise ContentError(f"{module_dir}: нет lesson_quizzes.json")
+            lesson_quizzes = _load_lesson_quizzes(meta["id"], lesson_quizzes_file, lessons, module_quiz)
+            for lesson in lessons:
+                lesson.quiz = lesson_quizzes[lesson.lesson_id]
             modules.append(
                 Module(
                     module_id=meta["id"],
@@ -334,7 +435,7 @@ class Course:
                     tags=list(meta.get("tags", [])),
                     path=module_dir,
                     lessons=lessons,
-                    quiz=_load_quiz(meta["id"], quiz_file) if quiz_file.exists() else None,
+                    quiz=module_quiz,
                     practice=_load_practice(meta["id"], practice_file) if practice_file.exists() else None,
                 )
             )
@@ -356,16 +457,25 @@ class Course:
         return [lesson for module in self.modules for lesson in module.lessons]
 
     def all_questions(self) -> list[Question]:
+        """Вопросы больших модульных тестов (используются в итоговом экзамене)."""
         return [q for module in self.modules if module.quiz for q in module.quiz.questions]
+
+    def all_lesson_questions(self) -> list[Question]:
+        """Вопросы коротких проверок после уроков."""
+        return [q for lesson in self.all_lessons() if lesson.quiz for q in lesson.quiz.questions]
 
     def all_tasks(self) -> list[Task]:
         return [t for module in self.modules if module.practice for t in module.practice.tasks]
 
     def stats(self) -> dict[str, int]:
+        module_questions = len(self.all_questions())
+        lesson_questions = len(self.all_lesson_questions())
         return {
             "modules": len(self.modules),
             "lessons": len(self.all_lessons()),
-            "questions": len(self.all_questions()),
+            "questions": module_questions + lesson_questions,
+            "module_questions": module_questions,
+            "lesson_questions": lesson_questions,
             "tasks": len(self.all_tasks()),
             "minutes": sum(m.total_minutes for m in self.modules),
         }

@@ -118,7 +118,7 @@ class DashboardView(QWidget):
                 widget.deleteLater()
         self.cards.addWidget(_card("Уроков пройдено", f"{summary['lessons_done']}/{summary['lessons_total']}"), 0, 0)
         self.cards.addWidget(_card("Задач решено", f"{summary['tasks_done']}/{summary['tasks_total']}"), 0, 1)
-        self.cards.addWidget(_card("Тестов сдано", f"{summary['quizzes_passed']}/{summary['modules_total']}"), 0, 2)
+        self.cards.addWidget(_card("Тестов сдано", f"{summary['quizzes_passed']}/{summary['quizzes_total']}"), 0, 2)
         self.cards.addWidget(_card("Дней занятий", str(summary["days_active"])), 0, 3)
         self.progress.setValue(summary["overall_percent"])
 
@@ -139,6 +139,10 @@ class DashboardView(QWidget):
                 )
             percent = self.store.quiz_percent(module.module_id)
             status = "🏆 пройден" if self.store.quiz_passed(module.module_id) else "в работе"
+            lesson_quizzes = [lesson.quiz for lesson in module.lessons if lesson.quiz]
+            lesson_quizzes_passed = sum(
+                1 for quiz in lesson_quizzes if self.store.quiz_passed(quiz.module_id)
+            )
             row = QFrame()
             row.setFrameShape(QFrame.StyledPanel)
             row.setStyleSheet(
@@ -148,7 +152,8 @@ class DashboardView(QWidget):
             text = QLabel(
                 f"<b>{module.order}. {module.title}</b> <span style='color:#888'>· {status}</span><br>"
                 f"<span style='color:#888'>уроки {done_lessons}/{module.lesson_count} · "
-                f"практика {done_tasks}/{module.task_count} · тест {percent}%</span>"
+                f"мини-тесты {lesson_quizzes_passed}/{len(lesson_quizzes)} · "
+                f"практика {done_tasks}/{module.task_count} · тест модуля {percent}%</span>"
             )
             text.setTextFormat(Qt.RichText)
             button = QPushButton("Открыть")

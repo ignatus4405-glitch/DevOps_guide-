@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "k8s-architecture": {
+      "question_ids": [
+        "q1",
+        "q12",
+        "q8"
+      ],
+      "questions": []
+    },
+    "k8s-manifests": {
+      "question_ids": [
+        "q3",
+        "q7"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Что должно выполняться для Deployment Kubernetes?",
+          "options": [
+            "Selector Deployment обязан быть пустым, даже если в шаблоне есть labels",
+            "Значения selector Deployment должны совпадать с labels шаблона pod",
+            "Labels pod должны совпадать с именем namespace, а не selector"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Контроллер Deployment управляет pod'ами, которые соответствуют selector; selector должен подходить шаблону.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "k8s-operations": {
+      "question_ids": [
+        "q5",
+        "q6"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Что нужно учитывать при использовании NetworkPolicy?",
+          "options": [
+            "NetworkPolicy автоматически шифрует все данные в etcd",
+            "Политики ограничивают pod-трафик только если используемый CNI умеет их применять",
+            "NetworkPolicy заменяет Kubernetes RBAC"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "NetworkPolicy задаёт сетевые правила, но их фактическое применение зависит от CNI-плагина.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "k8s-networking": {
+      "question_ids": [
+        "q11",
+        "q12",
+        "q13"
+      ],
+      "questions": []
+    },
+    "k8s-config-secrets": {
+      "question_ids": [
+        "q15",
+        "q16",
+        "q30"
+      ],
+      "questions": []
+    },
+    "k8s-storage": {
+      "question_ids": [
+        "q17",
+        "q19",
+        "q18"
+      ],
+      "questions": []
+    },
+    "k8s-rbac": {
+      "question_ids": [
+        "q20",
+        "q21"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Как проверить, может ли CI service account выполнить действие в namespace, не запуская сам пайплайн?",
+          "options": [
+            "Выдать аккаунту cluster-admin и проверить, исчезла ли ошибка",
+            "Использовать `kubectl auth can-i` с нужным действием, namespace и идентичностью",
+            "Запустить pod с privileged: true и посмотреть его логи"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "`kubectl auth can-i` проверяет решение авторизации RBAC без выполнения запрошенного изменения.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "k8s-troubleshooting": {
+      "question_ids": [
+        "q22",
+        "q23",
+        "q4"
+      ],
+      "questions": []
+    },
+    "helm": {
+      "question_ids": [
+        "q25",
+        "q26",
+        "q31"
+      ],
+      "questions": []
+    },
+    "scheduler-operators": {
+      "question_ids": [
+        "q31",
+        "q29",
+        "q32"
+      ],
+      "questions": []
+    },
+    "multi-tenancy": {
+      "question_ids": [],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Что namespace Kubernetes сам по себе не обеспечивает?",
+          "options": [
+            "Разделение имён большинства namespaced-объектов",
+            "Полную изоляцию сети, ядра узла и прав доступа между командами",
+            "Возможность сгруппировать объекты по среде"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Namespace — логическая область API, а не отдельная VM или автоматическая сетевая граница.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Зачем использовать вместе ResourceQuota и LimitRange?",
+          "options": [
+            "Оба объекта только шифруют секреты",
+            "Quota задаёт маршруты, а LimitRange управляет DNS",
+            "Quota ограничивает суммарное потребление namespace, а LimitRange задаёт или проверяет ограничения отдельных объектов"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "Эти механизмы работают на разных уровнях: общий бюджет ресурсов и правила для отдельного ресурса.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-3",
+          "type": "single",
+          "question": "Как ограничить сетевое взаимодействие tenant-pod'ов при поддержке CNI?",
+          "options": [
+            "Задать NetworkPolicy, часто начиная с default-deny и добавляя только необходимые разрешения",
+            "Переименовать namespace и оставить все сетевые правила открытыми",
+            "Добавить больше labels без NetworkPolicy"
+          ],
+          "answer": [
+            0
+          ],
+          "explanation": "NetworkPolicy позволяет явно разрешить нужный ingress/egress; одна лишь граница namespace трафик не блокирует.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "autoscaling": {
+      "question_ids": [],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Относительно чего HPA обычно вычисляет CPU utilization pod'а?",
+          "options": [
+            "Относительно limits памяти всех pod'ов кластера",
+            "Относительно CPU requests контейнеров; без requests метрика utilization может быть недоступна для расчёта",
+            "Относительно числа worker-нод независимо от метрик"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Для utilization HPA сопоставляет потребление CPU с requests, поэтому запросы ресурсов должны быть заданы.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "В каком случае KEDA особенно полезна поверх обычного CPU-based HPA?",
+          "options": [
+            "Когда требуется вручную менять число нод раз в год",
+            "Когда приложение вообще не имеет метрик и внешних событий",
+            "Когда масштабирование нужно связать с внешним событием, например длиной очереди"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "KEDA предоставляет event-driven scalers, в том числе для очередей и других внешних источников.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-3",
+          "type": "single",
+          "question": "Почему HPA и VPA могут конфликтовать, если одновременно управляют CPU одного workload?",
+          "options": [
+            "VPA меняет requests, а HPA может считать процент от этих requests и менять replicas, создавая взаимодействующие циклы",
+            "HPA управляет только DNS, а VPA — только TLS",
+            "Kubernetes запрещает запускать любые два контроллера в одном кластере"
+          ],
+          "answer": [
+            0
+          ],
+          "explanation": "Изменение requests со стороны VPA влияет на utilization, который использует HPA; стратегии нужно согласовать.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "service-mesh": {
+      "question_ids": [],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Чем control plane service mesh отличается от data plane?",
+          "options": [
+            "Control plane хранит бизнес-данные, data plane компилирует приложение",
+            "Control plane распространяет конфигурацию и политики, data plane проксирует прикладной трафик",
+            "Это два названия одной базы данных"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Control plane управляет конфигурацией; прокси в data plane применяют её к трафику.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Что обеспечивает mTLS между workloads в mesh?",
+          "options": [
+            "Автоматическое резервное копирование базы данных",
+            "Защиту от всех ошибок логики приложения",
+            "Шифрование соединения и взаимную проверку идентичности сервисов, но не авторизацию конечного пользователя приложения"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "mTLS защищает и аутентифицирует соединение сервис-сервис, но не заменяет прикладную авторизацию.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-3",
+          "type": "single",
+          "question": "Какое типичное отличие ambient-подхода от sidecar-модели?",
+          "options": [
+            "Ambient убирает обязательный proxy sidecar из каждого pod, уменьшая per-pod накладные расходы, но добавляет собственные компоненты и компромиссы",
+            "Ambient переносит каждый pod в отдельную виртуальную машину",
+            "Sidecar и ambient всегда обеспечивают одинаковую архитектуру без различий"
+          ],
+          "answer": [
+            0
+          ],
+          "explanation": "Ambient меняет место выполнения прокси и профиль накладных расходов; решение зависит от требований и сложности эксплуатации.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    }
+  }
+}

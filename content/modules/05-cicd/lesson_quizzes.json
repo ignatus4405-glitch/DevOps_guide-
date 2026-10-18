@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "pipeline-basics": {
+      "question_ids": [
+        "q11",
+        "q16",
+        "q12"
+      ],
+      "questions": []
+    },
+    "cd-and-deploy": {
+      "question_ids": [
+        "q5",
+        "q8",
+        "q24"
+      ],
+      "questions": []
+    },
+    "pipeline-design": {
+      "question_ids": [
+        "q11",
+        "q12",
+        "q1"
+      ],
+      "questions": []
+    },
+    "speed-and-cache": {
+      "question_ids": [
+        "q13",
+        "q27",
+        "q14"
+      ],
+      "questions": []
+    },
+    "secrets-in-ci": {
+      "question_ids": [
+        "q15",
+        "q16",
+        "q17"
+      ],
+      "questions": []
+    },
+    "testing-strategy": {
+      "question_ids": [
+        "q18",
+        "q19",
+        "q20"
+      ],
+      "questions": []
+    },
+    "github-actions-deep": {
+      "question_ids": [
+        "q16",
+        "q25",
+        "q12"
+      ],
+      "questions": []
+    },
+    "release-engineering": {
+      "question_ids": [
+        "q22",
+        "q23",
+        "q10"
+      ],
+      "questions": []
+    },
+    "dora-and-flow": {
+      "question_ids": [],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Какие четыре метрики DORA разбираются в этом курсе?",
+          "options": [
+            "Число строк кода, размер команды, количество серверов и возраст проекта",
+            "Частота деплоя, lead time изменений, доля неудачных изменений и время восстановления (MTTR)",
+            "Средняя загрузка CPU, число контейнеров, размер образа и количество веток"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "DORA измеряет скорость и стабильность доставки: частоту, lead time, change failure rate и время восстановления.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Как связаны WIP, throughput и lead time по закону Литтла?",
+          "options": [
+            "WIP всегда равен числу инженеров в команде",
+            "Рост WIP автоматически сокращает lead time при любом throughput",
+            "WIP = throughput × lead time; при том же throughput избыточный WIP увеличивает время прохождения"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "Формула Литтла связывает число задач в системе, скорость их завершения и среднее время ожидания.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-3",
+          "type": "single",
+          "question": "Если большая часть lead time уходит на ожидание ревью и согласований, что исследовать в первую очередь?",
+          "options": [
+            "Очереди, hand-off и задержки обратной связи, а не только длительность сборки",
+            "Повысить загрузку каждого разработчика до 100 %",
+            "Добавить больше обязательных согласований для каждой задачи"
+          ],
+          "answer": [
+            0
+          ],
+          "explanation": "Ускорение небольшого шага CI мало поможет, если основная задержка — ожидание между этапами.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "release-strategies": {
+      "question_ids": [
+        "q28",
+        "q30"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Что означает `maxUnavailable: 0` при rolling update в Kubernetes?",
+          "options": [
+            "Все старые pod'ы немедленно удаляются до запуска новых",
+            "Во время обновления нельзя уменьшать число доступных реплик ниже текущего; может потребоваться запас по `maxSurge`",
+            "Readiness-проверки отключаются на время деплоя"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Нулевая недоступность требует сначала поднять новые готовые реплики либо иметь достаточный surge-ресурс.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "gitops": {
+      "question_ids": [
+        "q4"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Что в GitOps называют drift?",
+          "options": [
+            "Случайное изменение DNS TTL до начала сборки",
+            "Расхождение фактического состояния кластера с желаемым состоянием в Git",
+            "Разницу между размером source-кода и Docker-образа"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Контроллер GitOps сравнивает состояние кластера с декларацией в Git и выявляет drift.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Почему GitOps-параметр `prune` нужно включать осознанно?",
+          "options": [
+            "Он только форматирует YAML и никогда не меняет ресурсы",
+            "Он отключает reconciler и оставляет кластер без контроллеров",
+            "Он может удалить ресурсы, которых больше нет в источнике желаемого состояния"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "Prune синхронизирует Git с кластером удалением отсутствующих в декларации ресурсов, поэтому важны область действия и review.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "build-systems": {
+      "question_ids": [
+        "q29",
+        "q27",
+        "q13"
+      ],
+      "questions": []
+    }
+  }
+}

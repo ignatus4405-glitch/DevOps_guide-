@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "images-and-containers": {
+      "question_ids": [
+        "q9",
+        "q7",
+        "q4"
+      ],
+      "questions": []
+    },
+    "compose-and-security": {
+      "question_ids": [
+        "q8",
+        "q3",
+        "q10"
+      ],
+      "questions": []
+    },
+    "dockerfile": {
+      "question_ids": [
+        "q2",
+        "q14",
+        "q24"
+      ],
+      "questions": []
+    },
+    "docker-networking": {
+      "question_ids": [
+        "q15",
+        "q16"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "К чему обращается `localhost` внутри контейнера?",
+          "options": [
+            "К публичному DNS-резолверу Docker Hub",
+            "К сетевому namespace самого контейнера, а не автоматически к хосту или соседнему контейнеру",
+            "К первому контейнеру, который был запущен на хосте"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Каждый контейнер имеет собственный loopback; для связи используют опубликованный порт или DNS-имя в общей сети.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "volumes": {
+      "question_ids": [
+        "q4",
+        "q17",
+        "q18"
+      ],
+      "questions": []
+    },
+    "compose-deep": {
+      "question_ids": [
+        "q6",
+        "q20",
+        "q28"
+      ],
+      "questions": []
+    },
+    "security-deep": {
+      "question_ids": [
+        "q21",
+        "q22",
+        "q23"
+      ],
+      "questions": []
+    },
+    "container-internals": {
+      "question_ids": [
+        "q29"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Что дают Linux namespaces контейнеру?",
+          "options": [
+            "Полную виртуализацию отдельного ядра для каждого контейнера",
+            "Изоляцию представлений ресурсов и пространств имён, например процессов, сети и mount points",
+            "Автоматическое шифрование всех файлов контейнера"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Namespaces изолируют видимость ресурсов, но контейнеры по умолчанию используют общее ядро хоста.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Что обычно происходит при записи в файл, пришедший из нижнего слоя overlayfs?",
+          "options": [
+            "Нижний слой всегда перезаписывается напрямую",
+            "Все слои образа удаляются и создаются заново",
+            "Файл копируется в writable upper layer (copy-up), после чего изменения хранятся там"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "Overlayfs сохраняет базовые read-only слои, а изменённая копия файла появляется в верхнем writable-слое.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "registry": {
+      "question_ids": [
+        "q29"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Зачем registry хранит manifest list (или OCI image index)?",
+          "options": [
+            "Чтобы автоматически исправлять уязвимости в образе без новой сборки",
+            "Чтобы по платформе клиента выбрать подходящий образ, например amd64 или arm64",
+            "Чтобы заменить digest изменяемым тегом latest"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Manifest list связывает платформенные манифесты и позволяет получить подходящий вариант образа.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Что должна защищать политика жизненного цикла registry?",
+          "options": [
+            "Удалять любой образ сразу после первого pull",
+            "Перезаписывать digest прод-образа при каждом запуске CI",
+            "Удалять устаревшие артефакты по правилам, сохраняя нужные релизы и образы, на которые ссылаются среды"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "Retention снижает стоимость хранения, но должна сохранять воспроизводимые релизы и необходимые для отката образы.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..content import Module, Question
+from ..content import Module, Question, Quiz
 from ..markdown_renderer import render_plain
 
 
@@ -90,6 +90,8 @@ class QuizWidget(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.module: Module | None = None
+        self.quiz: Quiz | None = None
+        self.quiz_title = ""
         self.question_widgets: list[QuestionWidget] = []
 
         self.title_label = QLabel("", self)
@@ -136,12 +138,25 @@ class QuizWidget(QWidget):
 
     def load(self, module: Module) -> None:
         self.module = module
-        self.title_label.setText(f"Тест: {module.title}")
-        quiz = module.quiz
-        if quiz is None:
+        if module.quiz is None:
+            self.quiz = None
+            self.quiz_title = module.title
+            self.title_label.setText(f"Тест: {module.title}")
             self.subtitle.setText("Для модуля не добавлен тест")
             self._clear()
+            self.progress.setValue(0)
+            self.result_label.clear()
+            self.check_button.setEnabled(False)
             return
+        self.load_quiz(module.title, module.quiz)
+        self.module = module
+
+    def load_quiz(self, title: str, quiz: Quiz) -> None:
+        """Показывает тест, в том числе короткий тест отдельного урока."""
+        self.module = None
+        self.quiz = quiz
+        self.quiz_title = title
+        self.title_label.setText(f"Тест: {title}")
         self.subtitle.setText(
             f"{quiz.max_score} вопросов · порог сдачи {quiz.pass_score}% · "
             "отвечайте без подсказок, разбор появится после проверки"
@@ -165,9 +180,9 @@ class QuizWidget(QWidget):
                 widget.deleteLater()
 
     def check(self) -> None:
-        if self.module is None or self.module.quiz is None:
+        if self.quiz is None:
             return
-        quiz = self.module.quiz
+        quiz = self.quiz
         correct = 0
         for widget in self.question_widgets:
             ok = widget.question.is_correct(widget.answer())
@@ -184,8 +199,10 @@ class QuizWidget(QWidget):
             f"{verdict}: {correct} из {total} ({percent}%), порог {quiz.pass_score}%</span>"
         )
         self.check_button.setEnabled(False)
-        self.finished.emit(self.module.module_id, correct, total, passed)
+        self.finished.emit(quiz.module_id, correct, total, passed)
 
     def reload(self) -> None:
         if self.module is not None:
             self.load(self.module)
+        elif self.quiz is not None:
+            self.load_quiz(self.quiz_title, self.quiz)

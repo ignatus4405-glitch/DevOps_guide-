@@ -4,7 +4,7 @@
 Запускается в CI перед тестами и сборкой: если контент сломан, релиз не выйдет.
 Проверяет:
   * структуру каталогов и обязательные файлы модулей;
-  * корректность JSON (module.json, quiz.json, practice.json, glossary.json);
+  * корректность JSON (module.json, quiz.json, lesson_quizzes.json, practice.json, glossary.json);
   * уникальность id модулей/уроков/задач;
   * существование всех иллюстраций, на которые ссылаются уроки;
   * длину уроков и наличие front matter;
@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from devops_academy.content import ContentError, Course  # noqa: E402
 
 IMG_RE = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
-REQUIRED_MODULE_FILES = ("module.json", "quiz.json", "practice.json")
+REQUIRED_MODULE_FILES = ("module.json", "quiz.json", "lesson_quizzes.json", "practice.json")
 MIN_LESSON_CHARS = 1800
 MIN_QUESTIONS = 8
 MIN_TASKS = 3
@@ -56,7 +56,12 @@ def main() -> int:
             check(errors, (module_dir / name).exists(), f"{module_dir.name}: нет {name}")
         lessons = sorted((module_dir / "lessons").glob("*.md"))
         check(errors, bool(lessons), f"{module_dir.name}: нет уроков")
-        for path in (module_dir / "module.json", module_dir / "quiz.json", module_dir / "practice.json"):
+        for path in (
+            module_dir / "module.json",
+            module_dir / "quiz.json",
+            module_dir / "lesson_quizzes.json",
+            module_dir / "practice.json",
+        ):
             if not path.exists():
                 continue
             try:
@@ -96,6 +101,19 @@ def main() -> int:
         for lesson in module.lessons:
             check(errors, len(lesson.body) >= MIN_LESSON_CHARS,
                   f"{lesson.key}: урок короче {MIN_LESSON_CHARS} символов ({len(lesson.body)})")
+            headings = list(re.finditer(
+                r"(?im)^#{2,6}\s+[^\n]*(?:проверьте себя|проверить себя|самопровер)[^\n]*$",
+                lesson.body,
+            ))
+            question_counts = []
+            for heading in headings:
+                rest = lesson.body[heading.end():]
+                next_heading = re.search(r"(?m)^#{1,6}\s+", rest)
+                section = rest[:next_heading.start()] if next_heading else rest
+                question_counts.append(len(re.findall(r"(?m)^\s*\d+\.\s+", section)))
+            check(errors, bool(headings), f"{lesson.key}: нет текстового раздела самопроверки")
+            check(errors, max(question_counts, default=0) >= 3,
+                  f"{lesson.key}: в самопроверке {max(question_counts, default=0)} текстовых вопросов, нужно не меньше 3")
             for target in IMG_RE.findall(lesson.body):
                 path = (content_dir / target).resolve()
                 check(errors, path.exists(), f"{lesson.key}: нет иллюстрации {target}")
@@ -137,8 +155,27 @@ def main() -> int:
                 elif question.qtype == "text":
                     check(errors, bool(question.answer_text),
                           f"{module.module_id}/{question.qid}: нет допустимых ответов")
+        # 7. Короткий тест после каждого урока — ровно три автопроверяемых вопроса.
+        for lesson in module.lessons:
+            quiz = lesson.quiz
+            check(errors, quiz is not None, f"{lesson.key}: нет теста после урока")
+            if quiz is None:
+                continue
+            check(errors, len(quiz.questions) == 3,
+                  f"{lesson.key}: в тесте {len(quiz.questions)} вопросов, нужно ровно 3")
+            check(errors, 0 < quiz.pass_score <= 100,
+                  f"{lesson.key}: некорректный порог теста")
+            for question in quiz.questions:
+                check(errors, bool(question.explanation),
+                      f"{lesson.key}/{question.qid}: нет пояснения")
+                if question.qtype in ("single", "multiple"):
+                    check(errors, len(question.options) >= 3,
+                          f"{lesson.key}/{question.qid}: меньше 3 вариантов")
+                elif question.qtype == "text":
+                    check(errors, bool(question.answer_text),
+                          f"{lesson.key}/{question.qid}: нет допустимых ответов")
 
-    # 7. Итоги
+    # 8. Итоги
     stats = course.stats()
     print("Контент: ", ", ".join(f"{k}={v}" for k, v in stats.items()))
     for module in course.modules:

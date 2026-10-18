@@ -67,14 +67,32 @@ def test_summary_counts(course, tmp_path, monkeypatch):
     summary = store.summary(course)
     assert summary["lessons_total"] == len(course.all_lessons())
     assert summary["tasks_total"] == len(course.all_tasks())
-    quiz_count = sum(1 for module in course.modules if module.quiz and module.quiz.questions)
-    assert summary["modules_total"] == quiz_count
+    module_quiz_count = sum(1 for module in course.modules if module.quiz and module.quiz.questions)
+    lesson_quiz_count = len(course.all_lessons())
+    assert summary["modules_total"] == module_quiz_count
+    assert summary["lesson_quizzes_total"] == lesson_quiz_count
+    assert summary["quizzes_total"] == module_quiz_count + lesson_quiz_count
     assert summary["overall_percent"] == 0
     for lesson in course.all_lessons():
         store.set_lesson_done(lesson.key, True)
     summary = store.summary(course)
     assert summary["lessons_done"] == summary["lessons_total"]
     assert 0 < summary["overall_percent"] <= 100
+
+
+def test_lesson_quiz_results_are_counted_and_exported(course, tmp_path, monkeypatch):
+    store = make_store(tmp_path, monkeypatch)
+    lesson = course.modules[0].lessons[0]
+    assert lesson.quiz is not None
+    store.save_quiz_result(lesson.quiz.module_id, 2, 3, True)
+
+    summary = store.summary(course)
+    assert summary["lesson_quizzes_passed"] == 1
+    assert summary["quizzes_passed"] == 1
+    assert summary["quizzes_total"] == len(course.modules) + len(course.all_lessons())
+    report = store.export_markdown(course)
+    assert "Тесты уроков" in report
+    assert "1/6" in report
 
 
 def test_export_markdown_report(course, tmp_path, monkeypatch):
@@ -88,14 +106,19 @@ def test_export_markdown_report(course, tmp_path, monkeypatch):
 
 def test_progress_round_trip(course, tmp_path, monkeypatch):
     store = make_store(tmp_path, monkeypatch)
-    store.set_lesson_done(course.modules[1].lessons[0].key, True)
+    lesson = course.modules[1].lessons[0]
+    store.set_lesson_done(lesson.key, True)
     store.set_task_done(f"{course.modules[0].module_id}/plan", True)
+    assert lesson.quiz is not None
+    store.save_quiz_result(lesson.quiz.module_id, 2, 3, True)
     store.save()
 
     same_settings = QSettings(str(tmp_path / "settings.ini"), QSettings.IniFormat)
     restored = ProgressStore(same_settings)
-    assert restored.is_lesson_done(course.modules[1].lessons[0].key)
+    assert restored.is_lesson_done(lesson.key)
     assert restored.is_task_done(f"{course.modules[0].module_id}/plan")
+    assert restored.quiz_passed(lesson.quiz.module_id)
+    assert restored.quiz_percent(lesson.quiz.module_id) == 67
 
 
 def test_corrupted_progress_does_not_crash(tmp_path, monkeypatch):

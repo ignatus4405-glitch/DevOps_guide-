@@ -26,6 +26,7 @@ class LessonView(QWidget):
 
     completed_toggled = Signal(str, bool)
     navigate = Signal(int)  # +1 следующая, -1 предыдущая
+    quiz_requested = Signal()
 
     def __init__(self, content_root, glossary: dict, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -47,6 +48,10 @@ class LessonView(QWidget):
         self.done_box = QCheckBox("Урок изучен", self)
         self.done_box.toggled.connect(self._on_done_toggled)
 
+        self.quiz_button = QPushButton("Пройти тест · 3 вопроса", self)
+        self.quiz_button.setObjectName("Secondary")
+        self.quiz_button.clicked.connect(self.quiz_requested.emit)
+
         self.prev_button = QPushButton("← Предыдущий", self)
         self.next_button = QPushButton(NEXT_LABEL, self)
         self.next_button.setObjectName("Primary")
@@ -57,6 +62,7 @@ class LessonView(QWidget):
         nav.addWidget(self.prev_button)
         nav.addStretch(1)
         nav.addWidget(self.done_box)
+        nav.addWidget(self.quiz_button)
         nav.addStretch(1)
         nav.addWidget(self.next_button)
 
@@ -77,6 +83,7 @@ class LessonView(QWidget):
         has_prev: bool | None = None,
         has_next: bool | None = None,
         next_label: str = NEXT_LABEL,
+        quiz_score: int | None = None,
     ) -> None:
         """Показывает урок.
 
@@ -97,12 +104,26 @@ class LessonView(QWidget):
         self.done_box.blockSignals(True)
         self.done_box.setChecked(done)
         self.done_box.blockSignals(False)
+        self.set_quiz_score(quiz_score)
 
         if has_prev is None:
             has_prev = position > 0
         if has_next is None:
             has_next = position < module.lesson_count - 1
         self.set_navigation(has_prev, has_next, next_label)
+
+    def set_quiz_score(self, score: int | None) -> None:
+        """Обновляет кнопку необязательного теста после урока."""
+        has_quiz = self.lesson is not None and self.lesson.quiz is not None
+        self.quiz_button.setVisible(has_quiz)
+        if not has_quiz:
+            return
+        if score is None:
+            self.quiz_button.setText(f"Пройти тест · {self.lesson.quiz.max_score} вопроса")
+            self.quiz_button.setToolTip("Необязательная короткая проверка знаний по этому уроку")
+        else:
+            self.quiz_button.setText(f"Повторить тест · лучший результат {score}%")
+            self.quiz_button.setToolTip("Тест можно пройти повторно; лучший результат сохранён")
 
     def set_navigation(self, has_prev: bool, has_next: bool, next_label: str = NEXT_LABEL) -> None:
         """Включает кнопки перехода и подписывает «Следующий» на краю курса."""
