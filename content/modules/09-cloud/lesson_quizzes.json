@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "cloud-architecture": {
+      "question_ids": [
+        "q8",
+        "q2",
+        "q17"
+      ],
+      "questions": []
+    },
+    "cloud-cost-reliability": {
+      "question_ids": [
+        "q5",
+        "q30",
+        "q22"
+      ],
+      "questions": []
+    },
+    "iam-deep": {
+      "question_ids": [
+        "q12",
+        "q13",
+        "q26"
+      ],
+      "questions": []
+    },
+    "vpc": {
+      "question_ids": [
+        "q15",
+        "q16",
+        "q14"
+      ],
+      "questions": []
+    },
+    "managed-services": {
+      "question_ids": [
+        "q21",
+        "q19",
+        "q20"
+      ],
+      "questions": []
+    },
+    "migration": {
+      "question_ids": [
+        "q23",
+        "q22",
+        "q3"
+      ],
+      "questions": []
+    },
+    "well-architected": {
+      "question_ids": [
+        "q27",
+        "q5"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Как соотносятся Availability Zone и Region в облаке?",
+          "options": [
+            "Region всегда является одной виртуальной машиной внутри одной зоны",
+            "Region — географическая область, содержащая несколько изолированных Availability Zones",
+            "Availability Zone — глобальная сеть всех облачных регионов"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Несколько зон в регионе помогают проектировать отказоустойчивость без размещения всего в одной зоне.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "disaster-recovery": {
+      "question_ids": [
+        "q22",
+        "q3",
+        "q7"
+      ],
+      "questions": []
+    },
+    "finops": {
+      "question_ids": [
+        "q30",
+        "q9",
+        "q5"
+      ],
+      "questions": []
+    }
+  }
+}

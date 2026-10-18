@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -224,6 +225,7 @@ class MainWindow(QMainWindow):
         self.dashboard.reset_progress.connect(self.reset_progress)
         self.lesson_view.completed_toggled.connect(self.on_lesson_toggled)
         self.lesson_view.navigate.connect(self.navigate_lesson)
+        self.lesson_view.quiz_requested.connect(self.open_lesson_quiz)
         self.practice_view.task_solved.connect(self.on_task_solved)
         self.quiz_view.finished.connect(self.on_quiz_finished)
 
@@ -278,6 +280,7 @@ class MainWindow(QMainWindow):
         module_index = self.course.modules.index(module) if module in self.course.modules else -1
         at_start = module_index == 0 and index == 0
         at_end = module_index == len(self.course.modules) - 1 and index == module.lesson_count - 1
+        quiz_result = self.store.data.quiz_scores.get(lesson.quiz.module_id, {}) if lesson.quiz else {}
         self.lesson_view.load(
             module,
             lesson,
@@ -286,12 +289,37 @@ class MainWindow(QMainWindow):
             has_prev=not at_start,
             has_next=True,  # дальше всегда есть урок, модуль или итоговый экзамен
             next_label=EXAM_LABEL if at_end else NEXT_LABEL,
+            quiz_score=quiz_result.get("percent") if quiz_result else None,
         )
         self.store.set_last_lesson(lesson.key)
         self.stack.setCurrentWidget(self.lesson_view)
         self.current_mode = MODE_LESSON
         self._sync_sidebar(module)
         self.refresh_status()
+
+    def open_lesson_quiz(self) -> None:
+        """Показывает необязательный короткий тест текущего урока."""
+        if self.current_module is None or self.current_mode != MODE_LESSON:
+            return
+        lesson = self.current_module.lessons[self.current_lesson_index]
+        if lesson.quiz is None:
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Тест после урока: {lesson.title}")
+        dialog.resize(900, 700)
+        layout = QVBoxLayout(dialog)
+        quiz_view = QuizWidget(dialog)
+        quiz_view.load_quiz(lesson.title, lesson.quiz)
+        quiz_view.finished.connect(self.on_quiz_finished)
+        return_button = QPushButton("Вернуться к уроку", dialog)
+        return_button.clicked.connect(dialog.accept)
+        layout.addWidget(quiz_view)
+        layout.addWidget(return_button, 0, Qt.AlignRight)
+        dialog.exec()
+
+        result = self.store.data.quiz_scores.get(lesson.quiz.module_id)
+        self.lesson_view.set_quiz_score(result.get("percent") if result else None)
 
     def navigate_lesson(self, delta: int) -> None:
         """Переход к соседнему уроку — сквозь границы модулей.
@@ -385,7 +413,7 @@ class MainWindow(QMainWindow):
         self.status_progress.setText(
             f"Прогресс: {summary['overall_percent']}% · уроки {summary['lessons_done']}/"
             f"{summary['lessons_total']} · задачи {summary['tasks_done']}/{summary['tasks_total']} · "
-            f"тесты {summary['quizzes_passed']}/{summary['modules_total']}"
+            f"тесты {summary['quizzes_passed']}/{summary['quizzes_total']}"
         )
 
     # ------------------------------------------------------------------

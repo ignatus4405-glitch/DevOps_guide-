@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "shell-and-files": {
+      "question_ids": [
+        "q14",
+        "q13"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Как перенаправить только поток ошибок команды в отдельный файл?",
+          "options": [
+            "command >errors.log",
+            "command 2>errors.log",
+            "command 1>&2"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Дескриптор 2 — stderr; запись `2>` перенаправляет его отдельно от stdout.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "users-permissions": {
+      "question_ids": [
+        "q1",
+        "q2"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Как дать приложению на непривилегированном пользователе слушать порт 80?",
+          "options": [
+            "Запустить всё приложение от root без ограничений",
+            "Назначить процессу только нужную capability CAP_NET_BIND_SERVICE или поставить привилегированный reverse proxy",
+            "Сделать исполняемый файл доступным на запись всем пользователям"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Ограниченная capability или proxy позволяют не запускать всё приложение с root-правами.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "processes-packets": {
+      "question_ids": [
+        "q16",
+        "q13",
+        "q25"
+      ],
+      "questions": []
+    },
+    "net-troubleshooting": {
+      "question_ids": [
+        "q8",
+        "q9"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Почему успешный `ping` не доказывает, что веб-сервис доступен?",
+          "options": [
+            "Ping устанавливает TLS-соединение и проверяет сертификат",
+            "Ping проверяет ICMP, а HTTP использует TCP-порт; ICMP может работать при закрытом или заблокированном сервисе",
+            "Успешный ping означает, что все порты сервера открыты"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "ICMP и TCP/HTTP — разные протоколы; доступность нужно проверять на уровне нужного сервиса.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "processes-signals": {
+      "question_ids": [
+        "q15",
+        "q16",
+        "q19"
+      ],
+      "questions": []
+    },
+    "storage-filesystems": {
+      "question_ids": [
+        "q17",
+        "q18",
+        "q6"
+      ],
+      "questions": []
+    },
+    "systemd-services": {
+      "question_ids": [
+        "q20",
+        "q13",
+        "q21"
+      ],
+      "questions": []
+    },
+    "network-tools": {
+      "question_ids": [
+        "q23",
+        "q24"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "В `tcpdump` виден исходящий SYN, но нет SYN-ACK. Что проверять в первую очередь?",
+          "options": [
+            "Срок действия сертификата HTTPS",
+            "Достигает ли SYN адресата и не блокирует ли ответ firewall или маршрут",
+            "Есть ли запись MX у домена"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Без SYN-ACK TCP-handshake не завершился; ищут недоступный порт, фильтрацию или проблему маршрута.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "performance": {
+      "question_ids": [
+        "q27",
+        "q26",
+        "q25"
+      ],
+      "questions": []
+    },
+    "memory-oom": {
+      "question_ids": [
+        "q26",
+        "q19",
+        "q32"
+      ],
+      "questions": []
+    },
+    "kernel-tracing": {
+      "question_ids": [
+        "q25",
+        "q27"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Для чего используют `perf record` в отличие от `perf top`?",
+          "options": [
+            "Немедленно завершить все процессы, потребляющие CPU",
+            "Собрать профиль работы процесса для последующего анализа стека и горячих точек",
+            "Показать только текущие TCP-соединения"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "`perf record` сохраняет профиль, который можно разбирать после сбора; `perf top` показывает активную картину в реальном времени.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "cgroups-v2": {
+      "question_ids": [
+        "q32",
+        "q33"
+      ],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Чем `cpu.weight` отличается от `cpu.max` в cgroups v2?",
+          "options": [
+            "Обе настройки задают только размер дискового кэша",
+            "`cpu.weight` задаёт относительный приоритет при конкуренции, а `cpu.max` ограничивает квоту CPU",
+            "`cpu.weight` — жёсткий предел времени CPU, а `cpu.max` — только приоритет"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Вес делит доступный CPU между конкурирующими группами, а `cpu.max` задаёт верхний лимит.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    },
+    "boot-process": {
+      "question_ids": [],
+      "questions": [
+        {
+          "id": "lesson-extra-1",
+          "type": "single",
+          "question": "Какова типичная последовательность загрузки Linux после включения машины?",
+          "options": [
+            "systemd → firmware → приложение → bootloader",
+            "Firmware → bootloader → kernel и initramfs → systemd",
+            "initramfs → приложение → firmware → kernel"
+          ],
+          "answer": [
+            1
+          ],
+          "explanation": "Firmware передаёт управление загрузчику; тот запускает ядро и initramfs, после чего стартует init-система.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-2",
+          "type": "single",
+          "question": "Для чего нужен initramfs?",
+          "options": [
+            "Это постоянный каталог пользовательских логов",
+            "Это архив с бинарными файлами всех приложений, который заменяет ядро",
+            "Это временная минимальная корневая среда с драйверами и инструментами, чтобы найти и подключить настоящую корневую ФС"
+          ],
+          "answer": [
+            2
+          ],
+          "explanation": "Initramfs помогает ядру подготовить устройства и смонтировать реальную корневую файловую систему.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        },
+        {
+          "id": "lesson-extra-3",
+          "type": "single",
+          "question": "Чем `rescue.target` обычно отличается от `emergency.target`?",
+          "options": [
+            "Rescue запускает минимальную базовую систему для обслуживания, emergency даёт ещё более минимальную среду с почти не запущенными сервисами",
+            "Rescue всегда переустанавливает систему, а emergency обновляет ядро",
+            "Это синонимы обычной многопользовательской загрузки"
+          ],
+          "answer": [
+            0
+          ],
+          "explanation": "Emergency — более минимальный режим восстановления; rescue запускает базовые компоненты для обслуживания.",
+          "tags": [
+            "lesson-quiz"
+          ]
+        }
+      ]
+    }
+  }
+}

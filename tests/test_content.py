@@ -23,8 +23,43 @@ def test_modules_have_required_files():
     for module_dir in sorted((CONTENT / "modules").iterdir()):
         if not module_dir.is_dir():
             continue
-        for name in ("module.json", "quiz.json", "practice.json"):
+        for name in ("module.json", "quiz.json", "lesson_quizzes.json", "practice.json"):
             assert (module_dir / name).exists(), f"{module_dir.name}: нет {name}"
+
+
+def test_every_lesson_has_three_autocheck_questions(course):
+    lessons = course.all_lessons()
+    assert len(course.all_lesson_questions()) == len(lessons) * 3
+    for lesson in lessons:
+        assert lesson.quiz is not None, f"{lesson.key}: нет теста"
+        assert lesson.quiz.module_id == f"lesson:{lesson.key}"
+        assert lesson.quiz.max_score == 3
+        assert 0 < lesson.quiz.pass_score <= 100
+        assert len({question.qid for question in lesson.quiz.questions}) == 3
+        for question in lesson.quiz.questions:
+            assert question.explanation, f"{lesson.key}/{question.qid}: нет объяснения"
+            if question.qtype in ("single", "multiple"):
+                assert len(question.options) >= 3
+                assert question.is_correct(question.answer)
+            else:
+                assert question.answer_text
+                assert question.is_correct(question.answer_text[0])
+
+
+def test_every_lesson_has_text_self_check(course):
+    pattern = re.compile(r"(?im)^#{2,6}\s+[^\n]*(?:проверьте себя|проверить себя|самопровер)[^\n]*$")
+    for lesson in course.all_lessons():
+        headings = list(pattern.finditer(lesson.body))
+        assert headings, f"{lesson.key}: нет текстового раздела самопроверки"
+        question_counts = []
+        for heading in headings:
+            rest = lesson.body[heading.end():]
+            next_heading = re.search(r"(?m)^#{1,6}\s+", rest)
+            section = rest[:next_heading.start()] if next_heading else rest
+            question_counts.append(len(re.findall(r"(?m)^\s*\d+\.\s+", section)))
+        assert max(question_counts, default=0) >= 3, (
+            f"{lesson.key}: самопроверка должна включать не менее 3 вопросов"
+        )
 
 
 def test_module_metadata_is_complete(course):

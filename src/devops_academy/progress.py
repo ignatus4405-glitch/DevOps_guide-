@@ -250,16 +250,23 @@ class ProgressStore:
             if module.practice is not None
             for task in module.practice.tasks
         }
-        quiz_keys = {
+        module_quiz_keys = {
             module.module_id for module in course.modules if module.quiz and module.quiz.questions
         }
+        lesson_quiz_keys = {
+            lesson.quiz.module_id for lesson in course.all_lessons() if lesson.quiz and lesson.quiz.questions
+        }
+        quiz_keys = module_quiz_keys | lesson_quiz_keys
         lessons_total = len(lesson_keys)
         tasks_total = len(task_keys)
         quizzes_total = len(quiz_keys)
         lessons_done = len(self.data.completed_lessons & lesson_keys)
         tasks_done = len(self.data.completed_tasks & task_keys)
         quizzes_passed = sum(
-            1 for module_id in quiz_keys if self.data.quiz_scores.get(module_id, {}).get("passed")
+            1 for quiz_id in quiz_keys if self.data.quiz_scores.get(quiz_id, {}).get("passed")
+        )
+        lesson_quizzes_passed = sum(
+            1 for quiz_id in lesson_quiz_keys if self.data.quiz_scores.get(quiz_id, {}).get("passed")
         )
         overall = 0
         if lessons_total or tasks_total or quizzes_total:
@@ -278,7 +285,10 @@ class ProgressStore:
             "tasks_done": tasks_done,
             "tasks_total": tasks_total,
             "quizzes_passed": quizzes_passed,
-            "modules_total": quizzes_total,
+            "quizzes_total": quizzes_total,
+            "lesson_quizzes_passed": lesson_quizzes_passed,
+            "lesson_quizzes_total": len(lesson_quiz_keys),
+            "modules_total": len(module_quiz_keys),
             "overall_percent": overall,
             "days_active": len(self.data.streak_days),
         }
@@ -292,13 +302,13 @@ class ProgressStore:
             f"- Общий прогресс: **{summary['overall_percent']}%**",
             f"- Уроков пройдено: {summary['lessons_done']} из {summary['lessons_total']}",
             f"- Практических задач решено: {summary['tasks_done']} из {summary['tasks_total']}",
-            f"- Тестов сдано: {summary['quizzes_passed']} из {summary['modules_total']}",
+            f"- Тестов сдано: {summary['quizzes_passed']} из {summary['quizzes_total']}",
             f"- Дней занятий: {summary['days_active']}",
             "",
             "## Модули",
             "",
-            "| Модуль | Уроки | Практика | Тест |",
-            "| --- | --- | --- | --- |",
+            "| Модуль | Уроки | Тесты уроков | Практика | Тест модуля |",
+            "| --- | --- | --- | --- | --- |",
         ]
         for module in course.modules:
             lessons_done = sum(
@@ -311,10 +321,12 @@ class ProgressStore:
                     for task in module.practice.tasks
                     if self.is_task_done(f"{module.module_id}/{task.tid}")
                 )
+            lesson_quizzes = [lesson.quiz for lesson in module.lessons if lesson.quiz]
+            lesson_quizzes_passed = sum(1 for quiz in lesson_quizzes if self.quiz_passed(quiz.module_id))
             percent = self.quiz_percent(module.module_id)
             lines.append(
                 f"| {module.title} | {lessons_done}/{module.lesson_count} | "
-                f"{tasks_done}/{module.task_count} | {percent}% |"
+                f"{lesson_quizzes_passed}/{len(lesson_quizzes)} | {tasks_done}/{module.task_count} | {percent}% |"
             )
         return "\n".join(lines) + "\n"
 

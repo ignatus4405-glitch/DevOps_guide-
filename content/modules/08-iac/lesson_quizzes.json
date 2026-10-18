@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "pass_score": 67,
+  "lessons": {
+    "terraform": {
+      "question_ids": [
+        "q2",
+        "q3",
+        "q16"
+      ],
+      "questions": []
+    },
+    "ansible": {
+      "question_ids": [
+        "q10",
+        "q7",
+        "q8"
+      ],
+      "questions": []
+    },
+    "terraform-state": {
+      "question_ids": [
+        "q11",
+        "q29",
+        "q14"
+      ],
+      "questions": []
+    },
+    "terraform-modules": {
+      "question_ids": [
+        "q16",
+        "q15",
+        "q2"
+      ],
+      "questions": []
+    },
+    "ansible-roles": {
+      "question_ids": [
+        "q19",
+        "q8",
+        "q27"
+      ],
+      "questions": []
+    },
+    "iac-testing": {
+      "question_ids": [
+        "q23",
+        "q22",
+        "q20"
+      ],
+      "questions": []
+    },
+    "terraform-internals": {
+      "question_ids": [
+        "q26",
+        "q13",
+        "q25"
+      ],
+      "questions": []
+    },
+    "policy-as-code": {
+      "question_ids": [
+        "q22",
+        "q20",
+        "q7"
+      ],
+      "questions": []
+    },
+    "ansible-internals": {
+      "question_ids": [
+        "q30",
+        "q8",
+        "q27"
+      ],
+      "questions": []
+    }
+  }
+}

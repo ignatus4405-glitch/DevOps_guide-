@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, QTimer
+from PySide6.QtWidgets import QDialog
 
 from devops_academy.progress import ProgressStore
 from devops_academy.ui.main_window import MainWindow, build_exam_module
+from devops_academy.ui.quiz_widget import QuizWidget
 
 
 def _wait_until(qtest, condition, timeout_ms: int = 1000) -> bool:
@@ -49,6 +51,57 @@ def test_lesson_navigation_and_completion(course, window):
     assert window.store.is_lesson_done(lesson.key)
     window.lesson_view.done_box.setChecked(False)
     assert not window.store.is_lesson_done(lesson.key)
+
+
+def test_optional_lesson_quiz_saves_result_without_blocking_next_lesson(course, window, qapp):
+    module = course.modules[0]
+    window.open_module(module.module_id)
+    lesson = module.lessons[0]
+    assert lesson.quiz is not None
+    assert not window.lesson_view.quiz_button.isHidden()
+    assert window.lesson_view.next_button.isEnabled()
+
+    result = {}
+
+    def finish_quiz():
+        dialogs = [
+            widget
+            for widget in qapp.topLevelWidgets()
+            if isinstance(widget, QDialog)
+            and widget.isVisible()
+            and widget.windowTitle().startswith("Тест после урока:")
+        ]
+        if not dialogs:
+            result["error"] = "lesson quiz dialog was not opened"
+            return
+        dialog = dialogs[-1]
+        quiz_view = dialog.findChild(QuizWidget)
+        if quiz_view is None:
+            result["error"] = "lesson quiz widget was not found"
+            dialog.reject()
+            return
+        result["question_count"] = len(quiz_view.question_widgets)
+        for question_widget in quiz_view.question_widgets:
+            question = question_widget.question
+            if question.qtype == "text":
+                question_widget.controls[0].setText(question.answer_text[0])
+            else:
+                for index, control in enumerate(question_widget.controls):
+                    control.setChecked(index in question.answer)
+        quiz_view.check()
+        dialog.accept()
+
+    QTimer.singleShot(0, finish_quiz)
+    window.lesson_view.quiz_button.click()
+    assert result.get("error") is None, result.get("error")
+    assert result["question_count"] == 3
+
+    assert window.store.quiz_percent(lesson.quiz.module_id) == 100
+    assert window.store.quiz_passed(lesson.quiz.module_id)
+    assert "100%" in window.lesson_view.quiz_button.text()
+    assert window.lesson_view.next_button.isEnabled()
+    window.navigate_lesson(1)
+    assert window.current_lesson_index == 1
 
 
 def test_quiz_flow_saves_result(course, window):
