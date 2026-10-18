@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from pathlib import Path
 
 import requests
 
@@ -209,3 +210,38 @@ def test_linux_archive_is_not_reported_as_installed(tmp_path, monkeypatch):
     assert not success
     assert "Автоматическая установка" in message
     assert "скачан" in message
+
+
+def test_windows_update_launches_installer_and_reports_relaunch(tmp_path, monkeypatch):
+    installer = tmp_path / "DevOpsAcademy-Setup-0.7.1.exe"
+    installer.write_bytes(b"verified installer")
+    monkeypatch.setattr(updater.sys, "platform", "win32")
+    monkeypatch.setattr(updater, "_is_x64_host", lambda: True)
+    launched = {}
+
+    def fake_popen(command, **kwargs):
+        launched["command"] = command
+        launched["kwargs"] = kwargs
+
+    monkeypatch.setattr(updater.subprocess, "Popen", fake_popen)
+    success, message = updater.install_update(str(installer))
+
+    assert success
+    assert launched["command"] == [
+        str(installer),
+        "/SILENT",
+        "/SUPPRESSMSGBOXES",
+        "/NOCANCEL",
+        "/RESTARTAPPLICATIONS",
+    ]
+    assert launched["kwargs"] == {"close_fds": True}
+    assert "откроется после установки" in message
+
+
+def test_inno_installer_runs_app_after_silent_update():
+    installer_script = Path(__file__).resolve().parents[1] / "packaging" / "installer.iss"
+    script = installer_script.read_text(encoding="utf-8")
+    run_section = script.split("[Run]", 1)[1].split("[UninstallDelete]", 1)[0]
+    run_entry = next(line for line in run_section.splitlines() if line.strip().startswith("Filename:"))
+    assert "postinstall" in run_entry
+    assert "skipifsilent" not in run_entry.casefold()
