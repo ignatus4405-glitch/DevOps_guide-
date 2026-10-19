@@ -27,6 +27,7 @@ class LessonView(QWidget):
     completed_toggled = Signal(str, bool)
     navigate = Signal(int)  # +1 следующая, -1 предыдущая
     quiz_requested = Signal()
+    practice_requested = Signal()
 
     def __init__(self, content_root, glossary: dict, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -52,6 +53,11 @@ class LessonView(QWidget):
         self.quiz_button.setObjectName("Secondary")
         self.quiz_button.clicked.connect(self.quiz_requested.emit)
 
+        self.practice_button = QPushButton("Практика модуля", self)
+        self.practice_button.setObjectName("Secondary")
+        self.practice_button.setToolTip("Открыть пошаговые практические задания модуля")
+        self.practice_button.clicked.connect(self.practice_requested.emit)
+
         self.prev_button = QPushButton("← Предыдущий", self)
         self.next_button = QPushButton(NEXT_LABEL, self)
         self.next_button.setObjectName("Primary")
@@ -63,6 +69,7 @@ class LessonView(QWidget):
         nav.addStretch(1)
         nav.addWidget(self.done_box)
         nav.addWidget(self.quiz_button)
+        nav.addWidget(self.practice_button)
         nav.addStretch(1)
         nav.addWidget(self.next_button)
 
@@ -105,6 +112,7 @@ class LessonView(QWidget):
         self.done_box.setChecked(done)
         self.done_box.blockSignals(False)
         self.set_quiz_score(quiz_score)
+        self.practice_button.setVisible(bool(module.practice and module.practice.tasks))
 
         if has_prev is None:
             has_prev = position > 0

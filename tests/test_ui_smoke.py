@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from PySide6.QtCore import QSettings, QTimer
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog, QPushButton
 
 from devops_academy.progress import ProgressStore
 from devops_academy.ui.main_window import MainWindow, build_exam_module
@@ -136,15 +136,62 @@ def test_wrong_answers_are_detected(course, window):
     assert window.store.quiz_percent(module.module_id) < 100
 
 
-def test_practice_shows_tasks_and_checks_solution(course, window):
-    module = next(m for m in course.modules if m.practice)
-    window.open_module(module.module_id, mode="practice")
+def test_practice_can_be_started_from_lesson_and_checks_simulated_result(course, window):
+    module = course.modules[0]
+    window.open_module(module.module_id)
+    assert not window.lesson_view.practice_button.isHidden()
+    window.lesson_view.practice_button.click()
+
+    assert window.current_mode == "practice"
     view = window.practice_view
     assert view.task_list.count() == module.task_count
     task = view.task
     view.answer.setPlainText(task.solution)
+    view.run_button.click()
+    assert "не запускаются" in view.lab_output.toPlainText()
+    assert view.check_button.isEnabled()
     view.check_button.click()
-    assert "✅" in view.feedback.text()
+    assert "PASS" in view.lab_output.toPlainText()
+    assert window.store.is_task_done(f"{module.module_id}/{task.tid}")
+
+    view.back_button.click()
+    assert window.current_mode == "lesson"
+
+
+def test_dashboard_can_start_module_practice(course, window):
+    first_row = window.dashboard.modules_box.itemAt(0).widget()
+    button = first_row.findChild(QPushButton, "PracticeModuleButton")
+    assert button is not None
+    button.click()
+    assert window.current_mode == "practice"
+    assert window.current_module.module_id == course.modules[0].module_id
+
+
+def test_manual_practice_requires_explicit_result_confirmation(course, window):
+    module = course.modules[0]
+    manual_index = next(i for i, task in enumerate(module.practice.tasks) if task.check_type == "manual")
+    window.open_module(module.module_id, mode="practice")
+    view = window.practice_view
+    view.task_list.setCurrentRow(manual_index)
+    task = view.task
+    assert not view.manual_confirm.isHidden()
+
+    view.answer.setPlainText("Провёл проверку и записал вывод в отчёт.")
+    view.run_button.click()
+    view.check_button.click()
+    assert not window.store.is_task_done(f"{module.module_id}/{task.tid}")
+
+    view.manual_confirm.setChecked(True)
+    view.answer.appendPlainText("\nУточнил итог проверки.")
+    assert not view.manual_confirm.isChecked()
+    assert not view.check_button.isEnabled()
+
+    view.run_button.click()
+    view.check_button.click()
+    assert not window.store.is_task_done(f"{module.module_id}/{task.tid}")
+
+    view.manual_confirm.setChecked(True)
+    view.check_button.click()
     assert window.store.is_task_done(f"{module.module_id}/{task.tid}")
 
 
