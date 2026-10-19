@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 from pathlib import Path
 
 from devops_academy.content import CommandRequirement, Task
@@ -81,7 +82,7 @@ def test_command_simulation_never_creates_real_files(tmp_path: Path):
     )
     sandbox = PracticeSandbox()
 
-    assert sandbox.run(task, f"touch {target}").status == "ready"
+    assert sandbox.run(task, f"touch {shlex.quote(str(target))}").status == "ready"
     assert sandbox.verify(task).status == "passed"
     assert not target.exists()
 
