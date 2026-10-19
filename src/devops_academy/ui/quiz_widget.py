@@ -86,6 +86,7 @@ class QuizWidget(QWidget):
     """Тест целиком: вопросы, проверка, результат, сохранение прогресса."""
 
     finished = Signal(str, int, int, bool)  # module_id, correct, total, passed
+    back_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -121,11 +122,15 @@ class QuizWidget(QWidget):
         self.check_button.clicked.connect(self.check)
         self.reset_button = QPushButton("Пройти заново", self)
         self.reset_button.clicked.connect(self.reload)
+        self.back_button = QPushButton("← К урокам", self)
+        self.back_button.setVisible(False)
+        self.back_button.clicked.connect(self.back_requested.emit)
 
         buttons = QHBoxLayout()
         buttons.addWidget(self.check_button)
         buttons.addWidget(self.reset_button)
         buttons.addStretch(1)
+        buttons.addWidget(self.back_button)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 14, 18, 14)
@@ -141,6 +146,7 @@ class QuizWidget(QWidget):
         if module.quiz is None:
             self.quiz = None
             self.quiz_title = module.title
+            self.back_button.setVisible(False)
             self.title_label.setText(f"Тест: {module.title}")
             self.subtitle.setText("Для модуля не добавлен тест")
             self._clear()
@@ -150,11 +156,13 @@ class QuizWidget(QWidget):
             return
         self.load_quiz(module.title, module.quiz)
         self.module = module
+        self.back_button.setVisible(module.module_id != "exam")
 
     def load_quiz(self, title: str, quiz: Quiz) -> None:
         """Показывает тест, в том числе короткий тест отдельного урока."""
         self.module = None
         self.quiz = quiz
+        self.back_button.setVisible(False)
         self.quiz_title = title
         self.title_label.setText(f"Тест: {title}")
         self.subtitle.setText(
