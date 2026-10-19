@@ -8,12 +8,13 @@
 │  ui/dashboard.py          прогресс и дорожная карта                     │
 │  ui/lesson_view.py        просмотр урока (QTextBrowser + CSS)           │
 │  ui/quiz_widget.py        тест: вопросы, проверка, разбор               │
-│  ui/practice_widget.py    интерфейс практики                            │
+│  ui/practice_widget.py    пошаговый интерфейс и симуляция практики       │
 │  ui/glossary_dialog.py    глоссарий с поиском                           │
 │  ui/update_dialog.py      уведомление о новой версии                    │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  content.py      модель курса: Course → Module → Lesson/Quiz/Practice    │
-│  practice_checker.py проверка regex и argv-команд без исполнения          │
+│  practice_simulator.py виртуальная среда без запуска команд              │
+│  practice_checker.py критерии regex и argv для отправленного решения     │
 │  markdown_renderer.py  markdown → HTML (+admonitions, подсветка, [[терм]])│
 │  progress.py     прогресс: schema, backup, atomic JSON, отчёты            │
 │  updater.py      GitHub Releases: fail-closed SHA-256, .part, установка  │
@@ -55,8 +56,11 @@
    и стилизуя таблицы инлайновыми стилями текущей темы (см. ниже).
 5. **Тест** → `Question.is_correct()` сравнивает ответы; результат уходит в
    `ProgressStore.save_quiz_result()` и в дашборд.
-6. **Практика** → `practice_checker.TaskChecker.check()` разбирает ответ по правилам задачи
-   (для `commands` — argv-токены без выполнения shell), `ProgressStore.set_task_done()` фиксирует выполнение.
+6. **Практика** → кнопку запуска можно открыть с дашборда или из урока. `PracticeSandbox.run()`
+   сохраняет решение только в памяти учебного стенда; `verify()` применяет критерии из
+   `practice.json` через `TaskChecker` и показывает `validation_hint`. Shell-команды никогда
+   не запускаются на компьютере пользователя; прогресс отмечается после успешной проверки
+   (для задач `manual` — после явного подтверждения студентом).
 7. **Обновление** → `UpdateChecker` (QThread) опрашивает GitHub API; найденный релиз
    остаётся доступен из баннера. `DownloadWorker` требует SHA-256, пишет `.part` и
    атомарно публикует файл только после совпадения digest.
@@ -83,6 +87,7 @@
 | Рендер | `tests/test_markdown.py` | admonitions, подсветка, картинки, термины |
 | Прогресс | `tests/test_progress.py` | сохранение, лучший результат, повреждённые данные |
 | Проверка задач | `tests/test_task_checker.py` | типы проверок, командные токены и ложные совпадения |
+| Симулятор практики | `tests/test_practice_simulator.py` | виртуальный запуск, проверка результата, ручное подтверждение и отсутствие исполнения ОС |
 | Обновления | `tests/test_updater.py`, `tests/test_updater_integrity.py` | версии, платформы, fail-closed SHA-256, атомарная загрузка |
 | Инструменты | `tests/test_version_tooling.py` | генерация версии, индекс контента, независимость хешей от CRLF |
 | Релиз | `tests/test_release_tools.py`, `tests/test_content_examples.py` | расчёт bump, YAML-практики, единый commit SHA |

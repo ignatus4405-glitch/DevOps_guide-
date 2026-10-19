@@ -43,6 +43,7 @@ class DashboardView(QWidget):
     """Главный экран: что уже сделано и куда двигаться дальше."""
 
     open_module = Signal(str)
+    open_practice = Signal(str)
     continue_learning = Signal()
     export_report = Signal()
     reset_progress = Signal()
@@ -160,4 +161,12 @@ class DashboardView(QWidget):
             button.clicked.connect(lambda _=False, mid=module.module_id: self.open_module.emit(mid))
             row_layout.addWidget(text, 1)
             row_layout.addWidget(button)
+            if module.practice and module.practice.tasks:
+                practice_button = QPushButton("Практика")
+                practice_button.setObjectName("PracticeModuleButton")
+                practice_button.setToolTip("Запустить практические задания этого модуля")
+                practice_button.clicked.connect(
+                    lambda _=False, mid=module.module_id: self.open_practice.emit(mid)
+                )
+                row_layout.addWidget(practice_button)
             self.modules_box.addWidget(row)

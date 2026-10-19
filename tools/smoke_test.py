@@ -73,7 +73,7 @@ def main() -> int:
     window.open_module(module_with_tasks.module_id, mode="practice")
     task = window.practice_view.task
     assert task is not None, "задача не загрузилась"
-    from devops_academy.ui.practice_widget import TaskChecker
+    from devops_academy.practice_checker import TaskChecker
 
     ok, _ = TaskChecker.check(task, task.solution)
     assert ok, f"эталонное решение не проходит проверку: {task.tid}"

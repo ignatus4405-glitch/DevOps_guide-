@@ -220,13 +220,16 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self.sidebar.currentRowChanged.connect(self.on_sidebar_changed)
         self.dashboard.open_module.connect(self.open_module)
+        self.dashboard.open_practice.connect(self.open_module_practice)
         self.dashboard.continue_learning.connect(self.continue_learning)
         self.dashboard.export_report.connect(self.export_report)
         self.dashboard.reset_progress.connect(self.reset_progress)
         self.lesson_view.completed_toggled.connect(self.on_lesson_toggled)
         self.lesson_view.navigate.connect(self.navigate_lesson)
         self.lesson_view.quiz_requested.connect(self.open_lesson_quiz)
+        self.lesson_view.practice_requested.connect(self.open_current_practice)
         self.practice_view.task_solved.connect(self.on_task_solved)
+        self.practice_view.back_requested.connect(self.return_from_practice)
         self.quiz_view.finished.connect(self.on_quiz_finished)
 
     # ------------------------------------------------------------------
@@ -244,6 +247,27 @@ class MainWindow(QMainWindow):
         self.dashboard.refresh()
         self.stack.setCurrentWidget(self.dashboard)
 
+    def open_module_practice(self, module_id: str) -> None:
+        """Открывает практику выбранного модуля с главного экрана."""
+        self.open_module(module_id, MODE_PRACTICE)
+
+    def open_current_practice(self) -> None:
+        """Открывает практику модуля текущего урока."""
+        if self.current_module is not None:
+            self.open_module(self.current_module.module_id, MODE_PRACTICE)
+
+    def return_from_practice(self) -> None:
+        """Возвращает к последнему уроку текущего модуля."""
+        if self.current_module is None:
+            self.show_dashboard()
+            return
+        lesson_id = ""
+        last_lesson = self.store.data.last_lesson
+        prefix = f"{self.current_module.module_id}/"
+        if last_lesson.startswith(prefix):
+            lesson_id = last_lesson[len(prefix):]
+        self.open_module(self.current_module.module_id, MODE_LESSON, lesson_id)
+
     def open_module(self, module_id: str, mode: str = MODE_LESSON, lesson_id: str = "") -> None:
         module = self.course.module(module_id)
         if module is None:
@@ -258,6 +282,7 @@ class MainWindow(QMainWindow):
             self.practice_view.load(module, solved)
             self.stack.setCurrentWidget(self.practice_view)
             self.current_mode = MODE_PRACTICE
+            self._sync_sidebar(module)
         elif mode == MODE_QUIZ:
             self.quiz_view.load(module)
             self.stack.setCurrentWidget(self.quiz_view)

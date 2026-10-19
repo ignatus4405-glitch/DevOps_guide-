@@ -117,15 +117,14 @@ def main() -> int:
             for target in IMG_RE.findall(lesson.body):
                 path = (content_dir / target).resolve()
                 check(errors, path.exists(), f"{lesson.key}: нет иллюстрации {target}")
-        # 5. Практика: regex-шаблоны компилируются
+        # 5. Практика: шаги, проверка результата и корректные критерии
         if module.practice:
             for task in module.practice.tasks:
                 check(errors, bool(task.goal), f"{module.module_id}/{task.tid}: пустая цель")
+                check(errors, bool(task.instructions), f"{module.module_id}/{task.tid}: нет пошаговых инструкций")
                 check(errors, bool(task.solution), f"{module.module_id}/{task.tid}: нет решения")
-                if task.check_type == "manual":
-                    check(errors, bool(task.validation_hint),
-                          f"{module.module_id}/{task.tid}: manual-задача без validation_hint")
-                elif task.check_type == "commands":
+                check(errors, bool(task.validation_hint), f"{module.module_id}/{task.tid}: нет способа проверить результат")
+                if task.check_type == "commands":
                     check(errors, bool(task.commands),
                           f"{module.module_id}/{task.tid}: нет требований check.commands")
                     for command in task.commands:
@@ -133,7 +132,7 @@ def main() -> int:
                               f"{module.module_id}/{task.tid}: пустое имя команды")
                         check(errors, all(isinstance(arg, str) and arg for arg in command.args),
                               f"{module.module_id}/{task.tid}: аргументы команд должны быть непустыми строками")
-                else:
+                elif task.check_type != "manual":
                     check(errors, task.check_type in {"regex_all", "regex_any", "equals"},
                           f"{module.module_id}/{task.tid}: неизвестный тип проверки {task.check_type}")
                     check(errors, bool(task.patterns),

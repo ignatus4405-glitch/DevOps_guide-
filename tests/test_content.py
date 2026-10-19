@@ -108,6 +108,13 @@ def test_single_choice_questions_have_exactly_one_answer(course):
                 assert len(question.answer) == 1, f"{module.module_id}/{question.qid}: должен быть один ответ"
 
 
+def test_practice_tasks_have_instructions_and_result_check(course):
+    for module in course.modules:
+        for task in module.practice.tasks:
+            assert task.instructions, f"{module.module_id}/{task.tid}: нет пошаговых инструкций"
+            assert task.validation_hint, f"{module.module_id}/{task.tid}: нет проверки результата"
+
+
 def test_practice_patterns_compile(course):
     for module in course.modules:
         for task in module.practice.tasks:
