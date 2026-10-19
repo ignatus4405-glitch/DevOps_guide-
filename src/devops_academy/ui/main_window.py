@@ -228,9 +228,11 @@ class MainWindow(QMainWindow):
         self.lesson_view.navigate.connect(self.navigate_lesson)
         self.lesson_view.quiz_requested.connect(self.open_lesson_quiz)
         self.lesson_view.practice_requested.connect(self.open_current_practice)
+        self.lesson_view.module_quiz_requested.connect(self.open_current_module_quiz)
         self.practice_view.task_solved.connect(self.on_task_solved)
         self.practice_view.back_requested.connect(self.return_from_practice)
         self.quiz_view.finished.connect(self.on_quiz_finished)
+        self.quiz_view.back_requested.connect(self.return_from_module_quiz)
 
     # ------------------------------------------------------------------
     # Навигация
@@ -255,6 +257,31 @@ class MainWindow(QMainWindow):
         """Открывает практику модуля текущего урока."""
         if self.current_module is not None:
             self.open_module(self.current_module.module_id, MODE_PRACTICE)
+
+    def open_current_module_quiz(self) -> None:
+        """Открывает итоговый тест модуля с кнопки в последнем уроке."""
+        if (
+            self.current_module is None
+            or self.current_mode != MODE_LESSON
+            or self.current_module.quiz is None
+        ):
+            return
+        self.open_module(self.current_module.module_id, MODE_QUIZ)
+
+    def return_from_module_quiz(self) -> None:
+        """Возвращает из теста модуля к последнему открытому уроку этого модуля."""
+        if self.current_module is None or self.current_mode != MODE_QUIZ:
+            return
+        module = self.current_module
+        if module.module_id == "exam" or not module.lessons:
+            self.show_dashboard()
+            return
+        lesson_id = ""
+        last_lesson = self.store.data.last_lesson
+        prefix = f"{module.module_id}/"
+        if last_lesson.startswith(prefix):
+            lesson_id = last_lesson[len(prefix):]
+        self.open_module(module.module_id, MODE_LESSON, lesson_id)
 
     def return_from_practice(self) -> None:
         """Возвращает к последнему уроку текущего модуля."""

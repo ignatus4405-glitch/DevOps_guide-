@@ -41,6 +41,28 @@ def test_open_every_module_lesson(course, window):
         assert len(window.lesson_view.browser.toPlainText()) > 500
 
 
+def test_module_quiz_button_appears_at_module_end_and_returns_to_last_lesson(course, window):
+    module = course.modules[0]
+    window.open_module(module.module_id)
+    button = window.lesson_view.module_quiz_button
+    assert button.isHidden()
+
+    last_lesson = module.lessons[-1]
+    window.open_module(module.module_id, lesson_id=last_lesson.lesson_id)
+    assert not button.isHidden()
+    assert "Тест по модулю" in button.text()
+
+    button.click()
+    assert window.current_mode == "quiz"
+    assert window.quiz_view.quiz is module.quiz
+    assert len(window.quiz_view.question_widgets) == module.question_count
+    assert not window.quiz_view.back_button.isHidden()
+
+    window.quiz_view.back_button.click()
+    assert window.current_mode == "lesson"
+    assert window.current_lesson_index == module.lesson_count - 1
+
+
 def test_lesson_navigation_and_completion(course, window):
     module = course.modules[0]
     window.open_module(module.module_id)

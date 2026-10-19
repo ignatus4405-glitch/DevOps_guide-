@@ -28,6 +28,7 @@ class LessonView(QWidget):
     navigate = Signal(int)  # +1 следующая, -1 предыдущая
     quiz_requested = Signal()
     practice_requested = Signal()
+    module_quiz_requested = Signal()
 
     def __init__(self, content_root, glossary: dict, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -58,6 +59,12 @@ class LessonView(QWidget):
         self.practice_button.setToolTip("Открыть пошаговые практические задания модуля")
         self.practice_button.clicked.connect(self.practice_requested.emit)
 
+        self.module_quiz_button = QPushButton("Тест по модулю", self)
+        self.module_quiz_button.setObjectName("Primary")
+        self.module_quiz_button.setToolTip("Итоговый тест по всем темам этого модуля")
+        self.module_quiz_button.setVisible(False)
+        self.module_quiz_button.clicked.connect(self.module_quiz_requested.emit)
+
         self.prev_button = QPushButton("← Предыдущий", self)
         self.next_button = QPushButton(NEXT_LABEL, self)
         self.next_button.setObjectName("Primary")
@@ -70,6 +77,7 @@ class LessonView(QWidget):
         nav.addWidget(self.done_box)
         nav.addWidget(self.quiz_button)
         nav.addWidget(self.practice_button)
+        nav.addWidget(self.module_quiz_button)
         nav.addStretch(1)
         nav.addWidget(self.next_button)
 
@@ -113,6 +121,16 @@ class LessonView(QWidget):
         self.done_box.blockSignals(False)
         self.set_quiz_score(quiz_score)
         self.practice_button.setVisible(bool(module.practice and module.practice.tasks))
+        has_module_quiz = (
+            position == module.lesson_count - 1
+            and module.quiz is not None
+            and bool(module.quiz.questions)
+        )
+        self.module_quiz_button.setVisible(has_module_quiz)
+        if has_module_quiz:
+            self.module_quiz_button.setToolTip(
+                f"Итоговый тест по всем темам модуля · порог сдачи {module.quiz.pass_score}%"
+            )
 
         if has_prev is None:
             has_prev = position > 0
