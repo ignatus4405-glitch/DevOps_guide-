@@ -1,5 +1,13 @@
 # История изменений
 
+## [0.8.0] — 2026-10-19
+
+### Добавлено
+- Add safe interactive practice simulator
+
+### Исправлено
+- Align smoke test and Windows command simulation
+
 ## [0.7.1] — 2026-10-18
 
 ### Исправлено
