@@ -28,8 +28,8 @@ jobs:
     name: Контент курса
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -49,8 +49,8 @@ jobs:
     name: Wheel и встроенный курс
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -82,8 +82,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -111,7 +111,7 @@ jobs:
         run: python run.py --self-test
       - name: Артефакты отчётов
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: reports-${{ matrix.os }}-${{ matrix.python }}
           path: |
@@ -124,7 +124,7 @@ jobs:
     name: Conftest / OPA Rego v1 примеры
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Установить закреплённую версию Conftest
         shell: bash
         run: |
@@ -171,8 +171,8 @@ jobs:
     name: GUI-тесты на Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -187,7 +187,7 @@ jobs:
           --log reports/gui-pytest.log
       - name: Сохранить отчёты GUI-тестов
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: reports-windows-gui
           path: reports/gui-pytest.*
