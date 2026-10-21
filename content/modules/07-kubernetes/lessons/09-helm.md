@@ -210,6 +210,15 @@ Helm рендерит chart templates с values и ведёт release history; K
 
 CRD расширяет Kubernetes API, а controller/operator реализует поведение для нового объекта. Удаление CRD может затронуть все созданные им ресурсы, поэтому проверяйте миграцию и порядок удаления. Для релиза храните зафиксированные values, версию chart и manifest; rollback Helm не откатывает автоматически внешние данные и необратимые изменения схемы.
 
+## Пошаговый сценарий
+
+![Порядок действий: Helm, Kustomize и операторы](assets/img/howto/07-kubernetes--09-helm.svg)
+
+1. Зафиксируйте chart, values и версию релиза.
+2. Отрендерите YAML и проверьте selectors, secrets и CRDs.
+3. Примените изменение в тестовом namespace и дождитесь readiness.
+4. Проверьте rollback, учитывая, что данные и CRD не всегда откатываются.
+
 ## Проверьте себя
 
 1. Чем Kustomize отличается от Helm?

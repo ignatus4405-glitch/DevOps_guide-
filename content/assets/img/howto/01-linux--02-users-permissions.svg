@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Порядок действий: Пользователи, права и владельцы файлов</title>
+  <desc id="desc">Определите UID и группы процесса, которому нужен доступ. → Проверьте права на каждом каталоге пути, а не только на файле. → Выдайте минимальное разрешение конкретному пользователю или группе. → Проверьте чтение или запись от имени самой службы.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
+    </marker>
+  </defs>
+  <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
+  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
+  <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
+  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="127" dy="0">Определите UID и группы</tspan>
+    <tspan x="127" dy="19">процесса, которому нужен</tspan>
+    <tspan x="127" dy="19">доступ.</tspan>
+  </text>
+  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
+  <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
+  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="367" dy="0">Проверьте права на</tspan>
+    <tspan x="367" dy="19">каждом каталоге пути, а</tspan>
+    <tspan x="367" dy="19">не только на файле.</tspan>
+  </text>
+  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
+  <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
+  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="607" dy="0">Выдайте минимальное</tspan>
+    <tspan x="607" dy="19">разрешение конкретному</tspan>
+    <tspan x="607" dy="19">пользователю или группе.</tspan>
+  </text>
+  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
+  <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
+  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="847" dy="0">Проверьте чтение или</tspan>
+    <tspan x="847" dy="19">запись от имени самой</tspan>
+    <tspan x="847" dy="19">службы.</tspan>
+  </text>
+  <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+</svg>

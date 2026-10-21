@@ -16,6 +16,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGES = ROOT / "content" / "assets" / "img"
+HOWTO_IMAGES = IMAGES / "howto"
 SVG_NS = "{http://www.w3.org/2000/svg}"
 
 
@@ -119,17 +120,39 @@ def test_lifecycle_arc_control_points_are_outside_panel(diagrams):
 def test_lesson_images_exist_and_are_used(course):
     """Каждая схема подключена хотя бы к одному уроку, а ссылки ведут на реальные файлы."""
     used: set[str] = set()
+    targets: set[str] = set()
     for module in course.modules:
         for lesson in module.lessons:
             for line in lesson.body.splitlines():
                 if "assets/img/" in line and "](" in line:
                     target = line.split("](")[1].split(")")[0]
+                    targets.add(target)
                     used.add(target.split("/")[-1])
     assert used, "ни одна схема не используется в уроках"
-    for name in used:
-        assert (IMAGES / name).exists(), f"урок ссылается на отсутствующий файл {name}"
+    for target in targets:
+        assert (ROOT / "content" / target).is_file(), f"урок ссылается на отсутствующий файл {target}"
     unused = {path.name for path in _svg_files()} - used
     assert not unused, f"схемы объявлены, но не используются в уроках: {sorted(unused)}"
+
+
+def test_howto_diagrams_are_accessible_and_match_markdown(course):
+    """Индивидуальные схемы всех уроков — валидные SVG, совпадающие со сценариями."""
+    lesson_count = sum(len(module.lessons) for module in course.modules)
+    paths = sorted(HOWTO_IMAGES.glob("*.svg"))
+    assert len(paths) == lesson_count, f"ожидалось {lesson_count} how-to SVG, найдено {len(paths)}"
+
+    for path in paths:
+        root = ET.parse(path).getroot()
+        assert root.tag == f"{SVG_NS}svg", f"{path.name}: корневой элемент не <svg>"
+        assert root.get("viewBox") == "0 0 960 280", f"{path.name}: некорректный viewBox"
+        assert root.get("role") == "img", f"{path.name}: SVG недоступен как изображение"
+        assert root.find(f"{SVG_NS}title") is not None, f"{path.name}: нет доступного заголовка"
+        assert root.find(f"{SVG_NS}desc") is not None, f"{path.name}: нет текстового описания"
+        assert len(root.findall(f"{SVG_NS}rect")) == 4, f"{path.name}: ожидается четыре шага"
+        assert len(root.findall(f"{SVG_NS}line")) == 3, f"{path.name}: отсутствуют стрелки последовательности"
+
+    generator = _load_tool("generate_lesson_diagrams")
+    assert generator.generate(check=True) == 0, "SVG-схемы расходятся с текстом уроков"
 
 
 def _is_number(value: str) -> bool:

@@ -140,6 +140,15 @@ IAM policy обычно состоит из principal, action, resource и condi
 
 Используйте роли и STS вместо долгоживущих ключей, разделяйте read и write задачи и сужайте resource ARN и condition по account, region или tag, если это безопасно. Проверьте права через policy simulator или тестовую identity, затем изучите audit log. Периодически удаляйте неиспользуемые permissions, но начинайте с наблюдения и постепенного rollout, чтобы не сломать скрытую автоматизацию.
 
+## Пошаговый сценарий
+
+![Порядок действий: IAM: роли, политики, least privilege](assets/img/howto/09-cloud--03-iam-deep.svg)
+
+1. Назовите workload identity и конкретное действие над ресурсом.
+2. Ограничьте policy ресурсом, условием и краткоживущим credential.
+3. Проверьте trust relationship, delegation и порядок deny/allow.
+4. Протестируйте разрешённый вызов, запрещённый вызов и запись аудита.
+
 ## Проверьте себя
 
 1. Почему `Action: "*"` почти всегда ошибка?

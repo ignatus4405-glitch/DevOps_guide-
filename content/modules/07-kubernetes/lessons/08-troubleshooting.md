@@ -133,6 +133,15 @@ kubectl debug node/<node> -it --image=busybox
 
 Собирайте контекст до удаления Pod: описание, events, логи и состояние соседних replica. Изменяйте один фактор и наблюдайте rollout, иначе причинную связь потерять легко. Если проблема связана с image pull, проверьте registry, tag/digest, credentials и сетевую доступность узла. Диагностика должна закончиться проверкой восстановления endpoint и метрик, а не только исчезновением ошибки в `kubectl get pods`.
 
+## Пошаговый сценарий
+
+![Порядок действий: Отладка: Pending, CrashLoopBackOff, OOMKilled](assets/img/howto/07-kubernetes--08-troubleshooting.svg)
+
+1. Выберите проблемный Pod и сохраните describe, events и logs.
+2. Для Pending проверьте resources, quota, taints и PVC.
+3. Для CrashLoop/OOM проверьте exit code, probes и memory limits.
+4. После исправления проверьте готовность endpoints и метрики.
+
 ## Проверьте себя
 
 1. Где искать причину Pending?

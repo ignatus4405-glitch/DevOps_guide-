@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Порядок действий: Prometheus и PromQL: метрики, которые отвечают на вопросы</title>
+  <desc id="desc">Настройте scrape target и проверьте его статус в targets. → Проверьте метрики, labels и ожидаемый тип серии. → Напишите PromQL для сигнала и оцените cardinality запроса. → Создайте recording/alert rule и проверьте его с реальным окном данных.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
+    </marker>
+  </defs>
+  <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
+  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
+  <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
+  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="127" dy="0">Настройте scrape target</tspan>
+    <tspan x="127" dy="19">и проверьте его статус в</tspan>
+    <tspan x="127" dy="19">targets.</tspan>
+  </text>
+  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
+  <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
+  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="367" dy="0">Проверьте метрики,</tspan>
+    <tspan x="367" dy="19">labels и ожидаемый тип</tspan>
+    <tspan x="367" dy="19">серии.</tspan>
+  </text>
+  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
+  <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
+  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="607" dy="0">Напишите PromQL для</tspan>
+    <tspan x="607" dy="19">сигнала и оцените</tspan>
+    <tspan x="607" dy="19">cardinality запроса.</tspan>
+  </text>
+  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
+  <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
+  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="847" dy="0">Создайте recording/alert</tspan>
+    <tspan x="847" dy="19">rule и проверьте его с</tspan>
+    <tspan x="847" dy="19">реальным окном данных.</tspan>
+  </text>
+  <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+</svg>

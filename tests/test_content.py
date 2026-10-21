@@ -91,6 +91,34 @@ def test_lesson_images_exist(course):
             assert (CONTENT / target).exists(), f"{lesson.key}: нет файла {target}"
 
 
+def test_every_lesson_has_four_step_howto_and_unique_diagram(course):
+    """Каждый урок содержит четыре практических шага и свою SVG-схему."""
+    guide_pattern = re.compile(
+        r"(?ms)^## Пошаговый сценарий\s*\n(.*?)(?=^#{1,6}\s|\Z)"
+    )
+    step_pattern = re.compile(r"(?m)^\s*\d+\.\s+(.+)$")
+    image_pattern = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
+    diagram_targets: set[str] = set()
+
+    for module in course.modules:
+        for lesson in module.lessons:
+            section_match = guide_pattern.search(lesson.body)
+            assert section_match is not None, f"{lesson.key}: нет пошагового сценария"
+            section = section_match.group(1)
+            steps = step_pattern.findall(section)
+            assert len(steps) == 4, f"{lesson.key}: ожидалось 4 шага, найдено {len(steps)}"
+            targets = image_pattern.findall(section)
+            assert len(targets) == 1, f"{lesson.key}: в сценарии должна быть одна схема"
+            target = targets[0]
+            expected = f"assets/img/howto/{module.slug}--{lesson.path.stem}.svg"
+            assert target == expected, f"{lesson.key}: схема должна быть индивидуальной ({expected})"
+            assert target not in diagram_targets, f"схема повторно используется: {target}"
+            diagram_targets.add(target)
+            assert (CONTENT / target).is_file(), f"{lesson.key}: нет файла схемы {target}"
+
+    assert len(diagram_targets) == len(course.all_lessons())
+
+
 def test_lessons_have_front_matter_and_body(course):
     for lesson in course.all_lessons():
         assert lesson.raw.startswith("---"), f"{lesson.key}: нет front matter"

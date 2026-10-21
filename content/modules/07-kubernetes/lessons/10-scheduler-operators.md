@@ -131,3 +131,12 @@ kubectl logs -n kube-system deploy/cluster-autoscaler
 Scheduler размещает Pod по requests, taints/tolerations, affinity, ограничению ресурсов и доступной топологии. Requests влияют на решение планировщика и QoS, limits ограничивают фактическое потребление; если requests сильно занижены, узел будет перегружен, хотя scheduler считает его свободным. Сопоставляйте планирование с реальными метриками и reserve для системных процессов.
 
 Контроллер реализует reconciliation loop: читает desired state, наблюдает current state и применяет небольшой шаг к согласованию. Он должен переносить повторное событие без дублирования побочных эффектов, обрабатывать временную недоступность API и публиковать понятный status. При работе оператора изучайте events и conditions CR, а не только логи controller.
+
+## Пошаговый сценарий
+
+![Порядок действий: Планировщик, контроллеры и операторы](assets/img/howto/07-kubernetes--10-scheduler-operators.svg)
+
+1. Проверьте requests, taints, tolerations, affinity и topology constraints.
+2. Сопоставьте scheduler events с реальной ёмкостью узлов.
+3. Проверьте reconciliation status и идемпотентность контроллера.
+4. Повторите событие и убедитесь, что лишних ресурсов не создаётся.
