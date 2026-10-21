@@ -6,39 +6,32 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
     </marker>
   </defs>
+  <rect id="canvas" x="0" y="0" width="960" height="280" rx="12" fill="#edf3fa"/>
   <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
-  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <rect class="step-card" x="15" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
   <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
-  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="127" dy="0">Зафиксируйте источники</tspan>
-    <tspan x="127" dy="19">зависимостей, сборки и</tspan>
-    <tspan x="127" dy="19">публикации артефактов.</tspan>
-  </text>
-  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Зафиксируйте источники</text>
+  <text class="step-label" x="127" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">зависимостей, сборки и</text>
+  <text class="step-label" x="127" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">публикации артефактов.</text>
+  <rect class="step-card" x="255" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
   <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
-  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="367" dy="0">Соберите SBOM, digest и</tspan>
-    <tspan x="367" dy="19">provenance для релизного</tspan>
-    <tspan x="367" dy="19">образа.</tspan>
-  </text>
-  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Соберите SBOM, digest и</text>
+  <text class="step-label" x="367" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">provenance для релизного</text>
+  <text class="step-label" x="367" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">образа.</text>
+  <rect class="step-card" x="495" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
   <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
-  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="607" dy="0">Проверьте подпись и</tspan>
-    <tspan x="607" dy="19">policy до продвижения по</tspan>
-    <tspan x="607" dy="19">средам.</tspan>
-  </text>
-  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Проверьте подпись и</text>
+  <text class="step-label" x="607" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">policy до продвижения по</text>
+  <text class="step-label" x="607" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">средам.</text>
+  <rect class="step-card" x="735" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
   <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
-  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="847" dy="0">Отрепетируйте отзыв</tspan>
-    <tspan x="847" dy="19">уязвимой зависимости и</tspan>
-    <tspan x="847" dy="19">блокировку артефакта.</tspan>
-  </text>
+  <text class="step-label" x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Отрепетируйте отзыв</text>
+  <text class="step-label" x="847" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">уязвимой зависимости и</text>
+  <text class="step-label" x="847" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">блокировку артефакта.</text>
   <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>

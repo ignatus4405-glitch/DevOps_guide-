@@ -6,39 +6,32 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
     </marker>
   </defs>
+  <rect id="canvas" x="0" y="0" width="960" height="280" rx="12" fill="#edf3fa"/>
   <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
-  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <rect class="step-card" x="15" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
   <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
-  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="127" dy="0">Соберите позитивные и</tspan>
-    <tspan x="127" dy="19">негативные примеры</tspan>
-    <tspan x="127" dy="19">искомой строки.</tspan>
-  </text>
-  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Соберите позитивные и</text>
+  <text class="step-label" x="127" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">негативные примеры</text>
+  <text class="step-label" x="127" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">искомой строки.</text>
+  <rect class="step-card" x="255" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
   <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
-  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="367" dy="0">Уточните движок regex и</tspan>
-    <tspan x="367" dy="19">необходимость совпадения</tspan>
-    <tspan x="367" dy="19">по границам.</tspan>
-  </text>
-  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Уточните движок regex и</text>
+  <text class="step-label" x="367" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">необходимость совпадения</text>
+  <text class="step-label" x="367" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">по границам.</text>
+  <rect class="step-card" x="495" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
   <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
-  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="607" dy="0">Соберите простой шаблон</tspan>
-    <tspan x="607" dy="19">с anchors и</tspan>
-    <tspan x="607" dy="19">экранированием.</tspan>
-  </text>
-  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Соберите простой шаблон</text>
+  <text class="step-label" x="607" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">с anchors и</text>
+  <text class="step-label" x="607" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">экранированием.</text>
+  <rect class="step-card" x="735" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
   <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
-  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="847" dy="0">Проверьте почти</tspan>
-    <tspan x="847" dy="19">совпавшие строки,</tspan>
-    <tspan x="847" dy="19">Unicode и пустой ввод.</tspan>
-  </text>
+  <text class="step-label" x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Проверьте почти</text>
+  <text class="step-label" x="847" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">совпавшие строки,</text>
+  <text class="step-label" x="847" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Unicode и пустой ввод.</text>
   <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>

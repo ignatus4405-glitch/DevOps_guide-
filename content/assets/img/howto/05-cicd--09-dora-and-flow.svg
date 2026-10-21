@@ -6,41 +6,34 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
     </marker>
   </defs>
+  <rect id="canvas" x="0" y="0" width="960" height="280" rx="12" fill="#edf3fa"/>
   <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
-  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <rect class="step-card" x="15" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
   <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
-  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="127" dy="0">Определите событие</tspan>
-    <tspan x="127" dy="19">deployment и окно</tspan>
-    <tspan x="127" dy="19">измерения для одного</tspan>
-    <tspan x="127" dy="19">сервиса.</tspan>
-  </text>
-  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Определите событие</text>
+  <text class="step-label" x="127" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">deployment и окно</text>
+  <text class="step-label" x="127" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">измерения для одного</text>
+  <text class="step-label" x="127" y="185" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">сервиса.</text>
+  <rect class="step-card" x="255" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
   <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
-  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="367" dy="0">Соберите lead time,</tspan>
-    <tspan x="367" dy="19">частоту, failure rate и</tspan>
-    <tspan x="367" dy="19">время восстановления.</tspan>
-  </text>
-  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Соберите lead time,</text>
+  <text class="step-label" x="367" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">частоту, failure rate и</text>
+  <text class="step-label" x="367" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">время восстановления.</text>
+  <rect class="step-card" x="495" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
   <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
-  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="607" dy="0">Найдите очередь и</tspan>
-    <tspan x="607" dy="19">ограничьте избыточный</tspan>
-    <tspan x="607" dy="19">WIP.</tspan>
-  </text>
-  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Найдите очередь и</text>
+  <text class="step-label" x="607" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">ограничьте избыточный</text>
+  <text class="step-label" x="607" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">WIP.</text>
+  <rect class="step-card" x="735" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
   <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
-  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="847" dy="0">Измените поток и</tspan>
-    <tspan x="847" dy="19">сравните метрики без</tspan>
-    <tspan x="847" dy="19">индивидуального</tspan>
-    <tspan x="847" dy="19">рейтинга.</tspan>
-  </text>
+  <text class="step-label" x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Измените поток и</text>
+  <text class="step-label" x="847" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">сравните метрики без</text>
+  <text class="step-label" x="847" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">индивидуального</text>
+  <text class="step-label" x="847" y="185" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">рейтинга.</text>
   <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>

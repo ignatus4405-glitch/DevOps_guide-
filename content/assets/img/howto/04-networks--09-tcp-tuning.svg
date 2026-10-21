@@ -6,40 +6,33 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
     </marker>
   </defs>
+  <rect id="canvas" x="0" y="0" width="960" height="280" rx="12" fill="#edf3fa"/>
   <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
-  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <rect class="step-card" x="15" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
   <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
-  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="127" dy="0">Снимите RTT,</tspan>
-    <tspan x="127" dy="19">retransmits, throughput</tspan>
-    <tspan x="127" dy="19">и очереди до настройки.</tspan>
-  </text>
-  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Снимите RTT,</text>
+  <text class="step-label" x="127" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">retransmits, throughput</text>
+  <text class="step-label" x="127" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">и очереди до настройки.</text>
+  <rect class="step-card" x="255" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
   <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
-  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="367" dy="0">Проверьте, ограничивает</tspan>
-    <tspan x="367" dy="19">ли окно TCP канал при</tspan>
-    <tspan x="367" dy="19">данном RTT.</tspan>
-  </text>
-  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Проверьте, ограничивает</text>
+  <text class="step-label" x="367" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">ли окно TCP канал при</text>
+  <text class="step-label" x="367" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">данном RTT.</text>
+  <rect class="step-card" x="495" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
   <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
-  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="607" dy="0">Измените только один</tspan>
-    <tspan x="607" dy="19">параметр на</tspan>
-    <tspan x="607" dy="19">изолированном тестовом</tspan>
-    <tspan x="607" dy="19">профиле.</tspan>
-  </text>
-  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Измените только один</text>
+  <text class="step-label" x="607" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">параметр на</text>
+  <text class="step-label" x="607" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">изолированном тестовом</text>
+  <text class="step-label" x="607" y="185" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">профиле.</text>
+  <rect class="step-card" x="735" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
   <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
-  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="847" dy="0">Сравните эффект на</tspan>
-    <tspan x="847" dy="19">разных соединениях и</tspan>
-    <tspan x="847" dy="19">сохраните откат.</tspan>
-  </text>
+  <text class="step-label" x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Сравните эффект на</text>
+  <text class="step-label" x="847" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">разных соединениях и</text>
+  <text class="step-label" x="847" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">сохраните откат.</text>
   <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>

@@ -6,43 +6,36 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
     </marker>
   </defs>
+  <rect id="canvas" x="0" y="0" width="960" height="280" rx="12" fill="#edf3fa"/>
   <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
-  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <rect class="step-card" x="15" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
   <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
-  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="127" dy="0">Соберите базовый профиль</tspan>
-    <tspan x="127" dy="19">процессов, сетевых</tspan>
-    <tspan x="127" dy="19">связей и файловых</tspan>
-    <tspan x="127" dy="19">операций.</tspan>
-  </text>
-  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Соберите базовый профиль</text>
+  <text class="step-label" x="127" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">процессов, сетевых</text>
+  <text class="step-label" x="127" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">связей и файловых</text>
+  <text class="step-label" x="127" y="185" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">операций.</text>
+  <rect class="step-card" x="255" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
   <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
-  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="367" dy="0">Настройте runtime</tspan>
-    <tspan x="367" dy="19">detection с привязкой к</tspan>
-    <tspan x="367" dy="19">workload identity.</tspan>
-  </text>
-  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Настройте runtime</text>
+  <text class="step-label" x="367" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">detection с привязкой к</text>
+  <text class="step-label" x="367" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">workload identity.</text>
+  <rect class="step-card" x="495" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
   <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
-  <text x="607" y="119" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="607" dy="0">Создайте проверяемое</tspan>
-    <tspan x="607" dy="19">правило для</tspan>
-    <tspan x="607" dy="19">подозрительного</tspan>
-    <tspan x="607" dy="19">поведения без сбора</tspan>
-    <tspan x="607" dy="19">лишних данных.</tspan>
-  </text>
-  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <text class="step-label" x="607" y="119" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Создайте проверяемое</text>
+  <text class="step-label" x="607" y="138" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">правило для</text>
+  <text class="step-label" x="607" y="157" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">подозрительного</text>
+  <text class="step-label" x="607" y="176" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">поведения без сбора</text>
+  <text class="step-label" x="607" y="195" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">лишних данных.</text>
+  <rect class="step-card" x="735" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>
   <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
   <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
-  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
-    <tspan x="847" dy="0">Проведите безопасное</tspan>
-    <tspan x="847" dy="19">учение и проверьте</tspan>
-    <tspan x="847" dy="19">alert, triage и</tspan>
-    <tspan x="847" dy="19">containment.</tspan>
-  </text>
+  <text class="step-label" x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">Проведите безопасное</text>
+  <text class="step-label" x="847" y="147" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">учение и проверьте</text>
+  <text class="step-label" x="847" y="166" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">alert, triage и</text>
+  <text class="step-label" x="847" y="185" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">containment.</text>
   <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
   <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>

@@ -148,8 +148,21 @@ def test_howto_diagrams_are_accessible_and_match_markdown(course):
         assert root.get("role") == "img", f"{path.name}: SVG недоступен как изображение"
         assert root.find(f"{SVG_NS}title") is not None, f"{path.name}: нет доступного заголовка"
         assert root.find(f"{SVG_NS}desc") is not None, f"{path.name}: нет текстового описания"
-        assert len(root.findall(f"{SVG_NS}rect")) == 4, f"{path.name}: ожидается четыре шага"
+        canvas = root.find(f"{SVG_NS}rect[@id='canvas']")
+        assert canvas is not None, f"{path.name}: нет непрозрачного фона для контраста в dark theme"
+        cards = root.findall(f"{SVG_NS}rect[@class='step-card']")
+        assert len(cards) == 4, f"{path.name}: ожидается четыре шага"
         assert len(root.findall(f"{SVG_NS}line")) == 3, f"{path.name}: отсутствуют стрелки последовательности"
+
+        # QtSvg/TextBrowser does not reliably honor tspan dy; explicit baselines
+        # keep every wrapped label on its own line instead of collapsing them.
+        assert not root.findall(f"{SVG_NS}tspan"), f"{path.name}: найден ненадёжный для Qt <tspan>"
+        labels = root.findall(f"{SVG_NS}text[@class='step-label']")
+        for card in cards:
+            label_x = str(int(card.get("x")) + 112)
+            card_labels = [label for label in labels if label.get("x") == label_x]
+            ys = [int(label.get("y")) for label in card_labels]
+            assert ys and ys == sorted(set(ys)), f"{path.name}: подписи шага не разбиты на строки"
 
     generator = _load_tool("generate_lesson_diagrams")
     assert generator.generate(check=True) == 0, "SVG-схемы расходятся с текстом уроков"

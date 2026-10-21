@@ -41,26 +41,28 @@ def render_diagram(title: str, steps: list[str]) -> str:
         '      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>',
         "    </marker>",
         "  </defs>",
+        '  <rect id="canvas" x="0" y="0" width="960" height="280" rx="12" fill="#edf3fa"/>',
         '  <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>',
     ]
     xs = [15, 255, 495, 735]
     for index, (x, step) in enumerate(zip(xs, steps, strict=True), start=1):
         svg.extend(
             [
-                f'  <rect x="{x}" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>',
+                f'  <rect class="step-card" x="{x}" y="66" width="210" height="174" rx="16" fill="#ffffff" stroke="#5b84b6" stroke-width="2"/>',
                 f'  <circle cx="{x + 28}" cy="94" r="16" fill="#3d70aa"/>',
                 f'  <text x="{x + 28}" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">{index}</text>',
             ]
         )
-        lines = _wrap_step(step)
+        lines = _wrap_step(step)[:6]
         start_y = 128 if len(lines) <= 4 else 119
-        svg.append(
-            f'  <text x="{x + 112}" y="{start_y}" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">'
-        )
-        for line_no, line in enumerate(lines[:6]):
-            dy = "0" if line_no == 0 else "19"
-            svg.append(f'    <tspan x="{x + 112}" dy="{dy}">{html.escape(line)}</tspan>')
-        svg.append("  </text>")
+        for line_no, line in enumerate(lines):
+            # Qt's SVG renderer can flatten <tspan dy=...> into one crowded
+            # baseline; independent text nodes render consistently in QTextBrowser.
+            y = start_y + line_no * 19
+            svg.append(
+                f'  <text class="step-label" x="{x + 112}" y="{y}" text-anchor="middle" '
+                f'font-family="sans-serif" font-size="14" fill="#1f2937">{html.escape(line)}</text>'
+            )
     for x in (225, 465, 705):
         svg.append(
             f'  <line x1="{x}" y1="153" x2="{x + 25}" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>'
