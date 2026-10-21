@@ -103,3 +103,12 @@ processors:
 OpenTelemetry разделяет API/SDK, которые создают telemetry, и Collector, который принимает, обрабатывает и экспортирует её. Это позволяет менять backend без переписывания приложения и централизованно добавлять attributes, фильтровать поля и управлять sampling. Но Collector сам становится частью пути данных: ему нужны масштабирование, HA, очередь и мониторинг собственного состояния.
 
 Определите схему resource attributes — service name, version, environment — до запуска разных команд, иначе сигналы трудно сопоставлять. Не добавляйте одинаковые labels одновременно в SDK и processor без понимания приоритета. Настройте limits и redaction до экспорта за пределы доверенной сети, а пропускную способность тестируйте при пике, включая поведение при недоступности exporter.
+
+## Пошаговый сценарий
+
+![Порядок действий: OpenTelemetry: единый конвейер телеметрии](assets/img/howto/10-observability--08-opentelemetry.svg)
+
+1. Установите SDK и задайте resource attributes без секретов.
+2. Настройте exporter, collector pipeline и безопасный endpoint.
+3. Проверьте propagation и маршрутизацию traces, metrics и logs.
+4. Измерьте overhead, sampling, retries и поведение при недоступном collector.

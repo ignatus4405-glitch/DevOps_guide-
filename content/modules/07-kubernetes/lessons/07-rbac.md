@@ -136,6 +136,15 @@ Role ограничивает разрешения namespace, ClusterRole дей
 
 Проверьте доступ через `kubectl auth can-i` с нужной identity и namespace, а не только просмотром YAML. Не используйте `default` ServiceAccount с широкими правами. Разделяйте права человека, CI и runtime-приложения; аудитируйте impersonation и binding изменения. Если приложению нужен доступ к API, ограничьте токен и срок его действия, а не кладите kubeconfig администратора в контейнер.
 
+## Пошаговый сценарий
+
+![Порядок действий: RBAC и безопасность кластера](assets/img/howto/07-kubernetes--07-rbac.svg)
+
+1. Назовите identity и API действия, которые нужны workload.
+2. Выберите Role или ClusterRole с минимальными resources и verbs.
+3. Привяжите роль к отдельному ServiceAccount в нужном namespace.
+4. Проверьте can-i и audit log для разрешённых и запрещённых операций.
+
 ## Проверьте себя
 
 1. Чем Role отличается от ClusterRole?

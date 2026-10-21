@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Порядок действий: Диагностика производительности: CPU, память, диск</title>
+  <desc id="desc">Зафиксируйте пользовательский симптом и временной интервал. → Снимите baseline CPU, памяти, диска и очередей подходящими инструментами. → Найдите ресурс, у которого показатели совпадают с ухудшением latency. → Измените один фактор и сравните тот же профиль нагрузки.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5584bd"/>
+    </marker>
+  </defs>
+  <text x="480" y="36" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#26364a">Порядок действий</text>
+  <rect x="15" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="43" cy="94" r="16" fill="#3d70aa"/>
+  <text x="43" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">1</text>
+  <text x="127" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="127" dy="0">Зафиксируйте</tspan>
+    <tspan x="127" dy="19">пользовательский симптом</tspan>
+    <tspan x="127" dy="19">и временной интервал.</tspan>
+  </text>
+  <rect x="255" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="283" cy="94" r="16" fill="#3d70aa"/>
+  <text x="283" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">2</text>
+  <text x="367" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="367" dy="0">Снимите baseline CPU,</tspan>
+    <tspan x="367" dy="19">памяти, диска и очередей</tspan>
+    <tspan x="367" dy="19">подходящими</tspan>
+    <tspan x="367" dy="19">инструментами.</tspan>
+  </text>
+  <rect x="495" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="523" cy="94" r="16" fill="#3d70aa"/>
+  <text x="523" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">3</text>
+  <text x="607" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="607" dy="0">Найдите ресурс, у</tspan>
+    <tspan x="607" dy="19">которого показатели</tspan>
+    <tspan x="607" dy="19">совпадают с ухудшением</tspan>
+    <tspan x="607" dy="19">latency.</tspan>
+  </text>
+  <rect x="735" y="66" width="210" height="174" rx="16" fill="#f4f8fd" stroke="#5b84b6" stroke-width="2"/>
+  <circle cx="763" cy="94" r="16" fill="#3d70aa"/>
+  <text x="763" y="100" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#ffffff">4</text>
+  <text x="847" y="128" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1f2937">
+    <tspan x="847" dy="0">Измените один фактор и</tspan>
+    <tspan x="847" dy="19">сравните тот же профиль</tspan>
+    <tspan x="847" dy="19">нагрузки.</tspan>
+  </text>
+  <line x1="225" y1="153" x2="250" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="465" y1="153" x2="490" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="705" y1="153" x2="730" y2="153" stroke="#5584bd" stroke-width="3" marker-end="url(#arrow)"/>
+</svg>

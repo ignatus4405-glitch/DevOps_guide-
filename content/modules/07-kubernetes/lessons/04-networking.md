@@ -185,6 +185,15 @@ Pod получает собственный IP в модели CNI, и Pod-to-Po
 
 Если соединение не работает, сравните DNS изнутри Pod, endpoints Service, NetworkPolicy, CNI и внешний ingress. `kubectl get endpoints` помогает заметить, что Service не выбрал ни одного готового Pod; `kubectl exec` проверяет путь из правильного namespace, но использовать его следует с учётом прав. Внимательно относитесь к `localhost`: внутри Pod он указывает на конкретный сетевой namespace, не на Service или другой Pod.
 
+## Пошаговый сценарий
+
+![Порядок действий: Сеть Kubernetes: CNI, Service, Ingress](assets/img/howto/07-kubernetes--04-networking.svg)
+
+1. Проверьте DNS имя сервиса из namespace проблемного Pod.
+2. Сверьте Service selector и готовые endpoints.
+3. Проверьте CNI route и NetworkPolicy на обеих сторонах.
+4. Протестируйте внешний Ingress, TLS и путь до приложения.
+
 ## Проверьте себя
 
 1. Почему нельзя обращаться к поду по IP?

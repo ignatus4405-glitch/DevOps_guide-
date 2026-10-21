@@ -98,6 +98,13 @@ def test_images_rewritten_to_absolute_file_urls():
     assert "file://" in html and "devops-lifecycle.svg" in html
 
 
+def test_nested_howto_diagram_is_rendered_from_content():
+    target = "assets/img/howto/00-intro--01-what-is-devops.svg"
+    assert (CONTENT / target).is_file()
+    html = render_lesson(f"![Порядок действий]({target})", CONTENT, {})
+    assert "file://" in html and "00-intro--01-what-is-devops.svg" in html
+
+
 def test_external_images_left_alone():
     body = "![Лого](https://example.com/x.png)"
     html = render_lesson(body, CONTENT, {})

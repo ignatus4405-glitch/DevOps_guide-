@@ -319,6 +319,15 @@ Kubernetes связывает объекты по labels и selectors, а не �
 
 Liveness отвечает, нужно ли перезапустить контейнер; readiness — можно ли направлять на него трафик; startup probe даёт медленно стартующему процессу время подняться. Неправильная liveness может создать цикл рестартов во время перегрузки. Ingress направляет HTTP(S) трафик только при наличии контроллера и корректного DNS/TLS; объект Ingress сам по себе не создаёт внешний балансировщик.
 
+## Пошаговый сценарий
+
+![Порядок действий: Манифесты: Deployment, Service, Ingress, конфигурация](assets/img/howto/07-kubernetes--02-manifests.svg)
+
+1. Проверьте namespace, labels и selectors между Deployment и Service.
+2. Проверьте image digest, requests, limits и конфигурацию.
+3. Разведите readiness, liveness и startup probes по назначению.
+4. Отрендерите manifest и проверьте его в тестовом namespace.
+
 ## Проверьте себя
 
 1. Почему liveness не должен проверять внешние зависимости?
