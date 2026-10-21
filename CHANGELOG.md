@@ -1,5 +1,13 @@
 # История изменений
 
+## [0.9.1] — 2026-10-21
+
+### Документация
+- Expand explanations across all course lessons
+
+### Инфраструктура и тесты
+- Refresh content index
+
 ## [0.9.0] — 2026-10-19
 
 ### Добавлено
