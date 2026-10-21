@@ -127,6 +127,12 @@ kubectl debug node/<node> -it --image=busybox
 4. `kubectl describe svc` — правильный ли selector/port.
 5. Ingress → Service → Endpoints → Pod.
 
+## Подробный разбор темы
+
+`Pending` означает, что Pod ещё не назначен узлу: проверьте events, requests, quota, taints/tolerations, affinity и доступность PVC. `CrashLoopBackOff` — процесс запускается и завершается; смотрите текущие и предыдущие logs, exit code, probes и конфигурацию. `OOMKilled` требует сопоставить лимит памяти, фактическое потребление и объём входных данных.
+
+Собирайте контекст до удаления Pod: описание, events, логи и состояние соседних replica. Изменяйте один фактор и наблюдайте rollout, иначе причинную связь потерять легко. Если проблема связана с image pull, проверьте registry, tag/digest, credentials и сетевую доступность узла. Диагностика должна закончиться проверкой восстановления endpoint и метрик, а не только исчезновением ошибки в `kubectl get pods`.
+
 ## Проверьте себя
 
 1. Где искать причину Pending?

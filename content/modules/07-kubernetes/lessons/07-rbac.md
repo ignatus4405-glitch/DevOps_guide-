@@ -130,6 +130,12 @@ kubectl logs -n kube-system -l component=kube-apiserver | grep audit
 
 NetworkPolicy ограничивает сеть, RBAC — API. Это разные слои, нужны оба.
 
+## Подробный разбор темы
+
+Role ограничивает разрешения namespace, ClusterRole действует шире; binding связывает правила с User, Group или ServiceAccount. Правила Kubernetes обычно добавляют разрешения, поэтому случайный широкий ClusterRole может дать доступ сразу во всём кластере. Начинайте с запроса, который должен выполнить workload, и выдавайте только нужные verbs и resources.
+
+Проверьте доступ через `kubectl auth can-i` с нужной identity и namespace, а не только просмотром YAML. Не используйте `default` ServiceAccount с широкими правами. Разделяйте права человека, CI и runtime-приложения; аудитируйте impersonation и binding изменения. Если приложению нужен доступ к API, ограничьте токен и срок его действия, а не кладите kubeconfig администратора в контейнер.
+
 ## Проверьте себя
 
 1. Чем Role отличается от ClusterRole?

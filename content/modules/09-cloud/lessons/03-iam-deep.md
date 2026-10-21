@@ -134,6 +134,12 @@ aws iam simulate-principal-policy   --policy-source-arn arn:aws:iam::123:role/ap
 - политика на пользователя вместо роли;
 - отсутствие границ (`Permissions boundary`) для делегирования.
 
+## Подробный разбор темы
+
+IAM policy обычно состоит из principal, action, resource и conditions. Эффективное разрешение зависит от нескольких слоёв: identity policy, resource policy, organization guardrail и explicit deny. Поэтому отсутствие allow не всегда единственная причина отказа; диагностика должна показывать, какой policy evaluation остановил запрос.
+
+Используйте роли и STS вместо долгоживущих ключей, разделяйте read и write задачи и сужайте resource ARN и condition по account, region или tag, если это безопасно. Проверьте права через policy simulator или тестовую identity, затем изучите audit log. Периодически удаляйте неиспользуемые permissions, но начинайте с наблюдения и постепенного rollout, чтобы не сломать скрытую автоматизацию.
+
 ## Проверьте себя
 
 1. Почему `Action: "*"` почти всегда ошибка?

@@ -27,6 +27,17 @@ def test_modules_have_required_files():
             assert (module_dir / name).exists(), f"{module_dir.name}: нет {name}"
 
 
+def test_every_lesson_has_a_detailed_topic_section(course):
+    for lesson in course.all_lessons():
+        section = re.search(
+            r"(?m)^## Подробный разбор темы\s*\n(.*?)(?=^#{1,6}\s|\Z)",
+            lesson.body,
+            re.S,
+        )
+        assert section is not None, f"{lesson.key}: нет подробного разбора темы"
+        assert len(section.group(1).split()) >= 60, f"{lesson.key}: подробный разбор слишком короткий"
+
+
 def test_every_lesson_has_three_autocheck_questions(course):
     lessons = course.all_lessons()
     assert len(course.all_lesson_questions()) == len(lessons) * 3
