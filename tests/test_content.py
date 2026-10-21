@@ -119,6 +119,27 @@ def test_every_lesson_has_four_step_howto_and_unique_diagram(course):
     assert len(diagram_targets) == len(course.all_lessons())
 
 
+def test_every_lesson_has_beginner_friendly_step_explanations(course):
+    """Каждый шаг объясняет, что сделать и как увидеть успешный результат."""
+    guide_pattern = re.compile(
+        r"(?ms)^## Пошаговое объяснение для новичка\s*\n(.*?)(?=^##\s|\Z)"
+    )
+    step_pattern = re.compile(r"(?m)^### Шаг ([1-4])\s*$")
+    action_pattern = re.compile(r"(?s)\*\*Что сделать\.\*\*\s*(.+?)\s*\n\s*\*\*Как проверить\.\*\*\s*(.+?)(?=\n\s*### Шаг|\Z)")
+
+    for lesson in course.all_lessons():
+        match = guide_pattern.search(lesson.body)
+        assert match is not None, f"{lesson.key}: нет объяснения для новичка"
+        section = match.group(1)
+        headings = step_pattern.findall(section)
+        assert headings == ["1", "2", "3", "4"], f"{lesson.key}: нужны пояснения ровно к четырём шагам"
+        explanations = action_pattern.findall(section)
+        assert len(explanations) == 4, f"{lesson.key}: каждому шагу нужны действие и проверка результата"
+        for index, (action, check) in enumerate(explanations, start=1):
+            assert len(action.split()) >= 6, f"{lesson.key}, шаг {index}: объяснение слишком короткое"
+            assert len(check.split()) >= 5, f"{lesson.key}, шаг {index}: не описана проверка результата"
+
+
 def test_lessons_have_front_matter_and_body(course):
     for lesson in course.all_lessons():
         assert lesson.raw.startswith("---"), f"{lesson.key}: нет front matter"
