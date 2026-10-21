@@ -313,6 +313,12 @@ kubectl diff -f app.yaml
 контроллере. Валидируйте бизнес-правила политиками и тестами манифестов
 (kubeconform, conftest).
 
+## Подробный разбор темы
+
+Kubernetes связывает объекты по labels и selectors, а не по именам файлов. Если selector Deployment не совпадает с labels Pod template или selector Service, объект будет валиден, но трафик не дойдёт до приложения. Перед выкладкой проверьте rendered manifest, namespace, selectors, image digest, probes и resource requests/limits.
+
+Liveness отвечает, нужно ли перезапустить контейнер; readiness — можно ли направлять на него трафик; startup probe даёт медленно стартующему процессу время подняться. Неправильная liveness может создать цикл рестартов во время перегрузки. Ingress направляет HTTP(S) трафик только при наличии контроллера и корректного DNS/TLS; объект Ingress сам по себе не создаёт внешний балансировщик.
+
 ## Проверьте себя
 
 1. Почему liveness не должен проверять внешние зависимости?
