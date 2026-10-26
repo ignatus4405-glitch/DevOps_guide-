@@ -49,7 +49,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Разрешить публикацию только из main
@@ -58,7 +58,7 @@ jobs:
             echo "Стабильный релиз собирается только из refs/heads/main (получено: $GITHUB_REF)" >&2
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -131,7 +131,7 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Сохранить release notes
         if: steps.version.outputs.release == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-meta
           path: release_notes.md
@@ -143,10 +143,10 @@ jobs:
     if: needs.guard.outputs.release == 'true'
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.guard.outputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -184,7 +184,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "сборка установщика провалилась" }
           Get-ChildItem dist -Filter *.exe | Format-Table Name, Length
       - name: Загрузить артефакты
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-dist
           path: |
@@ -198,10 +198,10 @@ jobs:
     if: needs.guard.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.guard.outputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -225,7 +225,7 @@ jobs:
       - name: Упаковать в tar.gz
         run: |
           cd dist && tar czf "DevOpsAcademy-${{ needs.guard.outputs.version }}-linux-x64.tar.gz" DevOpsAcademy
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-dist
           path: dist/*.tar.gz
@@ -240,11 +240,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.guard.outputs.sha }}
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
       - name: Подготовить файлы релиза
@@ -311,7 +311,7 @@ jobs:
     if: needs.guard.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Отправить уведомление в вебхук (если настроен)
         env:
           WEBHOOK: ${{ secrets.RELEASE_WEBHOOK_URL }}
